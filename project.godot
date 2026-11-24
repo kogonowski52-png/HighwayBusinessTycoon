@@ -1,0 +1,23 @@
+config_version=5
+
+[application]
+config/name="Highway Business Tycoon"
+config/icon="res://assets/icons/app.svg"
+run/main_scene="res://scenes/world/roadside.tscn"
+config/features=PackedStringArray("4.6", "GL Compatibility")
+
+[display]
+window/size/viewport_width=1080
+window/size/viewport_height=1920
+window/size/window_width_override=486
+window/size/window_height_override=864
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+anti_aliasing/quality/msaa_3d=1
+textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.72, 0.8, 0.72, 1)
