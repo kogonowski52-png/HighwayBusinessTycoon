@@ -1,5 +1,16 @@
 # Stan projektu
 
+## 0.3.0 · Ekonomia i działający kompleks
+
+- Działają stacja paliw, sklep, parking, myjnia, warsztat, restauracja, motel i osobny plac obsługi TIR. Kierowcy wybierają usługi według profilu, wjeżdżają na plac, czekają, zajmują przydzielone stanowisko i wyjeżdżają.
+- Osiem usług obsługuje poziomy 1–100, progi pojemności, cztery tryby zakupu i oddzielne stawki. Fizyka ruchu korzysta z rezerwacji, odstępów i odzyskiwania po blokadzie.
+- Pracownicy widoczni w świecie wykonują zadania, zyskują doświadczenie i awansują. Pięć kart menedżerów daje osobne efekty. Cele, osiągnięcia i rotujące wydarzenia pozwalają rozwijać kompleks za waluty zdobywane w grze.
+- Dochód offline, atomowy zapis i odzyskiwanie obsługują istniejące profile. Opcjonalny moduł reklamowy działa w wariancie eksportu Android z odpowiednią konfiguracją. Podstawowy APK debug nadal działa offline.
+
+Fizyczne testy Androida, pomiary wydajności i wyświetlenie reklamy z docelową konfiguracją wymagają urządzenia. Projekt rozgrywa się w kompleksie Trasy 17. Kolejne lokalizacje i publikacja sklepowa są w planie.
+
+[Raport testów](TEST_REPORT.md) · [Symulacja ekonomii](docs/balance-0.3.0.md)
+
 ## 0.2.0 · Przebudowa oprawy Stacji Północ
 
 - Ta sama grywalna lokalizacja z nową architekturą, autorskim otoczeniem, czterema porami dnia i kamerą mapy.
@@ -9,12 +20,8 @@
 - Grywalny dystrybutor ma widoczny wąż i pistolet tankowania, a wypłata uruchamia monety. Myjnia, warsztat i krajobraz mają własne cząsteczki.
 - Tryb 30 FPS korzysta z mniejszej skali 3D i lżejszych efektów. Projekt nadal używa Godot Compatibility i działa lokalnie.
 
-## Zakres grywalny i stan walidacji
+### Ówczesny zakres
 
 Przychód i rozwój obejmują stację paliw. Sklep, myjnia, restauracja, warsztat, motel i parking mają modele oraz czynności w świecie, a ich własne transakcje i ulepszenia są w planie rozwoju. Pracownicy widoczni na mapie są postaciami otoczenia. System zatrudniania, automatyzacja i kolejki wielostanowiskowe pozostają oddzielnym etapem.
 
 Zapis z 0.1.0 zachowuje poziom, ustawienia i środki. Materiały sprawdzono w renderze Compatibility i przygotowano APK debug. Pomiar 30 i 60 FPS na fizycznych urządzeniach, test wycięć ekranu i eksport iOS wymagają sprzętu docelowego. Szczegóły są w [raporcie testów](TEST_REPORT.md).
-
-## Kolejny etap
-
-Automatyzacja dystrybutora, obsługa wielu stanowisk, gospodarka sklepu i pomiary GPU na telefonach Android.

@@ -8,5 +8,11 @@ from kit import output_root
 
 families = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 for family in families or ["architecture", "landscape", "vehicles", "characters"]:
-    module = __import__(family)
-    module.generate(output_root())
+    if family == "directors":
+        from characters import generate_directors
+        generate_directors(output_root())
+    else:
+        module = __import__(family)
+        module.generate(output_root())
+        if family == "characters":
+            module.generate_directors(output_root())

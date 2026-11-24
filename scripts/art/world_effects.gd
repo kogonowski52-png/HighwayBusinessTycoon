@@ -12,7 +12,8 @@ var water: CPUParticles3D
 var smoke: CPUParticles3D
 var mote: CPUParticles3D
 var hose: Array[MeshInstance3D] = []
-var cycle := 1.3
+var washing := false
+var repairing := false
 var reduced := false
 
 func _ready() -> void:
@@ -124,12 +125,18 @@ func fade() -> Gradient:
 		Color(1, 1, 1, 0.36), Color(1, 1, 1, 0.0)])
 	return ramp
 
-func _process(delta: float) -> void:
-	cycle = fmod(cycle + delta, 12.0)
-	water.emitting = cycle < 5.9 and not reduced
-	foam.emitting = cycle > 1.9 and cycle < 6.4 and not reduced
-	steam.emitting = cycle < 6.8
-	smoke.emitting = cycle < 5.4 and not reduced
+func set_activity(wash: HbtVisit, workshop: HbtVisit) -> void:
+	washing = wash != null
+	repairing = workshop != null
+	if washing:
+		var at := wash.location
+		water.position = at + Vector3(0, 1.94, 0.28)
+		foam.position = at + Vector3(0, 0.40, 0.68)
+		steam.position = at + Vector3(0.10, 0.48, 1.40)
+	water.emitting = washing and not reduced
+	foam.emitting = washing and not reduced
+	steam.emitting = washing
+	smoke.emitting = repairing and not reduced
 	mote.emitting = not reduced
 
 func drive_on_dust(enabled: bool, at: Vector3) -> void:
@@ -137,13 +144,12 @@ func drive_on_dust(enabled: bool, at: Vector3) -> void:
 	if dust.emitting:
 		dust.position = at + Vector3(0, 0.14, 0)
 
-func set_hose(connected: bool, grip: Vector3) -> void:
+func set_hose(connected: bool, grip: Vector3, start := Vector3(1.61, 1.085, 0.63)) -> void:
 	for piece in hose:
 		piece.visible = connected
 	if not connected:
 		return
-	var start := Vector3(1.61, 1.085, 0.63)
-	var guide := Vector3(3.75, 0.15, 1.74)
+	var guide := start + Vector3(2.14, -0.935, 1.11)
 	var control := grip + Vector3(0.62, -0.84, 0.24)
 	for index in range(hose.size()):
 		var from := start.bezier_interpolate(guide, control, grip, index / float(hose.size()))

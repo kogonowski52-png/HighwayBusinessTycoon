@@ -1,5 +1,27 @@
 # Raport testów
 
+## 0.3.0 · Kompleks Idle Tycoon
+
+Środowisko używało Godot 4.7.2 Stable na Debianie i OpenGL Compatibility z Mesa llvmpipe. Test sceny głównej korzysta z własnego pliku profilu, wykonuje kliknięcia w prawdziwe kontrolki i ogląda działające modele usług.
+
+| Zestaw | Wynik |
+| --- | --- |
+| Ekonomia, pracownicy, karty, wydarzenia i zapis | 63/63 |
+| Ruch, 19 stanowisk i rezerwacje | 23/23 |
+| Symulacja bez płatności, trzy ziarna i sześć horyzontów | 46/46 |
+| Pętla gry bez okna | 26/26 |
+| Pętla gry w oknie, w tym zdjęcia i układ tabletu | 34/34 |
+| Regresja oprawy i światła bez okna | 52/52 |
+| Eksport APK debug 0.3.0 | Podpis v2/v3 zweryfikowany, arm64-v8a i x86_64, bez uprawnienia do internetu |
+| Kompilacja opcjonalnego modułu reklamowego | Gradle 8.13 zakończył `assembleRelease` i wytworzył AAR |
+| Działanie na fizycznym Androidzie | Bez próby instalacji i pomiaru FPS w chmurze |
+
+W 20-minutowej próbie ruchu obsłużono **253 klientów** we wszystkich ośmiu usługach. Sześciu klientów zrezygnowało lub odjechało bez obsługi. Maksymalnie sześć pojazdów zajmowało dwie kolejki. Po odcięciu przyjazdów każdy pojazd opuścił teren, a wszystkie rezerwacje zostały zwolnione bez interwencji awaryjnej. Osobny test z celową przeszkodą potwierdził zwolnienie zablokowanego wjazdu.
+
+Test zapisu obejmuje stare profile 0.1–0.2, wartości 200-cyfrowe, powrót z pliku tymczasowego po przerwanym zapisie, kopię po uszkodzeniu pliku głównego oraz ochronę nowszego schematu. Test offline sprawdza limit ośmiu godzin, powtarzane i cofnięte czasy, weryfikację monotoniczną oraz jednokrotne przyjęcie potwierdzenia nagrody.
+
+[Galeria rozgrywki](docs/gameplay-0.3.0/README.md) · [Raport symulacji](docs/balance-0.3.0.md)
+
 ## 0.2.0 · Przebudowa oprawy
 
 Godot 4.7.2 Stable, Blender 4.3.2 i Mesa llvmpipe z rendererem Compatibility. Przejrzano zbliżenia oraz przebieg gry w trybach telefonu i tabletu.

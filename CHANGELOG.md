@@ -1,5 +1,13 @@
 # Historia zmian
 
+## 0.3.0 · Kompleks Idle Tycoon
+
+- Dodano osiem usług, siedem profili klientów, sprawdzanie budżetu, dwie kolejki i rezerwowanie stanowisk na Trasie 17.
+- Dodano pracowników z animacjami w świecie, szkolenia, awanse oraz pięć kart menedżerskich.
+- Dodano cztery dokładne waluty, 100 poziomów na usługę, zakupy grupowe, statystyki, premie i wydarzenia dzienne.
+- Dodano dochód offline, migrację zapisów, odzyskiwanie kopii oraz opcjonalny wariant Android z reklamą nagradzaną.
+- Dodano automatyczne sprawdzanie balansu w sześciu horyzontach i testy pętli gry z rzeczywistymi kliknięciami w oknie.
+
 ## 0.2.0 · Oprawa Trasy 17
 
 - Wprowadzono autorskie modele GLB siedmiu obiektów, 20 pojazdów, ośmiu ról i wyposażenia krajobrazu.

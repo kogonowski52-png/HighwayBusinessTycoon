@@ -6,6 +6,9 @@ signal language_requested
 signal power_requested
 signal lighting_requested
 signal view_requested
+signal page_requested(page: String)
+signal quantity_requested(quantity: int)
+signal income_requested
 
 const REGULAR = preload("res://assets/fonts/OpenSans-Regular.ttf")
 const BOLD = preload("res://assets/fonts/OpenSans-Bold.ttf")
@@ -39,6 +42,12 @@ var power: Button
 var lighting: Button
 var view: Button
 var progress: ProgressBar
+var queued: Label
+var wallet_stats: Dictionary = {}
+var pages: Dictionary = {}
+var quantities: Dictionary = {}
+var income: Button
+var reserve: Label
 
 func _ready() -> void:
 	var root := Control.new()
@@ -73,13 +82,21 @@ func _ready() -> void:
 	stats.add_theme_constant_override("separation", 12)
 	var highway := tile(stats, ROAD)
 	traffic_caption = caption(highway, 20, FADE)
-	caption(highway, 35, GOLD, HEAVY).text = "R17"
+	queued = caption(highway, 35, GOLD, HEAVY)
 	var visits := tile(stats, BARS)
 	people_caption = caption(visits, 20, FADE)
 	people = caption(visits, 35, CREAM, HEAVY)
 	var treasury := tile(stats, null)
 	cash_caption = caption(treasury, 20, FADE)
 	cash = caption(treasury, 35, CREAM, HEAVY)
+	var balances := HBoxContainer.new()
+	header.add_child(balances)
+	balances.add_theme_constant_override("separation", 12)
+	for id in ["diamond", "reputation", "event"]:
+		var item := caption(balances, 21, MINT)
+		item.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		item.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		wallet_stats[id] = item
 
 	var framing := VBoxContainer.new()
 	root.add_child(framing)
@@ -124,6 +141,19 @@ func _ready() -> void:
 	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	progress.add_theme_stylebox_override("background", style(PANEL, RIM, 7, 0))
 	progress.add_theme_stylebox_override("fill", style(MINT, MINT, 7, 0))
+	reserve = caption(card, 23, GOLD)
+	reserve.visible = false
+	var purchase := HBoxContainer.new()
+	card.add_child(purchase)
+	purchase.add_theme_constant_override("separation", 8)
+	for count in [1, 10, 25, 0]:
+		var option := action(purchase, 0, 55, false)
+		option.toggle_mode = true
+		option.add_theme_stylebox_override("pressed", style(Color("#346451"), MINT, 18, 10))
+		option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		option.text = "MAX" if count == 0 else "+%d" % count
+		option.pressed.connect(func() -> void: quantity_requested.emit(count))
+		quantities[count] = option
 	var actions := HBoxContainer.new()
 	card.add_child(actions)
 	actions.add_theme_constant_override("separation", 14)
@@ -132,6 +162,17 @@ func _ready() -> void:
 	upgrade = action(actions, 292, 102, false)
 	serve.pressed.connect(func() -> void: serve_requested.emit())
 	upgrade.pressed.connect(func() -> void: upgrade_requested.emit())
+	income = action(card, 0, 66, false)
+	income.visible = false
+	income.pressed.connect(func() -> void: income_requested.emit())
+	var tabs := HBoxContainer.new()
+	card.add_child(tabs)
+	tabs.add_theme_constant_override("separation", 8)
+	for page in ["sites", "team", "goals", "finance"]:
+		var tab := action(tabs, 0, 68, false)
+		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab.pressed.connect(func() -> void: page_requested.emit(page))
+		pages[page] = tab
 
 func band(root: Control, bottom: bool) -> PanelContainer:
 	var panel := PanelContainer.new()

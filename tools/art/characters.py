@@ -29,6 +29,15 @@ ROLES = [
     Outfit("manager", "deab88", "716054", "746b83", "f2deb1", "465363"),
 ]
 
+
+DIRECTORS = [
+    Outfit("ada", "c89974", "804e39", "517b92", "f3d29c", "4c5d71"),
+    Outfit("iga", "945f48", "453735", "ab605b", "f7d7a7", "704d59", hat="b96860"),
+    Outfit("maks", "c58b65", "373c3a", "677c59", "d8deb4", "374f52"),
+    Outfit("mira", "daa780", "563b36", "a88745", "f4d1a8", "626067", hat="a17a57"),
+    Outfit("leon", "aa7359", "564945", "715b80", "e7ccaf", "445766"),
+]
+
 SUPPORT = {
     "pelvis": ((0, .968, 0), None),
     "spine": ((0, 1.055, 0), "pelvis"),
@@ -89,7 +98,7 @@ def actor(role):
         for side in [-1, 1]:
             model.pipe([(side * .122, 1.357, .182), (side * .115, 1.462, .033),
                         (side * .122, 1.388, -.103)], .021, role.apron, bone="spine", sides=7)
-    if role.key == "manager":
+    if role.key == "manager" or role in DIRECTORS:
         for side in [-1, 1]:
             model.pipe([(side * .076, 1.461, .126), (side * .099, 1.368, .173),
                         (side * .056, 1.267, .177)], .027, lining, bone="spine", sides=8)
@@ -114,14 +123,14 @@ def actor(role):
                     (side * .127, 1.768, .146)], .011, hair, bone="head", sides=7)
     model.orb((-.006, 1.756, -.039), (.206, .176, .158), hair, 17, 11, bone="head", irregular=.045)
     model.orb((-.050, 1.833, .086), (.146, .103, .112), hair, 13, 8, bone="head", yaw=.43, irregular=.15)
-    if role.key in ("customer", "cashier", "server"):
+    if role.key in ("customer", "cashier", "server", "ada", "iga"):
         model.orb((.123, 1.708, -.103), (.117, .149, .129), hair, 13, 9, bone="head", irregular=.12)
         model.orb((.144, 1.580, -.121), (.077, .083, .078), hair, 12, 8, bone="head")
     if role.hat:
         model.orb((0, 1.831, -.021), (.224, .142, .185), role.hat, 17, 10, "Paint", bone="head")
         model.orb((0, 1.823, .173), (.185, .039, .129), role.hat, 15, 8, "Paint", bone="head")
         model.box((0, 1.882, .142), (.089, .053, .027), lining, .016, "Paint", bone="head")
-    if role.key == "manager":
+    if role.key in ("manager", "ada", "maks", "leon"):
         for side in [-1, 1]:
             model.box((side * .084, 1.729, .184), (.132, .074, .025), hair, .016, "Metal", bone="head")
             model.box((side * .084, 1.729, .202), (.107, .049, .017), "a1c7b3", .013, "Glass", bone="head")
@@ -201,3 +210,10 @@ def generate(root):
     clear_objects()
     tools_model()
     export(folder / "hand_props.glb")
+
+def generate_directors(root):
+    folder = root / "assets/models/characters"
+    for role in DIRECTORS:
+        clear_objects()
+        actor(role)
+        export(folder / f"{role.key}.glb")

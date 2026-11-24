@@ -1,0 +1,177 @@
+[gd_resource type="Resource" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://scripts/economy/balance_profile.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/economy/service_definition.gd" id="2"]
+
+[sub_resource type="Resource" id="fuel"]
+script = ExtResource("2")
+id = "fuel"
+name_pl = "Stacja paliw"
+name_en = "Fuel station"
+base_price = 35
+first_upgrade = 155
+upgrade_growth = 113
+price_growth = 112
+seconds = 2.7
+minimum_seconds = 1.25
+unlock_cost = 0
+reputation_gate = 0
+prerequisite = ""
+prerequisite_level = 0
+wage = 90
+capacity_levels = Array[int]([1, 15])
+vehicle_kind = "car"
+role = "attendant"
+task = "fuel"
+
+[sub_resource type="Resource" id="market"]
+script = ExtResource("2")
+id = "market"
+name_pl = "Sklep"
+name_en = "Market"
+base_price = 62
+first_upgrade = 150
+upgrade_growth = 113
+price_growth = 113
+seconds = 3.1
+minimum_seconds = 1.45
+unlock_cost = 110
+reputation_gate = 4
+prerequisite = "fuel"
+prerequisite_level = 2
+wage = 115
+capacity_levels = Array[int]([1, 18])
+vehicle_kind = "car"
+role = "cashier"
+task = "cash"
+
+[sub_resource type="Resource" id="parking"]
+script = ExtResource("2")
+id = "parking"
+name_pl = "Parking"
+name_en = "Parking"
+base_price = 78
+first_upgrade = 215
+upgrade_growth = 113
+price_growth = 113
+seconds = 4.3
+minimum_seconds = 1.8
+unlock_cost = 245
+reputation_gate = 9
+prerequisite = "fuel"
+prerequisite_level = 2
+wage = 160
+capacity_levels = Array[int]([1, 15, 44])
+vehicle_kind = "car"
+role = "attendant"
+task = "service"
+
+[sub_resource type="Resource" id="wash"]
+script = ExtResource("2")
+id = "wash"
+name_pl = "Myjnia"
+name_en = "Car wash"
+base_price = 156
+first_upgrade = 360
+upgrade_growth = 114
+price_growth = 113
+seconds = 5.6
+minimum_seconds = 2.35
+unlock_cost = 580
+reputation_gate = 14
+prerequisite = "fuel"
+prerequisite_level = 3
+wage = 245
+capacity_levels = Array[int]([1, 25])
+vehicle_kind = "car"
+role = "wash_worker"
+task = "clean"
+
+[sub_resource type="Resource" id="truck"]
+script = ExtResource("2")
+id = "truck"
+name_pl = "Stanowiska TIR"
+name_en = "Truck fuel"
+base_price = 275
+first_upgrade = 560
+upgrade_growth = 114
+price_growth = 113
+seconds = 6.1
+minimum_seconds = 2.4
+unlock_cost = 940
+reputation_gate = 22
+prerequisite = "fuel"
+prerequisite_level = 4
+wage = 405
+capacity_levels = Array[int]([1, 12, 52])
+vehicle_kind = "truck"
+role = "attendant"
+task = "fuel"
+
+[sub_resource type="Resource" id="workshop"]
+script = ExtResource("2")
+id = "workshop"
+name_pl = "Warsztat"
+name_en = "Workshop"
+base_price = 410
+first_upgrade = 870
+upgrade_growth = 114
+price_growth = 113
+seconds = 7.5
+minimum_seconds = 3.25
+unlock_cost = 1750
+reputation_gate = 31
+prerequisite = "wash"
+prerequisite_level = 2
+wage = 520
+capacity_levels = Array[int]([1, 17])
+vehicle_kind = "car"
+role = "mechanic"
+task = "repair"
+
+[sub_resource type="Resource" id="restaurant"]
+script = ExtResource("2")
+id = "restaurant"
+name_pl = "Restauracja"
+name_en = "Restaurant"
+base_price = 570
+first_upgrade = 1170
+upgrade_growth = 114
+price_growth = 113
+seconds = 7.3
+minimum_seconds = 3.0
+unlock_cost = 2850
+reputation_gate = 45
+prerequisite = "market"
+prerequisite_level = 3
+wage = 710
+capacity_levels = Array[int]([1, 19])
+vehicle_kind = "car"
+role = "server"
+task = "carry"
+
+[sub_resource type="Resource" id="motel"]
+script = ExtResource("2")
+id = "motel"
+name_pl = "Motel"
+name_en = "Motel"
+base_price = 925
+first_upgrade = 1850
+upgrade_growth = 114
+price_growth = 113
+seconds = 8.5
+minimum_seconds = 3.65
+unlock_cost = 5400
+reputation_gate = 65
+prerequisite = "parking"
+prerequisite_level = 3
+wage = 1050
+capacity_levels = Array[int]([1, 20, 50])
+vehicle_kind = "car"
+role = "manager"
+task = "service"
+
+[resource]
+script = ExtResource("1")
+cost_growth_checkpoints = Array[Vector2i]([Vector2i(16, 3), Vector2i(38, 6), Vector2i(67, 12), Vector2i(83, 21), Vector2i(88, 33), Vector2i(94, 46)])
+services = Array[ExtResource("2")]([SubResource("fuel"), SubResource("market"), SubResource("parking"), SubResource("wash"), SubResource("truck"), SubResource("workshop"), SubResource("restaurant"), SubResource("motel")])

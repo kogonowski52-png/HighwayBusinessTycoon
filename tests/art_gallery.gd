@@ -56,7 +56,7 @@ func run() -> void:
 		await vehicle_studies()
 		await character_studies()
 		await building_studies()
-	for suffix in ["", ".backup", ".tmp"]:
+	for suffix in ["", ".backup", ".tmp", ".backup.tmp"]:
 		if FileAccess.file_exists(save_path + suffix):
 			DirAccess.remove_absolute(save_path + suffix)
 	print("Visual QA: %d/%d passed" % [checks - failures, checks])
@@ -66,59 +66,57 @@ func play_scene() -> void:
 	root.size = Vector2i(756, 1344)
 	game = Main.instantiate()
 	game.economy.storage.path = save_path
+	game.seed_override = 41
+	game.wall_override = 1_789_000_000
 	root.add_child(game)
+	game.set_physics_process(false)
+	game.traffic.dispatch.spawning = false
 	await process_frame
-	check(game.economy.level == 1 and game.traffic.active.model_id == "sprint", "main scene starts with first tier and Sprint")
+	var dispatch: HbtDispatch = game.traffic.dispatch
+	var fuel := dispatch.visit_at("fuel", 0)
+	check(game.economy.level("fuel") == 1 and game.traffic.vehicles[fuel.number].model_id == "sprint", "main scene starts with first tier and Sprint")
 	check(game.hud.lighting.text == "Dzień" and game.hud.view.text == "Mapa", "localized lighting and camera controls")
-	game.traffic.set_process(false)
 	await capture("01-stacja-w-grze.png")
-	game.hud.view.pressed.emit()
+	game.toggle_view()
 	check(game.overview and game.camera.size >= 46.0, "camera control expands the world view")
 	game.hud.visible = false
 	set_window(Vector2i(1440, 960))
 	await process_frame
 	await process_frame
-	var map_target := Vector3(-1.35, 0.0, -3.18)
+	var map_target := Vector3(2.2, 0.0, -3.18)
 	var map_view := Vector3(8.2, 32.0, 27.0)
-	game.aim_camera(map_target, map_view, 52.0)
+	game.aim_camera(map_target, map_view, 62.0)
 	await capture("02-mapa-dzien.png")
 
 	game.serve_customer()
-	game._process(0.0)
+	game.tick_game(0.05)
 	game.driver.pose_at("fuel", 0.68)
 	check(game.effects.hose[0].visible and game.driver.prop.visible, "live nozzle and hose")
 	game.aim_camera(Vector3(-0.42, 1.12, -0.17), Vector3(5.8, 7.5, 14.6), 18.75)
 	await capture("03-stacja-detal.png")
 
-	game.hud.lighting.pressed.emit()
-	check(game.lighting.current == Lighting.Look.GOLDEN and not game.traffic.active.head_pool.visible, "golden hour preserves daylight lamps")
-	game.aim_camera(map_target, map_view, 52.0)
+	game.cycle_lighting()
+	check(game.lighting.current == Lighting.Look.GOLDEN and not game.traffic.vehicles[fuel.number].head_pool.visible,
+		"golden hour preserves daylight lamps")
+	game.aim_camera(map_target, map_view, 62.0)
 	await capture("04-mapa-zlota-godzina.png")
-	game.hud.lighting.pressed.emit()
-	check(game.lighting.current == Lighting.Look.EVENING and game.traffic.active.head_pool.visible, "evening turns on headlights")
+	game.cycle_lighting()
+	check(game.lighting.current == Lighting.Look.EVENING and game.traffic.vehicles[fuel.number].head_pool.visible,
+		"evening turns on headlights")
 	await capture("05-mapa-wieczor.png")
-	game.hud.lighting.pressed.emit()
+	game.cycle_lighting()
 	check(game.lighting.current == Lighting.Look.NIGHT and game.lighting.practical_lights[0].visible, "night lights the forecourt")
 	game.aim_camera(Vector3(0, 0.62, 0.73), Vector3(9.1, 12, 15.9), 29.4)
 	await capture("06-stacja-noc.png")
 
 	game.set_look(Lighting.Look.DAY)
-	game.effects.cycle = 2.5
-	game.effects._process(0.0)
-	check(game.effects.water.emitting and game.effects.foam.emitting and game.effects.smoke.emitting,
-		"wash water, foam and workshop smoke start")
-	if not captures.is_empty():
-		game.aim_camera(Campus.WASH_AT + Vector3(0, 1.12, 1.70), Vector3(-2.7, 3.4, 7.6), 10.5)
-		await create_timer(0.37).timeout
-		await capture("15-myjnia-woda.png")
-		game.aim_camera(Vector3(0, 0.62, 0.73), Vector3(9.1, 12, 15.9), 29.4)
-	game.traffic._process(3.0)
-	check(game.traffic.state == game.traffic.State.LEAVING and game.economy.customers == 1, "payment settles through gameplay")
+	game.tick_game(3.0)
+	check(fuel.paid and game.economy.customers == 1, "payment settles through gameplay")
 	await capture("07-monety-sprzedaz.png", false)
 	for tier in range(2, 6):
-		game.economy.cash = game.economy.PROFILE.upgrade_cost(tier - 1)
-		game.upgrade_station()
-		check(game.economy.level == tier and is_instance_valid(game.station.newest_module),
+		game.economy.credit("cash", game.economy.cost_at("fuel", tier - 1))
+		game.invest()
+		check(game.economy.level("fuel") == tier and is_instance_valid(game.station.newest_module),
 			"level %d unlocks dedicated architecture" % tier)
 	if not captures.is_empty():
 		await create_timer(0.26).timeout
@@ -130,9 +128,30 @@ func play_scene() -> void:
 	game.aim_camera(Vector3(-0.3, 0.7, -1.52), Vector3(9.4, 14.7, 22.8), 24.9)
 	await capture("09-stacja-poziom-5.png")
 	game.hud.visible = true
-	game.hud.view.pressed.emit()
+	game.toggle_view()
 	set_window(Vector2i(756, 1344))
 	await capture("10-poziom-5-w-grze.png")
+
+	game.hud.visible = false
+	set_window(Vector2i(1440, 960))
+	await process_frame
+	var store: HbtEconomy = game.economy
+	store.credit("cash", HbtAmount.from(2000))
+	store.credit("reputation", HbtAmount.from(30))
+	store.unlock("wash")
+	var wash := dispatch.try_admit("local", "wash")
+	for i in range(640):
+		game.tick_game(0.05)
+		if wash.phase == HbtVisit.Phase.READY:
+			dispatch.start_manual("wash")
+			break
+	game.tick_game(0.1)
+	check(wash.phase == HbtVisit.Phase.WORKING and game.effects.water.emitting and game.effects.foam.emitting,
+		"operational wash emits water and foam")
+	game.aim_camera(Campus.WASH_AT + Vector3(0, 1.12, 1.70), Vector3(-2.7, 3.4, 7.6), 10.5)
+	if not captures.is_empty():
+		await create_timer(0.37).timeout
+	await capture("15-myjnia-woda.png")
 	game.free()
 
 func vehicle_studies() -> void:

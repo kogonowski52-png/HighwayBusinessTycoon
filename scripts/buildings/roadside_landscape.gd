@@ -30,8 +30,12 @@ func pavement() -> void:
 	var worn := Color("#657473")
 	var concrete := Color("#a0a18d")
 	var paving := Color("#b3a78d")
-	ground(Vector3(0, -0.035, 10.50), Vector3(91.0, 0.053, 8.64), concrete, paving, 0.11)
-	ground(Vector3(0, -0.016, 10.50), Vector3(90.8, 0.036, 7.34), blacktop, worn, 0.12, 0.52)
+	ground(Vector3(23.15, -0.023, 5.53), Vector3(25.85, 0.049, 3.38), blacktop, worn, 0.11)
+	ground(Vector3(32.13, -0.028, -4.01), Vector3(30.78, 0.048, 15.17), concrete, worn, 0.11)
+	ground(Vector3(46.11, -0.015, 3.16), Vector3(4.24, 0.030, 11.82), blacktop, worn, 0.10)
+	ground(Vector3(36.86, -0.017, 3.07), Vector3(3.44, 0.035, 11.51), blacktop, worn, 0.10)
+	ground(Vector3(0, -0.035, 10.50), Vector3(127.0, 0.053, 8.64), concrete, paving, 0.11)
+	ground(Vector3(0, -0.016, 10.50), Vector3(127.0, 0.036, 7.34), blacktop, worn, 0.12, 0.52)
 	ground(Vector3(-0.4, -0.041, -1.70), Vector3(21.27, 0.075, 14.08), concrete, paving, 0.12, 0.87)
 	ground(Vector3(0.08, -0.01, 2.21), Vector3(17.58, 0.029, 6.67),
 		Color("#858d88"), Color("#aa9e87"), 0.14, 0.53)
@@ -47,13 +51,23 @@ func pavement() -> void:
 		Vector3(8.48, -0.012, -13.62), Vector3(11.46, -0.012, -5.19)]:
 		ground(pos, Vector3(6.4, 0.034, 2.42),
 			Color("#aaa08a"), Color("#c4ae8e"), 0.104, 0.63, Vector2(0.68, 0.451))
+	ground(Vector3(-19.44, -0.018, -4.66), Vector3(14.34, 0.036, 4.90), concrete, paving, 0.11)
+	for edge in [-25.83, -22.97, -20.11]:
+		stamp(Vector3(edge, 0.015, -5.75), Vector3(0.074, 0.016, 3.32), WHITE)
+	ground(Vector3(-7.10, -0.007, -8.95), Vector3(7.88, 0.039, 4.11), concrete, paving, 0.11)
+	for edge in [-10.87, -8.46, -5.88, -3.24]:
+		stamp(Vector3(edge, 0.016, -8.60), Vector3(0.074, 0.016, 2.84), WHITE)
 	for pair in [[-7.13, 3.92], [-1.08, 4.52], [4.83, 3.4]]:
 		ground(Vector3(pair[0], -0.003, -8.17), Vector3(pair[1], 0.051, 1.19),
 			Color("#acac91"), Color("#bea98b"), 0.1, 0.64, Vector2(0.53, 0.36))
 
 func road_marking() -> void:
-	for i in range(-13, 14):
+	for i in range(-18, 19):
 		stamp(Vector3(i * 3.33, 0.008, 10.5), Vector3(1.55, 0.013, 0.084), CREAM)
+	for x in [15.8, 20.75, 25.70, 30.65]:
+		stamp(Vector3(x + 2.25, 0.014, 5.41), Vector3(0.10, 0.015, 1.78), WHITE)
+	for z in [-2.15, -5.21, -8.54, -11.55]:
+		stamp(Vector3(25.6, 0.011, z), Vector3(11.80, 0.015, 0.083), GOLD)
 	for z in [7.10, 13.90]:
 		stamp(Vector3(0, 0.011, z), Vector3(87.4, 0.013, 0.083), WHITE)
 		stamp(Vector3(0, -0.001, z + signf(z - 10.5) * 0.34), Vector3(89, 0.015, 0.07), Color("#777d6d"))
@@ -82,19 +96,19 @@ func road_marking() -> void:
 
 func furniture() -> void:
 	for pos in [Vector3(-11.15, 0, 4.78), Vector3(10.22, 0, 2.81),
-		Vector3(15.6, 0, 6.55), Vector3(-19.5, 0, 7.08),
+		Vector3(16.40, 0, 3.1), Vector3(-19.5, 0, 7.08),
 		Vector3(12.92, 0, -9.78), Vector3(-12.72, 0, -12.79),
 		Vector3(5.5, 0, -11.25), Vector3(-3.09, 0, 14.8), Vector3(11.28, 0, 14.8)]:
 		Art.place(self, "landscape", "lamp", pos, PI if pos.z > 14.0 else 0.0)
 	var rail_transforms: Array[Transform3D] = []
 	for z in [6.48, 14.91]:
-		for x in [-24.1, -20.12, -16.14, 17.8, 21.78, 25.76]:
+		for x in ([-24.1, -20.12, -16.14] if z < 8.0 else [-24.1, -20.12, -16.14, 17.8, 21.78, 25.76]):
 			rail_transforms.append(transform_at(Vector3(x, 0.0, z), 0.0, 1.0))
 	batch(Art.extract_mesh("landscape", "rail"), rail_transforms)
-	var sign_board := Art.place(self, "landscape", "billboard", Vector3(16.65, 0, 4.65), -0.17)
+	var sign_board := Art.place(self, "landscape", "billboard", Vector3(16.89, 0, 0.92), -0.17)
 	Art.sign(sign_board, Vector3(0, 2.93, 0.178), "NORTHPOINT", 0.43, CREAM)
 	Art.sign(sign_board, Vector3(0, 2.592, 0.179), "ROUTE 17   /   500 m", 0.175, GOLD)
-	var route := Art.place(self, "landscape", "route_sign", Vector3(-10.79, 0.01, 5.81), 0.11)
+	var route := Art.place(self, "landscape", "route_sign", Vector3(-10.52, 0.01, 5.22), 0.11)
 	Art.sign(route, Vector3(0.0, 1.758, 0.127), "R17  ↑", 0.28, CREAM)
 	Art.sign(route, Vector3(0.0, 1.128, 0.113), "←  P", 0.25, Color("#213c3f"))
 	var wires: Array[Transform3D] = []
@@ -126,15 +140,15 @@ func planting() -> void:
 		"broadleaf": [Vector3(-11.0, 0, -7.7), Vector3(5.52, 0, -8.52),
 			Vector3(-22, 0, -13.7), Vector3(16.0, 0, -14.8), Vector3(-9.9, 0, 16.56),
 			Vector3(14.2, 0, 16.8), Vector3(17.70, 0.0, -1.1), Vector3(-4.2, 0.0, -19.6)],
-		"golden_tree": [Vector3(-10.54, 0, -3.87), Vector3(16.52, 0, -6.35),
-			Vector3(-19.1, 0, -4.81), Vector3(8.68, 0, 16.42), Vector3(-0.3, 0, -15.55),
-			Vector3(20.72, 0, -7.3), Vector3(-17.52, 0, -16.10), Vector3(15.51, 0, -17.66)],
+		"golden_tree": [Vector3(-10.54, 0, -3.87), Vector3(15.94, 0, -8.09),
+			Vector3(-22.4, 0, -8.9), Vector3(8.68, 0, 16.42), Vector3(-0.3, 0, -15.55),
+			Vector3(20.72, 0, -12.58), Vector3(-17.52, 0, -16.10), Vector3(15.51, 0, -17.66)],
 		"pine": [Vector3(-3.43, 0, -8.37), Vector3(7.04, 0, -7.40),
-			Vector3(-8.82, 0, -9.11), Vector3(-18.16, 0, 3.32), Vector3(17.32, 0, 2.3),
+			Vector3(-9.42, 0, -14.44), Vector3(-18.16, 0, 3.32), Vector3(17.32, 0, 2.3),
 			Vector3(1.14, 0, 17.10), Vector3(3.71, 0, 18.8), Vector3(1.04, 0, -15.10)],
 		"hedge": [Vector3(-9.53, 0, -6.93), Vector3(-9.44, 0, -2.23),
 			Vector3(8.25, 0, -1.64), Vector3(9.77, 0, 1.5), Vector3(9.93, 0, 4.83),
-			Vector3(7.84, 0, 4.12), Vector3(-7.51, 0, -8.48), Vector3(0.03, 0, -8.52),
+			Vector3(7.84, 0, 4.12), Vector3(-10.19, 0, -6.41), Vector3(0.03, 0, -8.52),
 			Vector3(-19.31, 0, -4.1), Vector3(-2.11, 0, -14.27),
 			Vector3(15.95, 0, -7.51), Vector3(8.41, 0, 15.82), Vector3(17.3, 0, -1.3)],
 	}

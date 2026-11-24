@@ -4,3 +4,6 @@ builds/*
 !builds/.gitkeep
 !builds/.gdignore
 __pycache__/
+/tools/android_rewarded/.gradle/
+/tools/android_rewarded/build/
+/addons/highway_rewarded/highway-rewarded.aar

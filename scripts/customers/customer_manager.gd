@@ -2,7 +2,8 @@ extends Node3D
 
 const Art = preload("res://scripts/art/visual_library.gd")
 const Clips = preload("res://scripts/art/character_clips.gd")
-const ROLE_PROPS := {"driver": "Nozzle", "wash_worker": "Mop", "mechanic": "Spanner", "server": "Tray", "manager": "Clipboard"}
+const ROLE_PROPS := {"driver": "Nozzle", "attendant": "Nozzle", "wash_worker": "Mop", "mechanic": "Spanner", "server": "Tray", "manager": "Clipboard", "ada": "Clipboard", "iga": "Clipboard",
+	"maks": "Clipboard", "mira": "Clipboard", "leon": "Clipboard"}
 
 @export var role := "driver"
 
@@ -35,14 +36,14 @@ func attach_prop(key: String) -> void:
 	if key == "Tray":
 		utensil.rotation.x = PI * 0.48
 	prop.add_child(utensil)
-	prop.visible = role != "driver"
+	prop.visible = key != "Nozzle"
 
 func play(clip: String, blend := 0.12) -> void:
 	if cycles == clip:
 		return
 	cycles = clip
 	animation.play(clip, blend)
-	if role == "driver" and is_instance_valid(prop):
+	if role in ["driver", "attendant"] and is_instance_valid(prop):
 		prop.visible = clip == "fuel"
 
 func configure_walk(points: Array[Vector3], clip := "walk", speed := 1.10) -> void:
