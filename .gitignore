@@ -3,3 +3,4 @@
 builds/*
 !builds/.gitkeep
 !builds/.gdignore
+__pycache__/
