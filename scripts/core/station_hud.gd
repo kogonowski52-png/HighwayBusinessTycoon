@@ -4,6 +4,8 @@ signal serve_requested
 signal upgrade_requested
 signal language_requested
 signal power_requested
+signal lighting_requested
+signal view_requested
 
 const REGULAR = preload("res://assets/fonts/OpenSans-Regular.ttf")
 const BOLD = preload("res://assets/fonts/OpenSans-Bold.ttf")
@@ -34,6 +36,8 @@ var serve: Button
 var upgrade: Button
 var language: Button
 var power: Button
+var lighting: Button
+var view: Button
 var progress: ProgressBar
 
 func _ready() -> void:
@@ -77,6 +81,22 @@ func _ready() -> void:
 	cash_caption = caption(treasury, 20, FADE)
 	cash = caption(treasury, 35, CREAM, HEAVY)
 
+	var framing := VBoxContainer.new()
+	root.add_child(framing)
+	framing.set_anchor(SIDE_LEFT, 1.0)
+	framing.set_anchor(SIDE_RIGHT, 1.0)
+	framing.set_anchor(SIDE_TOP, 0.214)
+	framing.set_anchor(SIDE_BOTTOM, 0.214)
+	framing.offset_left = -215.0
+	framing.offset_right = -38.0
+	framing.offset_top = 0.0
+	framing.offset_bottom = 0.0
+	framing.add_theme_constant_override("separation", 10)
+	lighting = action(framing, 164, 65, false)
+	view = action(framing, 164, 65, false)
+	lighting.pressed.connect(func() -> void: lighting_requested.emit())
+	view.pressed.connect(func() -> void: view_requested.emit())
+
 	var bottom := band(root, true)
 	var card := VBoxContainer.new()
 	bottom.add_child(card)
@@ -117,7 +137,11 @@ func band(root: Control, bottom: bool) -> PanelContainer:
 	var panel := PanelContainer.new()
 	root.add_child(panel)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", style(INK, RIM, 31, 26))
+	var surface := style(INK, RIM, 31, 26)
+	surface.shadow_size = 13
+	surface.shadow_offset = Vector2(0, 5)
+	surface.shadow_color = Color("#1e30296c")
+	panel.add_theme_stylebox_override("panel", surface)
 	var anchor := float(bottom)
 	panel.anchor_right = 1.0
 	panel.anchor_top = anchor

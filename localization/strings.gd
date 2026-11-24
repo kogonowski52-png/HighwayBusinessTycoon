@@ -8,7 +8,9 @@ const COPY := {
 		"arriving": "Klient jedzie na stację", "serving": "Tankowanie w toku", "open": "Czekasz na kolejnego klienta",
 		"serve": "Rozpocznij tankowanie", "upgrade": "Ulepsz · %d zł", "max": "Maks. poziom",
 		"sale": "+%d zł  /  tankowanie zakończone", "money": "%d zł",
-		"save_error": "Błąd zapisu postępu", "rate": "%d zł / klient"
+		"save_error": "Błąd zapisu postępu", "rate": "%d zł / klient",
+		"day": "Dzień", "golden": "Złota godz.", "evening": "Wieczór", "night": "Noc",
+		"map": "Mapa", "station_view": "Stacja", "lighting_tip": "Zmień porę dnia", "view_tip": "Zmień kadr kamery"
 	},
 	"en": {
 		"location": "LOCATION 01  /  ROUTE 17", "name": "Northpoint Station",
@@ -17,7 +19,9 @@ const COPY := {
 		"arriving": "Customer approaching the station", "serving": "Refueling in progress", "open": "Waiting for the next customer",
 		"serve": "Start refueling", "upgrade": "Upgrade · %d PLN", "max": "Max level",
 		"sale": "+%d PLN  /  refueling complete", "money": "%d PLN",
-		"save_error": "Progress could not be saved", "rate": "%d PLN / customer"
+		"save_error": "Progress could not be saved", "rate": "%d PLN / customer",
+		"day": "Day", "golden": "Golden hour", "evening": "Evening", "night": "Night",
+		"map": "Map", "station_view": "Station", "lighting_tip": "Change time of day", "view_tip": "Change camera framing"
 	}
 }
 

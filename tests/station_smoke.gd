@@ -33,7 +33,7 @@ func run() -> void:
 	check(not game.traffic.start_service(3.0), "duplicate service rejected")
 	await advance(1.0)
 	check(game.hud.progress.value > 0.0 and game.hud.progress.value < 1.0, "animated refueling progress")
-	check(game.driver.visible and game.driver.arm.rotation.x < -0.6, "driver animates beside the car")
+	check(game.driver.visible and game.driver.cycles == "fuel" and game.effects.hose[0].visible, "driver animates beside the car")
 	await capture("02-tankowanie.png")
 	await advance(2.0)
 	check(game.economy.cash == 155 and game.economy.customers == 1, "exactly one payout after service")
@@ -96,7 +96,7 @@ func check(condition: bool, description: String) -> void:
 
 func controls_fit() -> bool:
 	var viewport := root.get_visible_rect()
-	for button in [game.hud.serve, game.hud.upgrade, game.hud.language, game.hud.power]:
+	for button in [game.hud.serve, game.hud.upgrade, game.hud.language, game.hud.power, game.hud.lighting, game.hud.view]:
 		if not viewport.encloses(button.get_global_rect()):
 			return false
 	return true

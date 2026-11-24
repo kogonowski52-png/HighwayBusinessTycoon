@@ -1,17 +1,20 @@
 # Stan projektu
 
-## Etap 1 · Stacja Północ
+## 0.2.0 · Przebudowa oprawy Stacji Północ
 
-- Grywalna scena 3D z kamerą ortograficzną, krajobrazem, ruchem ulicznym, jedną usługą oraz widocznym klientem tankującym przy aucie.
-- Przychody, pięć poziomów dystrybutora i natychmiastowa aktualizacja geometrii stacji po zakupie.
-- Zapis lokalny z kopią poprzedniego zapisu, polski i angielski oraz wybór limitu 30 lub 60 FPS.
-- Pionowy HUD ze skalowaniem dla telefonu i tabletu. Główna pętla działa lokalnie bez usług sieciowych.
-- Gotowy do dalszej rozbudowy podział kodu na grę, ekonomię, zapis, budynki, klientów, pojazdy, ruch oraz HUD. Android ma własny preset oraz wyeksportowany i zweryfikowany pakiet debug 0.1.0.
+- Ta sama grywalna lokalizacja z nową architekturą, autorskim otoczeniem, czterema porami dnia i kamerą mapy.
+- Siedem dopracowanych obiektów w świecie gry. Stacja paliw zachowała obsługę klienta, ekonomię, zapis i pięć poziomów. Każdy zakup dodaje osobny moduł 3D i animację budowy.
+- Flota 20 osobnych nadwozi GLB przejeżdża przez teren, z animacją kół i świateł oraz dwoma wariantami lakieru na model.
+- Osiem ról używa własnych mundurów, akcesoriów i wspólnego szkieletu z dziewięcioma animacjami. Czynności personelu widać w otoczeniu gry.
+- Grywalny dystrybutor ma widoczny wąż i pistolet tankowania, a wypłata uruchamia monety. Myjnia, warsztat i krajobraz mają własne cząsteczki.
+- Tryb 30 FPS korzysta z mniejszej skali 3D i lżejszych efektów. Projekt nadal używa Godot Compatibility i działa lokalnie.
 
-## Rozwiązania etapu do rozwinięcia
+## Zakres grywalny i stan walidacji
 
-Ruch używa zdefiniowanych punktów trasy, a jedno stanowisko obsługuje jednego klienta naraz. Animacja klienta obejmuje postawę i ruch ręki obok pojazdu. Podstawowe modele wariantów pojazdów oraz stacji są proceduralne. Fizyczne urządzenia, obciążenie GPU, obszary wycięcia ekranu i wersja iOS wymagają osobnej walidacji. Stan produkcyjny, podpisanie dystrybucyjne i wydajność 60 FPS nie zostały potwierdzone.
+Przychód i rozwój obejmują stację paliw. Sklep, myjnia, restauracja, warsztat, motel i parking mają modele oraz czynności w świecie, a ich własne transakcje i ulepszenia są w planie rozwoju. Pracownicy widoczni na mapie są postaciami otoczenia. System zatrudniania, automatyzacja i kolejki wielostanowiskowe pozostają oddzielnym etapem.
+
+Zapis z 0.1.0 zachowuje poziom, ustawienia i środki. Materiały sprawdzono w renderze Compatibility i przygotowano APK debug. Pomiar 30 i 60 FPS na fizycznych urządzeniach, test wycięć ekranu i eksport iOS wymagają sprzętu docelowego. Szczegóły są w [raporcie testów](TEST_REPORT.md).
 
 ## Kolejny etap
 
-Pracownicy i automatyzacja dystrybutora, obsługa wielu stanowisk i kolejki, pierwszy sklep oraz kalibracja ekonomii i wydajności na urządzeniu Android.
+Automatyzacja dystrybutora, obsługa wielu stanowisk, gospodarka sklepu i pomiary GPU na telefonach Android.
