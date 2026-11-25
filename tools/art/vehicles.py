@@ -118,11 +118,12 @@ def cabin(model, car, front, rear, bottom_y, top_y, width, upright=False):
     upper_rear = rear + rear_inset
     lower = polygon(width, bottom_y, front, rear)
     upper = polygon(width * (.91 if upright else .82), top_y - .095, upper_front, upper_rear)
-    vertices = lower + upper
     for i in range(8):
         j = (i + 1) % 8
-        model.add(vertices, [(i, i + 8, j + 8, j)],
-                  "447581" if i in (0, 1, 7) else WINDOW, "Tint", True)
+        # A broad sky reflection stays legible on the silhouette in the overhead view.
+        horizon = "95bcca" if i in (0, 1, 7) else "709aa4"
+        model.add([lower[i], upper[i], upper[j], lower[j]], [(0, 1, 2, 3)],
+                  WINDOW, "Tint", True, vertex_colors=[WINDOW, horizon, horizon, WINDOW])
     cap = polygon(width * (.87 if upright else .76), top_y, upper_front - .006, upper_rear + .021)
     cap_points = upper + cap
     cap_color = "d9d9c3" if car.detail in ("visor", "wood", "rack", "shuttle", "crown") else PAINT
@@ -156,6 +157,11 @@ def cabin(model, car, front, rear, bottom_y, top_y, width, upright=False):
                   (.20, .134, .131), PAINT, .048, "CoachPaint", yaw=side * .18)
         model.box((side * (width + .14), face + .026, front - .150),
                   (.128, .080, .019), "7ba6a9", .007, "Tint")
+        if car.kind in ("sedan", "wagon", "city", "ev", "luxury", "suv"):
+            x = side * car.half_width * .978
+            model.pipe([(x, bottom_y - .198, rear + .28), (x * 1.016, bottom_y - .165, .0),
+                        (x, bottom_y - .159, front - .37)], .015,
+                       CHROME if car.kind == "luxury" else TRIM, "Metal", 6)
 
 
 def wheels_for(car):

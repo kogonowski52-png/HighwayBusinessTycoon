@@ -78,3 +78,13 @@ static func plane(parent: Node3D, at: Vector3, size: Vector2, surface: Material)
 	instance.scale = Vector3(size.x, 1.0, size.y)
 	parent.add_child(instance)
 	return instance
+
+static func settle(module: Node3D) -> void:
+	var height := module.position.y
+	var scale_y := module.scale.y
+	module.position.y += 0.75
+	module.scale.y *= 0.82
+	var lift := module.create_tween().set_parallel()
+	lift.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	lift.tween_property(module, "position:y", height, 0.59)
+	lift.tween_property(module, "scale:y", scale_y, 0.67)

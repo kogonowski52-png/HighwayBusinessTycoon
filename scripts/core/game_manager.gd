@@ -101,9 +101,10 @@ func frame_camera() -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
 	var aspect := viewport_size.x / maxf(1.0, viewport_size.y)
 	if overview:
-		aim_camera(Vector3(5.0, 0.0, -1.6), Vector3(9.0, 39.0, 31.0), maxf(66.0, aspect * 65.0))
+		aim_camera(Vector3(7.0, 0.0, -3.9), Vector3(16.0, 39.0, 32.5), maxf(72.0, aspect * 63.0))
 	else:
-		aim_camera(campus.focus(selected), Vector3(9.4, 26.5, 35.0), maxf(24.8, aspect * 34.5))
+		var subject: Vector3 = campus.focus(selected) + Vector3(-0.54, 0.52, -0.88)
+		aim_camera(subject, Vector3(15.3, 34.7, 31.5), maxf(24.1, aspect * 32.5))
 
 func aim_camera(target: Vector3, offset: Vector3, width: float) -> void:
 	camera.position = target + offset
@@ -223,8 +224,10 @@ func serve_customer() -> void:
 	traffic.dispatch.start_manual(selected)
 
 func invest() -> void:
+	var installed: int = campus.roof_counts[selected]
 	if economy.level(selected) == 0:
 		if economy.unlock(selected):
+			campus.animate_install(selected, installed)
 			effects.construction(Routes.position_of(selected, 0))
 			economy.checkpoint()
 		return
@@ -233,6 +236,7 @@ func invest() -> void:
 		return
 	if selected == "fuel" and station.newest_module != null and economy.level("fuel") <= 5:
 		station.animate_construction()
+	campus.animate_install(selected, installed)
 	effects.construction(Routes.position_of(selected, 0))
 	show_message(t("bought_levels") % count)
 	economy.checkpoint()
@@ -381,7 +385,7 @@ func refresh() -> void:
 	hud.location.text = t("location")
 	hud.title.text = t("name")
 	hud.cash_caption.text = t("cash")
-	hud.cash.text = money(economy.amount("cash"))
+	hud.update_cash(economy.amount("cash"), economy.language, t("money"), not economy.low_power)
 	hud.traffic_caption.text = t("road")
 	hud.queued.text = str(traffic.dispatch.lanes.car.size() + traffic.dispatch.lanes.truck.size())
 	hud.people_caption.text = t("customers")

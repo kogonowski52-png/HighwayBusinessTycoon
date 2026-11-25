@@ -121,19 +121,32 @@ def actor(role):
         model.orb((side * .074 + .007, 1.732, .197), (.008, .008, .005), whites, 8, 5, bone="head")
         model.pipe([(side * .039, 1.772, .170), (side * .084, 1.782, .166),
                     (side * .127, 1.768, .146)], .011, hair, bone="head", sides=7)
-    model.orb((-.006, 1.756, -.039), (.206, .176, .158), hair, 17, 11, bone="head", irregular=.045)
-    model.orb((-.050, 1.833, .086), (.146, .103, .112), hair, 13, 8, bone="head", yaw=.43, irregular=.15)
+    model.orb((-.006, 1.736, -.048), (.198, .129 if role.hat else .195, .149), hair,
+              17, 11, bone="head", irregular=.045)
+    if not role.hat:
+        model.orb((0, 1.848, .034), (.179, .100, .130), hair, 16, 9, bone="head", irregular=.07)
+        for x, y, width, angle in [(-.078, 1.828, .122, .52), (.068, 1.850, .092, -.34)]:
+            model.orb((x, y, .075), (width, .090, .112), hair, 13, 8,
+                      bone="head", yaw=angle, irregular=.075)
     if role.key in ("customer", "cashier", "server", "ada", "iga"):
         model.orb((.123, 1.708, -.103), (.117, .149, .129), hair, 13, 9, bone="head", irregular=.12)
         model.orb((.144, 1.580, -.121), (.077, .083, .078), hair, 12, 8, bone="head")
     if role.hat:
-        model.orb((0, 1.831, -.021), (.224, .142, .185), role.hat, 17, 10, "Paint", bone="head")
-        model.orb((0, 1.823, .173), (.185, .039, .129), role.hat, 15, 8, "Paint", bone="head")
-        model.box((0, 1.882, .142), (.089, .053, .027), lining, .016, "Paint", bone="head")
+        model.orb((0, 1.851, -.011), (.222, .126, .187), role.hat, 17, 10, bone="head")
+        if role.key == "wash_worker":
+            model.orb((0, 1.952, -.024), (.059, .057, .056), lining, 12, 7, bone="head")
+            model.orb((0, 1.825, -.008), (.225, .043, .184), lining, 17, 8, bone="head")
+        else:
+            model.orb((0, 1.821, .162), (.176, .021, .112), role.hat, 15, 8, bone="head")
+            model.box((0, 1.882, .177), (.089, .051, .018), lining, .010, "Paint", bone="head")
     if role.key in ("manager", "ada", "maks", "leon"):
         for side in [-1, 1]:
-            model.box((side * .084, 1.729, .184), (.132, .074, .025), hair, .016, "Metal", bone="head")
-            model.box((side * .084, 1.729, .202), (.107, .049, .017), "a1c7b3", .013, "Glass", bone="head")
+            x = side * .084
+            rim = [(x + dx, 1.729 + dy, .204) for dx, dy in [(-.056, -.026), (.056, -.026),
+                    (.064, .013), (.049, .032), (-.049, .032), (-.064, .013), (-.056, -.026)]]
+            model.pipe(rim, .009, hair, sides=7, bone="head")
+            model.pipe([(x + side * .057, 1.740, .199), (side * .201, 1.748, .056)],
+                       .009, hair, sides=7, bone="head")
         model.box((0, 1.728, .195), (.059, .019, .026), hair, .005, "Metal", bone="head")
     if role.key == "mechanic":
         model.orb((0, 1.58, .089), (.134, .066, .101), hair, 13, 8, bone="head")

@@ -1,5 +1,41 @@
 # Raport testów
 
+## 0.3.1 · Modernizacja wizualna
+
+Godot 4.7.2 Stable, Blender 4.3.2 oraz Mesa llvmpipe z rendererem Compatibility. Zrzuty pochodzą z uruchomionej sceny, plansz modeli i testu sterowanego kliknięciami. Przejrzano widoki dzienny, nocny, telefon, tablet i rozbudowany kompleks. W drugiej iteracji skorygowano import kolorów GLB i jasność materiałów. Kolejna próba sprawdziła połączenia nasypów z terenem oraz grupowanie dachów.
+
+| Weryfikacja | Wynik |
+| --- | --- |
+| Import projektu i uruchomienie GL Compatibility | Zakończone |
+| Ekonomia, zapis i dochód offline | 63/63 |
+| Ruch i rezerwacje stanowisk | 23/23 |
+| Symulacja balansu z raportem | 46/46 |
+| Pętla rozgrywki bez okna | 26/26 |
+| Pętla rozgrywki w oknie z kliknięciami, myjnią, obsługą TIR i tabletem | 34/34 |
+| Test oprawy i progów dachów bez okna | 90/90 |
+| Test oprawy z zapisem 16 kadrów z silnika | 106/106 |
+| Porównanie kamery w trzech ustawieniach | 3/3 |
+| APK debug 0.3.1 | Podpis v2/v3, arm64-v8a i x86_64, portret, min. API 24, cel API 36 |
+
+W 20-minutowym teście ruchu ukończono 253 obsługi we wszystkich ośmiu usługach. Sześć pojazdów zrezygnowało lub ominęło obsługę. Automatyczne odblokowanie rezerwacji nie było potrzebne. Test sceny potwierdził wybór stanowiska, tankowanie, zakup ulepszenia, zatrudnienie, uruchomienie myjni na rzeczywistym kliencie, zmianę języka, tryb 30 FPS i odczyt zapisu.
+
+### Koszt renderowania
+
+Liczniki viewportu z tej samej maszyny testowej. Zbliżenie startowe używa kamery wybranej dla każdej wersji. Ujęcia dzienne mapy i nocne stacji używają tych samych kadrów porównawczych.
+
+| Ujęcie | Wywołania przed | Wywołania po | Prymitywy przed | Prymitywy po |
+| --- | ---: | ---: | ---: | ---: |
+| Start gry, 756 × 1344 | 301 | 271 | 86 799 | 92 229 |
+| Mapa dzienna, 1440 × 960 | 395 | 360 | 94 345 | 102 061 |
+| Stacja nocą, 1440 × 960 | 350 | 306 | 106 973 | 111 751 |
+| Pełna rozbudowana mapa, 1728 × 1010, przed i po grupowaniu dachów | 656 | 464 | 135 263 | 117 415 |
+
+Tryb oszczędny ogranicza lokalne źródła światła do trzech, upraszcza emitery, wyłącza animację traw i szyldów oraz zmniejsza skalę obrazu 3D. Wyniki wydajności i instalacji na fizycznym Androidzie wymagają urządzenia.
+
+APK ma 66 243 265 bajtów. SHA-256 pliku to `f0bf9651a04ba58a731b3f108bb3ff2b687da8cdfdc58f3ed69230f44143405f`. Kolaż i galeria są wyłączone z eksportu. APK z tej próby ma podpis debug wygenerowany w środowisku lokalnym. Android wymaga zgodnego podpisu przy aktualizacji pakietu z wydania 0.3.0 pobranego z GitHuba.
+
+[Zrzuty z silnika](screenshots/README.md) · [Ocena wizualna](ART_DIRECTION.md)
+
 ## 0.3.0 · Kompleks Idle Tycoon
 
 Środowisko używało Godot 4.7.2 Stable na Debianie i OpenGL Compatibility z Mesa llvmpipe. Test sceny głównej korzysta z własnego pliku profilu, wykonuje kliknięcia w prawdziwe kontrolki i ogląda działające modele usług.

@@ -13,16 +13,22 @@ signal income_requested
 const REGULAR = preload("res://assets/fonts/OpenSans-Regular.ttf")
 const BOLD = preload("res://assets/fonts/OpenSans-Bold.ttf")
 const HEAVY = preload("res://assets/fonts/OpenSans-ExtraBold.ttf")
-const PUMP = preload("res://assets/icons/pump.svg")
-const ROAD = preload("res://assets/icons/road.svg")
-const BARS = preload("res://assets/icons/bars.svg")
-const INK := Color("#152d33")
-const PANEL := Color("#1c373c")
-const RIM := Color("#48605a")
-const CREAM := Color("#fff1cf")
-const GOLD := Color("#ffd894")
-const FADE := Color("#b9cec0")
-const MINT := Color("#a7d0ac")
+const PUMP = preload("res://assets/ui/icon_fuel.png")
+const ROAD = preload("res://assets/ui/icon_road.png")
+const STAFF = preload("res://assets/ui/icon_staff.png")
+const CASH = preload("res://assets/ui/icon_cash.png")
+const NAV := {"sites": preload("res://assets/ui/icon_sites.png"), "team": STAFF,
+	"goals": preload("res://assets/ui/icon_goals.png"), "finance": preload("res://assets/ui/icon_finance.png")}
+const IVORY = preload("res://assets/ui/panel_ivory.png")
+const ACTION = preload("res://assets/ui/button_mint.png")
+const UPGRADE = preload("res://assets/ui/button_honey.png")
+const INK := Color("#243a43")
+const PANEL := Color("#fff9ed")
+const RIM := Color("#d2bea1")
+const CREAM := Color("#fff8e8")
+const GOLD := Color("#956023")
+const FADE := Color("#536760")
+const MINT := Color("#2b795f")
 
 var location: Label
 var title: Label
@@ -48,6 +54,11 @@ var pages: Dictionary = {}
 var quantities: Dictionary = {}
 var income: Button
 var reserve: Label
+var shown_cash: HbtAmount
+var next_cash: HbtAmount
+var cash_locale := ""
+var cash_pattern := ""
+var counting: Tween
 
 func _ready() -> void:
 	var root := Control.new()
@@ -58,42 +69,42 @@ func _ready() -> void:
 	var top := band(root, false)
 	var header := VBoxContainer.new()
 	top.add_child(header)
-	header.add_theme_constant_override("separation", 20)
+	header.add_theme_constant_override("separation", 11)
 	var hero := HBoxContainer.new()
 	header.add_child(hero)
 	hero.add_theme_constant_override("separation", 16)
 	var heading := VBoxContainer.new()
 	hero.add_child(heading)
 	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	location = caption(heading, 25, GOLD)
-	title = caption(heading, 57, CREAM, HEAVY)
+	location = caption(heading, 22, GOLD, HEAVY)
+	title = caption(heading, 51, INK, HEAVY)
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var settings := HBoxContainer.new()
 	hero.add_child(settings)
 	settings.alignment = BoxContainer.ALIGNMENT_END
 	settings.add_theme_constant_override("separation", 10)
-	language = action(settings, 90, 76, false)
-	power = action(settings, 112, 76, false)
+	language = action(settings, 84, 68, false)
+	power = action(settings, 110, 68, false)
 	language.pressed.connect(func() -> void: language_requested.emit())
 	power.pressed.connect(func() -> void: power_requested.emit())
 
 	var stats := HBoxContainer.new()
 	header.add_child(stats)
 	stats.add_theme_constant_override("separation", 12)
-	var highway := tile(stats, ROAD)
+	var highway := tile(stats, ROAD, Color("#f2ead9"))
 	traffic_caption = caption(highway, 20, FADE)
-	queued = caption(highway, 35, GOLD, HEAVY)
-	var visits := tile(stats, BARS)
+	queued = caption(highway, 34, INK, HEAVY)
+	var visits := tile(stats, STAFF, Color("#f5eadc"))
 	people_caption = caption(visits, 20, FADE)
-	people = caption(visits, 35, CREAM, HEAVY)
-	var treasury := tile(stats, null)
+	people = caption(visits, 34, INK, HEAVY)
+	var treasury := tile(stats, CASH, Color("#e1efdf"))
 	cash_caption = caption(treasury, 20, FADE)
-	cash = caption(treasury, 35, CREAM, HEAVY)
+	cash = caption(treasury, 35, MINT, HEAVY)
 	var balances := HBoxContainer.new()
 	header.add_child(balances)
 	balances.add_theme_constant_override("separation", 12)
 	for id in ["diamond", "reputation", "event"]:
-		var item := caption(balances, 21, MINT)
+		var item := caption(balances, 19, FADE)
 		item.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		item.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		wallet_stats[id] = item
@@ -102,10 +113,10 @@ func _ready() -> void:
 	root.add_child(framing)
 	framing.set_anchor(SIDE_LEFT, 1.0)
 	framing.set_anchor(SIDE_RIGHT, 1.0)
-	framing.set_anchor(SIDE_TOP, 0.214)
-	framing.set_anchor(SIDE_BOTTOM, 0.214)
-	framing.offset_left = -215.0
-	framing.offset_right = -38.0
+	framing.set_anchor(SIDE_TOP, 0.194)
+	framing.set_anchor(SIDE_BOTTOM, 0.194)
+	framing.offset_left = -213.0
+	framing.offset_right = -34.0
 	framing.offset_top = 0.0
 	framing.offset_bottom = 0.0
 	framing.add_theme_constant_override("separation", 10)
@@ -117,20 +128,20 @@ func _ready() -> void:
 	var bottom := band(root, true)
 	var card := VBoxContainer.new()
 	bottom.add_child(card)
-	card.add_theme_constant_override("separation", 16)
+	card.add_theme_constant_override("separation", 10)
 	var top_row := HBoxContainer.new()
 	card.add_child(top_row)
 	top_row.add_theme_constant_override("separation", 20)
-	icon(top_row, PUMP, 78)
+	icon(top_row, PUMP, 85)
 	var station_info := VBoxContainer.new()
 	top_row.add_child(station_info)
 	station_info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	level = caption(station_info, 23, GOLD)
-	station = caption(station_info, 39, CREAM, HEAVY)
+	station = caption(station_info, 39, INK, HEAVY)
 	station.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rate = caption(top_row, 24, MINT)
 	rate.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	status = caption(card, 29, FADE, REGULAR)
+	status = caption(card, 27, FADE, BOLD)
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	progress = ProgressBar.new()
 	card.add_child(progress)
@@ -139,7 +150,7 @@ func _ready() -> void:
 	progress.step = 0.0
 	progress.show_percentage = false
 	progress.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	progress.add_theme_stylebox_override("background", style(PANEL, RIM, 7, 0))
+	progress.add_theme_stylebox_override("background", style(Color("#e7dac4"), RIM, 7, 0))
 	progress.add_theme_stylebox_override("fill", style(MINT, MINT, 7, 0))
 	reserve = caption(card, 23, GOLD)
 	reserve.visible = false
@@ -149,7 +160,7 @@ func _ready() -> void:
 	for count in [1, 10, 25, 0]:
 		var option := action(purchase, 0, 55, false)
 		option.toggle_mode = true
-		option.add_theme_stylebox_override("pressed", style(Color("#346451"), MINT, 18, 10))
+		option.add_theme_stylebox_override("pressed", style(Color("#d5eadb"), MINT, 18, 10))
 		option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		option.text = "MAX" if count == 0 else "+%d" % count
 		option.pressed.connect(func() -> void: quantity_requested.emit(count))
@@ -157,9 +168,12 @@ func _ready() -> void:
 	var actions := HBoxContainer.new()
 	card.add_child(actions)
 	actions.add_theme_constant_override("separation", 14)
-	serve = action(actions, 0, 102, true)
+	serve = action(actions, 0, 92, true)
 	serve.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	upgrade = action(actions, 292, 102, false)
+	upgrade = action(actions, 305, 92, false)
+	upgrade.add_theme_stylebox_override("normal", sculpted(UPGRADE, 24, 10))
+	upgrade.add_theme_stylebox_override("hover", style(Color("#ffe5a8"), Color("#b48443"), 18, 10))
+	upgrade.add_theme_stylebox_override("pressed", style(Color("#ecb35e"), Color("#b48443"), 18, 10))
 	serve.pressed.connect(func() -> void: serve_requested.emit())
 	upgrade.pressed.connect(func() -> void: upgrade_requested.emit())
 	income = action(card, 0, 66, false)
@@ -169,8 +183,11 @@ func _ready() -> void:
 	card.add_child(tabs)
 	tabs.add_theme_constant_override("separation", 8)
 	for page in ["sites", "team", "goals", "finance"]:
-		var tab := action(tabs, 0, 68, false)
+		var tab := action(tabs, 0, 70, false)
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab.icon = NAV[page]
+		tab.add_theme_constant_override("icon_max_width", 48)
+		tab.add_theme_constant_override("h_separation", 4)
 		tab.pressed.connect(func() -> void: page_requested.emit(page))
 		pages[page] = tab
 
@@ -178,35 +195,30 @@ func band(root: Control, bottom: bool) -> PanelContainer:
 	var panel := PanelContainer.new()
 	root.add_child(panel)
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var surface := style(INK, RIM, 31, 26)
-	surface.shadow_size = 13
-	surface.shadow_offset = Vector2(0, 5)
-	surface.shadow_color = Color("#1e30296c")
-	panel.add_theme_stylebox_override("panel", surface)
+	panel.add_theme_stylebox_override("panel", sculpted(IVORY, 35, 26))
 	var anchor := float(bottom)
 	panel.anchor_right = 1.0
 	panel.anchor_top = anchor
 	panel.anchor_bottom = anchor
-	panel.offset_left = 38
-	panel.offset_right = -38
+	panel.offset_left = 29
+	panel.offset_right = -29
 	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN if bottom else Control.GROW_DIRECTION_END
 	if bottom:
-		panel.offset_top = -48
-		panel.offset_bottom = -48
+		panel.offset_top = -34
+		panel.offset_bottom = -34
 	else:
-		panel.offset_top = 48
+		panel.offset_top = 33
 	return panel
 
-func tile(parent: Control, texture: Texture2D) -> VBoxContainer:
+func tile(parent: Control, texture: Texture2D, tint: Color) -> VBoxContainer:
 	var shell := PanelContainer.new()
 	parent.add_child(shell)
 	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	shell.add_theme_stylebox_override("panel", style(PANEL, RIM, 19, 13))
+	shell.add_theme_stylebox_override("panel", style(tint, RIM, 19, 9))
 	var row := HBoxContainer.new()
 	shell.add_child(row)
 	row.add_theme_constant_override("separation", 8)
-	if texture:
-		icon(row, texture, 47)
+	icon(row, texture, 56)
 	var body := VBoxContainer.new()
 	row.add_child(body)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -235,19 +247,21 @@ func action(parent: Control, width: int, height: int, primary: bool) -> Button:
 	button.custom_minimum_size = Vector2(width, height)
 	button.add_theme_font_override("font", HEAVY)
 	button.add_theme_font_size_override("font_size", 30 if height > 80 else 23)
-	var normal := GOLD if primary else PANEL
-	var text := INK if primary else CREAM
+	var normal := Color("#32846e") if primary else PANEL
+	var text := CREAM if primary else INK
 	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
 		var fill := normal
 		match state:
 			"hover": fill = normal.lightened(0.12)
 			"pressed": fill = normal.darkened(0.12)
 			"focus": fill = Color.TRANSPARENT
-			"disabled": fill = Color("#294348")
+			"disabled": fill = Color("#e7decc")
 		button.add_theme_stylebox_override(state, style(fill, GOLD if state == "focus" else RIM, 18, 10))
+	if primary:
+		button.add_theme_stylebox_override("normal", sculpted(ACTION, 24, 10))
 	for key in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		button.add_theme_color_override(key, text)
-	button.add_theme_color_override("font_disabled_color", Color("#a1b5ad"))
+	button.add_theme_color_override("font_disabled_color", Color("#68756a"))
 	return button
 
 func style(fill: Color, border: Color, radius: int, padding: int) -> StyleBoxFlat:
@@ -255,7 +269,45 @@ func style(fill: Color, border: Color, radius: int, padding: int) -> StyleBoxFla
 	box.bg_color = fill
 	box.border_color = border
 	box.set_border_width_all(2)
+	box.border_width_bottom = 3
 	box.set_corner_radius_all(radius)
 	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
 		box.set_content_margin(side, padding)
 	return box
+
+func sculpted(texture: Texture2D, corner: int, padding: int) -> StyleBoxTexture:
+	var style_box := StyleBoxTexture.new()
+	style_box.texture = texture
+	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		style_box.set_texture_margin(side, corner)
+		style_box.set_content_margin(side, padding)
+	return style_box
+
+func update_cash(value: HbtAmount, locale: String, pattern: String, animate: bool) -> void:
+	var locale_changed := cash_locale != locale
+	var in_motion := counting != null and counting.is_running()
+	if next_cash != null and next_cash.compare(value) == 0 and not locale_changed and (animate or not in_motion):
+		return
+	if in_motion:
+		counting.kill()
+	cash.modulate = Color.WHITE
+	next_cash = value
+	cash_locale = locale
+	cash_pattern = pattern
+	if shown_cash == null or not animate or locale_changed or shown_cash.compare(value) == 0:
+		display_cash(value)
+		return
+	var origin := shown_cash
+	var growing := value.compare(origin) > 0
+	var distance := value.minus(origin) if growing else origin.minus(value)
+	counting = create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	counting.tween_method(func(step: int) -> void:
+		var moved := distance.times(step).divided(1000)
+		display_cash(origin.plus(moved) if growing else origin.minus(moved)), 0, 1000, 0.38)
+	if growing:
+		cash.modulate = Color(1.30, 1.16, 1.04)
+		counting.parallel().tween_property(cash, "modulate", Color.WHITE, 0.34)
+
+func display_cash(value: HbtAmount) -> void:
+	shown_cash = value
+	cash.text = cash_pattern % value.compact(cash_locale)

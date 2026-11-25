@@ -99,6 +99,7 @@ def canopy():
         model.box((x, 0.41, 0.16), (0.51, 0.58, 0.54), DARK, 0.075, "Paint")
         model.box((x, 1.94, 0.16), (0.325, 3.13, 0.42), CREAM, 0.073, "Paint")
         model.box((x, 1.77, 0.384), (0.105, 2.04, 0.048), TEAL, 0.019, "Metal")
+        strip(model, (x, 2.22, 0.418), (0.049, 0.95, 0.019), "c4e7d7")
         model.pipe([(x, 2.74, 0.16), (x, 3.16, 0.51), (x, 3.31, 1.12)],
                    0.09, IRON, "Metal", 12)
         model.pipe([(x, 2.74, 0.16), (x, 3.16, -0.23), (x, 3.31, -0.97)],
@@ -106,8 +107,17 @@ def canopy():
     model.custom_box((0, 3.40, 0), (9.40, 0.25, 3.75), COAL, 0.52, 0.065, "Metal")
     model.custom_box((0, 3.57, 0), (9.63, 0.155, 3.97), OCHRE, 0.53, 0.045, "Paint")
     model.custom_box((0, 3.76, 0), (9.67, 0.31, 4.02), TEAL, 0.57, 0.096, "Paint")
-    model.custom_box((0, 3.94, -0.03), (9.27, 0.14, 3.66), "7ab4a3", 0.46, 0.048)
-    model.custom_box((0, 4.016, -0.08), (8.63, 0.034, 3.13), "619a8c", 0.34, 0.012)
+    model.custom_box((0, 3.952, -0.03), (9.39, 0.174, 3.77), CREAM, 0.49, 0.062, "Paint")
+    model.custom_box((0, 4.044, -0.03), (8.91, 0.036, 3.28), "dacaae", 0.37, 0.012)
+    for x in [-3.53, 3.53]:
+        model.custom_box((x, 4.059, -0.03), (1.66, 0.061, 3.18), SEA, 0.27, 0.024, "Paint")
+        for z in [-1.16, 1.09]:
+            trim(model, (x, 4.094, z), (1.09, 0.013, 0.032), MINT)
+    for x in [-2.48, -1.61, -0.74, 0.13, 1.0, 1.87, 2.73]:
+        trim(model, (x, 4.072, -0.03), (0.042, 0.025, 3.09), "adab98")
+    for x in [-3.87, -3.27]:
+        model.pipe([(x - .24, 4.097, .41), (x, 4.097, -.52), (x + .24, 4.097, .41)],
+                   .060, CREAM, "Paint", 8)
     for x in [-3.3, -1.65, 0, 1.65, 3.30]:
         slab(model, (x, 3.251, 0.01), (1.35, 0.067, 2.16), DARK)
         for z in [-0.69, 0.65]:
@@ -115,6 +125,28 @@ def canopy():
         trim(model, (x + 0.77, 3.267, 0), (0.045, 0.064, 3.34), "6a8280")
     north_mark(model, -1.76, 3.77, 2.012, 0.29, "ffdd90")
     strip(model, (0, 3.486, 1.992), (6.1, 0.023, 0.022), "ffc575")
+    return model
+
+
+def truck_canopy():
+    model = Model()
+    for x in [-3.72, 3.72]:
+        for z in [-5.02, -1.67, 1.67, 5.02]:
+            slab(model, (x, .10, z), (.83, .20, .79), CONCRETE)
+            model.box((x, 2.48, z), (.30, 4.77, .33), CREAM, .067, "Paint")
+            model.box((x, .63, z), (.43, .91, .46), OCHRE, .08, "Paint")
+            model.pipe([(x, 3.89, z), (x * .84, 4.57, z), (x * .68, 4.89, z)],
+                       .081, IRON, "Metal", 8)
+    model.custom_box((0, 4.93, 0), (8.50, .27, 10.97), COAL, .60, .075, "Metal")
+    model.custom_box((0, 5.15, 0), (8.64, .26, 11.08), TEAL, .64, .08, "Paint")
+    model.custom_box((0, 5.33, 0), (8.27, .15, 10.71), "9daea0", .53, .058)
+    for z in [-4.75, -3.81, -2.87, -1.93, -.99, -.05, .89, 1.83, 2.77, 3.71, 4.65]:
+        trim(model, (0, 5.418, z), (7.87, .033, .081), "718f87")
+    for z in [-3.34, 0, 3.34]:
+        model.custom_box((.02, 5.464, z), (3.21, .165, 1.18), WINDOW, .21, .053, "Tint")
+        strip(model, (.02, 4.78, z), (4.46, .048, .113), LAMP)
+    strip(model, (0, 5.014, 5.50), (7.28, .038, .037), OCHRE)
+    north_mark(model, -2.87, 5.15, 5.557, .43)
     return model
 
 
@@ -133,6 +165,8 @@ def island():
     model.box((0.22, 0.95, 0.31), (0.106, 0.24, 0.034), COAL, 0.015)
     strip(model, (0.22, 1.006, 0.337), (0.064, 0.057, 0.022), AQUA)
     north_mark(model, -0.13, 0.731, 0.307, 0.27)
+    for x in [-.34, -.26, -.18, -.10]:
+        trim(model, (x, .474, .290), (.040, .076, .028), COOL)
     for sign in [-1, 1]:
         side = sign * 0.56
         model.pipe([(side, 1.39, -0.07), (side * 1.20, 1.00, -0.09),
@@ -156,6 +190,8 @@ def price_sign():
         model.box((0, y, 0.28), (1.22, 0.032, 0.023), "496466", 0.008, "Metal")
     north_mark(model, -0.39, 3.25, 0.245, 0.32)
     strip(model, (0, 1.56, 0.246), (1.13, 0.033, 0.02), AQUA)
+    for x in [-.53, .53]:
+        strip(model, (x, 3.497, .242), (.118, .037, .031), LAMP)
     return model
 
 
@@ -171,7 +207,7 @@ def market():
     model.custom_box((0, 3.03, -0.06), (7.67, 0.08, 4.91), "658f84", 0.28, 0.028, "Paint")
     # Raised roof volume with seams and a mechanical enclosure behind it.
     model.custom_box((-1.12, 3.22, -0.18), (4.64, 0.38, 3.69), DARK, 0.29, 0.09, "Metal")
-    model.custom_box((-1.12, 3.43, -0.20), (4.46, 0.16, 3.50), "789891", 0.24, 0.05, "Paint")
+    model.custom_box((-1.12, 3.43, -0.20), (4.46, 0.16, 3.50), "95b0a4", 0.24, 0.05, "Paint")
     for j in range(9):
         trim(model, (-3.08 + j * 0.49, 3.518, -0.20), (0.054, 0.03, 3.32), "456562")
     hvac(model, 2.42, 3.32, -0.91)
@@ -222,6 +258,10 @@ def market():
     strip(model, (2.18, 1.36, 0.166), (0.25, 0.072, 0.02), AQUA)
     for x in [-2.2, 0, 2.2]:
         strip(model, (x, 2.508, 1.63), (1.43, 0.049, 0.105))
+    for x in [-3.21, 3.2]:
+        strip(model, (x, 2.408, 2.218), (0.24, 0.051, 0.093))
+    for x in [-2.70, -2.19, -1.72]:
+        model.box((x, .283, .99), (.32, .014, .24), "a99776", .004)
     return model
 
 
@@ -338,7 +378,7 @@ def wash():
         model.box((x, 1.47, 2.49), (1.02, 2.44, 0.24), TEAL, 0.1, "Paint")
     model.box((0, 1.58, -2.65), (5.80, 2.71, 0.49), TEAL, 0.15, "Paint")
     model.custom_box((0, 2.95, -0.16), (6.44, 0.41, 5.89), DARK, 0.50, 0.11, "Paint")
-    model.custom_box((0, 3.17, -0.16), (6.18, 0.10, 5.65), "6cae9d", 0.38, 0.034)
+    model.custom_box((0, 3.17, -0.16), (6.18, 0.10, 5.65), "8dbdb0", 0.38, 0.034)
     model.custom_box((-0.64, 3.243, -0.45), (2.16, 0.17, 3.89), COAL, 0.26, 0.05, "Metal")
     for panel in range(4):
         model.custom_box((-0.64, 3.344, -1.88 + panel * 0.935), (1.91, 0.08, 0.83),
@@ -360,6 +400,7 @@ def wash():
             model.custom_box((x, 0.58 + k * 0.207, -0.54), (0.83, 0.122, 0.84),
                              "499786" if k % 2 else "80b7a7", 0.36, 0.032, "Rubber")
         bollard(model, side * 2.58, 3.02, 0.72)
+        strip(model, (side * 2.08, 1.33, 2.705), (.041, .91, .041), AQUA)
         for k in range(7):
             model.box((side * 1.24, 0.271, -2.0 + k * 0.70), (0.081, 0.016, 0.48), OCHRE, 0.006)
     for j in range(17):
@@ -395,6 +436,8 @@ def restaurant():
     for x in [-2.42, 2.56]:
         model.box((x, 0.69, 0.4), (1.38, 0.74, 0.48), TEAL, 0.13, "Paint")
         model.box((x, 0.95, 0.64), (1.38, 0.19, 0.45), CORAL, 0.11)
+        model.pipe([(x, 1.91, .44), (x, 2.17, .44)], .063, DARK, "Metal", 10)
+        model.pipe([(x, 1.85, .44), (x, 1.98, .44)], [.209, .122], LAMP, "Light", 12)
     model.custom_box((0, 2.70, 1.653), (2.76, 0.51, 0.22), COAL, 0.095, 0.042, "Paint")
     for x in [-2.49, 2.63]:
         model.pipe([(x, 0.31, 2.38), (x, 2.26, 2.38)], 0.043, DARK, "Metal")
@@ -402,9 +445,9 @@ def restaurant():
         for dx in [-0.61, 0.61]:
             model.box((x + dx, 0.52, 2.44), (0.29, 0.42, 0.31), TEAL, 0.065, "Paint")
         vertices = [(x, 2.29, 2.38)]
-        vertices.extend((x + cos(j * pi / 4) * 0.91, 2.07, 2.38 + sin(j * pi / 4) * 0.91) for j in range(8))
-        for i in range(8):
-            model.add(vertices, [(0, (i + 1) % 8 + 1, i + 1)], CORAL if i % 2 else CREAM)
+        vertices.extend((x + cos(j * pi / 8) * 0.91, 2.07, 2.38 + sin(j * pi / 8) * 0.91) for j in range(16))
+        for i in range(16):
+            model.add(vertices, [(0, (i + 1) % 16 + 1, i + 1)], CORAL if i // 2 % 2 else CREAM)
     planter(model, 3.45, -1.82, 1.20, BRICK)
     hvac(model, -1.99, 3.17, -1.25)
     return model
@@ -429,6 +472,7 @@ def workshop():
     model.box((0, 2.62, 2.39), (6.75, 0.36, 0.20), SEA, 0.09, "Paint")
     for x in [-1.73, 1.72]:
         strip(model, (x, 2.394, 2.36), (2.46, 0.069, 0.104), AQUA)
+        strip(model, (x, 2.506, -0.8), (1.98, 0.038, 0.082), LAMP)
         for sign in [-1, 1]:
             model.box((x + sign * 0.95, 1.28, 0.13), (0.20, 2.27, 0.26), OCHRE, 0.053, "Paint")
             model.box((x + sign * 0.77, 0.73, 0.30), (0.42, 0.115, 0.70), IRON, 0.037, "Metal")
@@ -463,6 +507,9 @@ def motel():
             model.box((x, y + 0.77, 1.199), (0.65, 1.45, 0.11), TEAL, 0.056, "Paint")
             model.box((x + 0.70, y + 0.93, 1.198), (0.58, 0.78, 0.12), COAL, 0.056)
             model.box((x + 0.70, y + 0.93, 1.267), (0.48, 0.65, 0.037), "517779", 0.022, "Tint")
+            for dx in [-.11, .11]:
+                strip(model, (x + .70 + dx, y + .985, 1.290), (.104, .39, .016), "e7b282")
+            trim(model, (x + .70, y + .596, 1.278), (.55, .067, .13), CREAM)
             trim(model, (x + 0.15, y + 0.79, 1.273), (0.041, 0.16, 0.05), CREAM)
             strip(model, (x + 0.27, y + 1.53, 1.264), (0.16, 0.073, 0.075))
     for y in [2.45, 3.03]:
@@ -495,24 +542,80 @@ def parking():
     for x in [-2.75, -0.91, 0.93, 2.77]:
         model.box((x, 0.170, 0.13), (0.07, 0.027, 3.35), CREAM, 0.008)
         model.box((x + 0.85, 0.215, -1.24), (1.13, 0.12, 0.23), CONCRETE, 0.05)
+        for lip in [-.30, .30]:
+            model.box((x + 0.85 + lip, .255, -1.125), (.191, .047, .035), OCHRE, .014, "Paint")
     for x in [-3.46, 3.46]:
         model.box((x, 1.12, -2.27), (0.24, 2.0, 0.30), DARK, 0.058, "Metal")
         bollard(model, x, 1.71, 0.63)
     model.custom_box((0, 2.15, -1.85), (7.23, 0.20, 2.16), TEAL, 0.37, 0.065, "Paint")
     for j in range(10):
         model.box((-3.25 + j * 0.722, 2.302, -1.85), (0.42, 0.13, 2.02), SEA, 0.042, "Paint")
+    for x in [-1.79, 1.79]:
+        model.pipe([(x, 1.81, -2.25), (x, 2.02, -1.58), (x, 2.07, -.95)],
+                   .052, COOL, "Metal", 8)
     strip(model, (0, 2.027, -0.86), (6.28, 0.043, 0.085))
     model.box((-3.9, 1.11, 1.9), (0.135, 2.07, 0.14), IRON, 0.05, "Metal")
     model.box((-3.90, 1.95, 1.9), (0.72, 0.74, 0.13), "438e9b", 0.13, "Paint")
     planter(model, 0, -2.73, 2.9, CREAM)
+    bench(model, -2.21, -2.43, .14)
     bin_unit(model, 2.95, 2.51)
     return model
 
 
+def service_console():
+    model = Model()
+    slab(model, (0, .13, 0), (.64, .26, .65), DARK)
+    model.custom_box((0, .39, 0), (.68, .32, .69), SEA, .15, .06, "Paint")
+    strip(model, (0, .403, .352), (.41, .059, .031), AQUA)
+    for x in [-.16, 0, .16]:
+        trim(model, (x, .561, .03), (.053, .024, .39), IRON)
+    return model
+
+
+def service_clerestory():
+    model = Model()
+    model.custom_box((0, .20, 0), (1.87, .40, .98), WINDOW, .15, .059, "Tint")
+    model.custom_box((0, .44, 0), (2.02, .16, 1.15), CREAM, .19, .045, "Paint")
+    for x in [-.55, -.18, .18, .55]:
+        strip(model, (x, .207, .493), (.26, .18, .024), "bee5d8")
+    return model
+
+
+def service_solar():
+    model = Model()
+    for x in [-.55, .55]:
+        solar(model, x, .16, 0, 1.02, .89)
+    return model
+
+
+def service_mechanical():
+    model = Model()
+    slab(model, (0, .085, 0), (1.75, .17, .99), DARK)
+    hvac(model, -.17, .385, -.047)
+    model.pipe([(.24, .21, -.14), (.61, .21, -.14), (.61, .68, -.14)], .105, COOL, "Metal", 12)
+    model.pipe([(.61, .64, -.14), (.61, .74, -.14)], .179, IRON, "Metal", 12)
+    trim(model, (-.67, .222, .40), (.12, .085, .098), OCHRE)
+    return model
+
+
+def service_lantern():
+    model = Model()
+    slab(model, (0, .087, 0), (1.17, .174, .73), COAL)
+    model.custom_box((0, .63, 0), (.92, .96, .54), WINDOW, .16, .075, "Tint")
+    for x in [-.25, 0, .25]:
+        strip(model, (x, .666, .276), (.16, .62, .023), LAMP)
+    model.custom_box((0, 1.155, 0), (1.14, .139, .69), TEAL, .19, .038, "Paint")
+    north_mark(model, 0, .68, .301, .42, AQUA)
+    return model
+
+
 MODELS = {
-    "canopy": canopy, "island": island, "price_sign": price_sign, "market": market,
+    "canopy": canopy, "truck_canopy": truck_canopy, "island": island, "price_sign": price_sign, "market": market,
     "stage_2": stage_two, "stage_3": stage_three, "stage_4": stage_four, "stage_5": stage_five,
     "wash": wash, "restaurant": restaurant, "workshop": workshop, "motel": motel, "parking": parking,
+    "service_console": service_console, "service_clerestory": service_clerestory,
+    "service_solar": service_solar, "service_mechanical": service_mechanical,
+    "service_lantern": service_lantern,
 }
 
 

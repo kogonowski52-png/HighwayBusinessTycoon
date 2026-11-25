@@ -16,11 +16,14 @@ var right_lamps: MeshInstance3D
 var headlamps: MeshInstance3D
 var head_pool: MeshInstance3D
 var decoration: Node3D
+var chassis_art: Node3D
 var record: Dictionary
 var model_id := ""
 var radius := 0.30
 var blink_elapsed := 0.0
 var lit_at_night := false
+var eased_speed := 0.0
+var steering := 0.0
 
 func build(id: String, variant := 0) -> void:
 	if is_instance_valid(decoration):
@@ -32,7 +35,10 @@ func build(id: String, variant := 0) -> void:
 	radius = float(record.radius)
 	decoration = Node3D.new()
 	add_child(decoration)
-	var car := Art.place(decoration, "vehicles", id)
+	chassis_art = Art.place(decoration, "vehicles", id)
+	var car := chassis_art
+	eased_speed = 0.0
+	steering = 0.0
 	var chassis := car.find_child("Chassis", true, false) as MeshInstance3D
 	var swatch := Color.html(record.paint[posmod(variant, record.paint.size())])
 	apply_paint(chassis, swatch)
@@ -61,8 +67,9 @@ func build(id: String, variant := 0) -> void:
 	decoration.add_child(rolling)
 	update_wheel_transforms()
 	Art.contact(decoration, Vector3(0, 0.016, 0), float(record.width) * 1.96, float(record.length) * 1.40)
-	head_pool = Art.light_pool(decoration, Vector3(0, 0.019, float(record.head_z) + 0.76),
-		Vector2(float(record.width) * 1.53, 2.65), Color("#ffdaa2"), 0.63)
+	head_pool = Art.light_pool(decoration, Vector3(0, 0.019, float(record.head_z) + 1.56),
+		Vector2(float(record.width) * 1.63, 3.47), Color("#ffdfaf"), 0.81)
+	(head_pool.material_override as ShaderMaterial).set_shader_parameter("headlights", true)
 	configure_light_materials()
 	apply_headlamps()
 
@@ -114,8 +121,21 @@ func spin(distance: float) -> void:
 		wheel.rotate_x(distance / radius)
 	update_wheel_transforms()
 
+func suspension(distance: float, turning: int, delta: float) -> void:
+	var speed := distance / maxf(delta, 0.001)
+	var ease := 1.0 - exp(-delta * 9.0)
+	var nose := clampf((eased_speed - speed) * 0.010, -0.047, 0.047)
+	eased_speed = lerpf(eased_speed, speed, ease)
+	chassis_art.rotation.x = lerpf(chassis_art.rotation.x, nose, ease)
+	chassis_art.rotation.z = lerpf(chassis_art.rotation.z, turning * minf(absf(speed) * 0.0045, 0.035), ease)
+	var angle := lerpf(steering, turning * 0.24 if absf(speed) > 0.15 else 0.0, ease)
+	if not is_equal_approx(angle, steering) or not is_zero_approx(distance):
+		steering = angle
+		spin(distance)
+
 func update_wheel_transforms() -> void:
 	for index in range(wheels.size()):
 		var wheel := wheels[index]
-		var pose := Transform3D(wheel.basis.scaled_local(Vector3.ONE * radius), wheel.position)
+		var axes := wheel.basis.rotated(Vector3.UP, steering) if wheel.position.z == float(record.axles[-1]) else wheel.basis
+		var pose := Transform3D(axes.scaled_local(Vector3.ONE * radius), wheel.position)
 		wheel_instances.set_instance_transform(index, pose)

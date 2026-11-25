@@ -2,7 +2,7 @@ extends RefCounted
 
 const COPY := {
 	"pl": {
-		"location": "LOKALIZACJA 01  /  TRASA 17", "name": "Stacja Północ",
+		"location": "TRASA 17", "name": "Stacja Północ",
 		"road": "RUCH NA TRASIE", "customers": "OBSŁUŻENI", "cash": "KASA STACJI",
 		"fuel": "Dystrybutor paliwa", "level": "POZIOM %d / 5", "waiting": "Klient gotowy do obsługi",
 		"arriving": "Klient jedzie na stację", "serving": "Tankowanie w toku", "open": "Czekasz na kolejnego klienta",
@@ -13,7 +13,7 @@ const COPY := {
 		"map": "Mapa", "station_view": "Stacja", "lighting_tip": "Zmień porę dnia", "view_tip": "Zmień kadr kamery"
 	},
 	"en": {
-		"location": "LOCATION 01  /  ROUTE 17", "name": "Northpoint Station",
+		"location": "ROUTE 17", "name": "Northpoint Station",
 		"road": "HIGHWAY TRAFFIC", "customers": "SERVED", "cash": "STATION CASH",
 		"fuel": "Fuel dispenser", "level": "LEVEL %d / 5", "waiting": "Customer ready for service",
 		"arriving": "Customer approaching the station", "serving": "Refueling in progress", "open": "Waiting for the next customer",

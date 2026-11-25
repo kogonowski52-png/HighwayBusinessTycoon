@@ -1,5 +1,11 @@
 # Stan projektu
 
+## 0.3.1 · Modernizacja wizualna
+
+- Stacja, Trasa 17 i osiem działających usług mają nową oprawę. Pięć progów dachów, wydzielona wiata TIR i animowane elementy oświetlenia są dostępne w uruchomionej grze.
+- Kremowy HUD i widok ortograficzny zachowują obsługę w pionie, języki PL i EN oraz tryby 60 i 30 FPS. Zmiany przeszły próby pętli rozgrywki, zapisu i działania paneli. [Raport testów](TEST_REPORT.md)
+- Porównanie zrzutów i galeria powstały w Godocie z istniejącej sceny Trasy 17. [Galeria](screenshots/README.md)
+
 ## 0.3.0 · Ekonomia i działający kompleks
 
 - Działają stacja paliw, sklep, parking, myjnia, warsztat, restauracja, motel i osobny plac obsługi TIR. Kierowcy wybierają usługi według profilu, wjeżdżają na plac, czekają, zajmują przydzielone stanowisko i wyjeżdżają.

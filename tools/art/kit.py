@@ -15,6 +15,7 @@ class Part:
     faces: list
     smooth: list
     bone: str | None
+    vertex_colors: list | None = None
 
 
 FINISHES = {
@@ -82,10 +83,11 @@ class Model:
     def __init__(self):
         self.parts = []
 
-    def add(self, vertices, faces, color, finish="Ceramic", smooth=False, bone=None):
+    def add(self, vertices, faces, color, finish="Ceramic", smooth=False, bone=None, vertex_colors=None):
         if isinstance(smooth, bool):
             smooth = [smooth] * len(faces)
-        self.parts.append(Part(finish, rgba(color), vertices, faces, smooth, bone))
+        colors = [rgba(tint) for tint in vertex_colors] if vertex_colors else None
+        self.parts.append(Part(finish, rgba(color), vertices, faces, smooth, bone, colors))
 
     def box(self, pos, size, color, radius=0.04, finish="Ceramic", yaw=0.0, bone=None):
         """A rounded rectangle footprint with bevels around the top and bottom."""
@@ -178,7 +180,7 @@ class Model:
             base = len(vertices)
             vertices.extend(orientation(point) for point in part.vertices)
             faces.extend(tuple(base + index for index in face) for face in part.faces)
-            colors.extend([part.color] * len(part.vertices))
+            colors.extend(part.vertex_colors or [part.color] * len(part.vertices))
             if part.finish not in materials:
                 materials.append(part.finish)
             indices.extend([materials.index(part.finish)] * len(part.faces))

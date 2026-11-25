@@ -9,6 +9,8 @@ func _post_import(scene: Node) -> Object:
 	practical = ShaderMaterial.new()
 	practical.shader = PRACTICAL
 	practical.resource_name = "Practical fixture"
+	var asset := get_source_file().get_file().get_basename()
+	practical.set_shader_parameter("beacon", asset in ["price_sign", "service_lantern"])
 	color_surfaces(scene)
 	return scene
 

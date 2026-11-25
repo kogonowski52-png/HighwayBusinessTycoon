@@ -58,13 +58,5 @@ func set_service_progress(progress: float) -> void:
 	meter.position.x = ISLAND_AT.x - 0.26 + 0.217 * meter.scale.x
 
 func animate_construction() -> void:
-	if not is_instance_valid(newest_module):
-		return
-	# Each upgrade module has an origin at the slab. Settle the finished structure onto it.
-	var module := newest_module
-	module.position.y = 0.75
-	module.scale.y = 0.82
-	var lift := module.create_tween().set_parallel()
-	lift.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	lift.tween_property(module, "position:y", 0.0, 0.59)
-	lift.tween_property(module, "scale:y", 1.0, 0.67)
+	if is_instance_valid(newest_module):
+		Art.settle(newest_module)

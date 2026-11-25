@@ -1,5 +1,12 @@
 # Historia zmian
 
+## 0.3.1 · Modernizacja wizualna Trasy 17
+
+- Przebudowano zadaszenie stacji i plac TIR, wzbogacono fasady usług oraz dodano pięć dostrzegalnych progów rozwoju dachów usługowych.
+- Poprawiono szyby floty, kształty fryzur i nakryć głowy, pracę zawieszenia i kół, nocne oświetlenie oraz animacje postaci.
+- Dodano relief terenu, zbiornik retencyjny, kaktusy, wyposażenie zapleczy, teksturę asfaltu i ślady opon.
+- Wprowadzono kremowy HUD z autorskimi ikonami 3D, animowanym licznikiem kasy i otwieraniem paneli. Porównano trzy kąty kamery w grze i zapisano zrzuty przed i po zmianach.
+
 ## 0.3.0 · Kompleks Idle Tycoon
 
 - Dodano osiem usług, siedem profili klientów, sprawdzanie budżetu, dwie kolejki i rezerwowanie stanowisk na Trasie 17.

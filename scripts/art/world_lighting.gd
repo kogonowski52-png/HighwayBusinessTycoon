@@ -5,18 +5,20 @@ const Art = preload("res://scripts/art/visual_library.gd")
 enum Look { DAY, GOLDEN, EVENING, NIGHT }
 
 const LOOKS := [
-	{ "ambient": Color("#c4dfed"), "ambient_energy": 0.55, "key": Color("#fff0d1"), "energy": 0.75,
-		"angles": Vector3(-54, -38, 0), "back": Color("#b4c7ae"), "practicals": 0.0 },
-	{ "ambient": Color("#c7c3dd"), "ambient_energy": 0.48, "key": Color("#ffd09a"), "energy": 0.92,
-		"angles": Vector3(-31, -55, 0), "back": Color("#b0a789"), "practicals": 0.18 },
-	{ "ambient": Color("#a6b9e8"), "ambient_energy": 0.40, "key": Color("#a4bbf0"), "energy": 0.47,
-		"angles": Vector3(-38, -45, 0), "back": Color("#667b97"), "practicals": 0.68 },
-	{ "ambient": Color("#a5bce8"), "ambient_energy": 0.36, "key": Color("#91a8e5"), "energy": 0.28,
-		"angles": Vector3(-53, 31, 0), "back": Color("#354c6d"), "practicals": 1.0 },
+	{ "ambient": Color("#d6e6f7"), "ambient_energy": 0.54, "key": Color("#fff1db"), "energy": 0.69,
+		"angles": Vector3(-49, -34, 0), "back": Color("#b4c8b2"), "sky": Color("#80b5cf"), "practicals": 0.0 },
+	{ "ambient": Color("#d1cce1"), "ambient_energy": 0.51, "key": Color("#ffd098"), "energy": 0.88,
+		"angles": Vector3(-29, -53, 0), "back": Color("#cead84"), "sky": Color("#bdbcdd"), "practicals": 0.19 },
+	{ "ambient": Color("#9babdb"), "ambient_energy": 0.38, "key": Color("#c3bad7"), "energy": 0.44,
+		"angles": Vector3(-35, -41, 0), "back": Color("#747895"), "sky": Color("#465f9a"), "practicals": 0.68 },
+	{ "ambient": Color("#8aaee9"), "ambient_energy": 0.24, "key": Color("#91b3ff"), "energy": 0.20,
+		"angles": Vector3(-54, 29, 0), "back": Color("#243951"), "sky": Color("#192e5c"), "practicals": 1.0 },
 ]
 
 var environment := Environment.new()
 var sun := DirectionalLight3D.new()
+var reflected_sky := ProceduralSkyMaterial.new()
+var supports_glow := false
 var practical_lights: Array[OmniLight3D] = []
 var floor_glows: Array[MeshInstance3D] = []
 var has_practicals := true
@@ -27,11 +29,20 @@ func _ready() -> void:
 	var world := WorldEnvironment.new()
 	environment.background_mode = Environment.BG_COLOR
 	environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	var sky := Sky.new()
+	sky.radiance_size = Sky.RADIANCE_SIZE_64
+	sky.sky_material = reflected_sky
+	reflected_sky.sun_angle_max = 0.0
+	environment.sky = sky
+	environment.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
+	supports_glow = RenderingServer.get_current_rendering_method() != "gl_compatibility"
+	environment.glow_intensity = 0.29
+	environment.glow_hdr_threshold = 1.08
 	world.environment = environment
 	add_child(world)
 
 	sun.shadow_enabled = true
-	sun.shadow_blur = 1.45
+	sun.shadow_blur = 1.60
 	sun.shadow_bias = 0.24
 	sun.shadow_normal_bias = 1.22
 	sun.shadow_reverse_cull_face = true
@@ -50,6 +61,7 @@ func setup_practicals() -> void:
 	practical(Vector3(-15.3, 2.25, -6.95), 5.8, Color("#ffba87"))
 	practical(Vector3(-7.65, 2.90, -13.4), 5.6, Color("#ffc29a"))
 	practical(Vector3(8.56, 2.5, -13.75), 5.5, Color("#b6dbc9"))
+	practical(Vector3(23.9, 4.45, -6.89), 7.8, Color("#ffdda3"))
 	for at in [Vector3(1.0, 0.016, 1.45), Vector3(-6.0, 0.025, -2.06),
 		Vector3(9.63, 0.024, 4.01), Vector3(-11.6, 0.026, 4.95), Vector3(13.1, 0.027, 10.65)]:
 		floor_glows.append(Art.light_pool(self, at, Vector2(6.2, 5.4), Color("#ffc977"), 0.64))
@@ -70,17 +82,24 @@ func set_look(look: Look) -> void:
 	environment.background_color = preset.back
 	environment.ambient_light_color = preset.ambient
 	environment.ambient_light_energy = preset.ambient_energy
+	reflected_sky.sky_top_color = preset.sky
+	reflected_sky.sky_horizon_color = preset.ambient
+	reflected_sky.ground_horizon_color = preset.back
+	reflected_sky.ground_bottom_color = Color("#4b5148") if current < Look.EVENING else Color("#151e35")
 	sun.rotation_degrees = preset.angles
 	sun.light_color = preset.key
 	sun.light_energy = preset.energy
 	var intensity: float = preset.practicals
+	RenderingServer.global_shader_parameter_set(&"hbt_practical_level", lerpf(0.16, 1.64, intensity))
+	RenderingServer.global_shader_parameter_set(&"hbt_ambient_motion", 0.0 if reduced else 1.0)
+	environment.glow_enabled = supports_glow and not reduced and look >= Look.EVENING
 	for index in range(practical_lights.size()):
 		var lamp := practical_lights[index]
 		lamp.visible = intensity > 0.0 and (not reduced or index < 3)
-		lamp.light_energy = intensity * (1.1 if index < 2 else 0.79)
+		lamp.light_energy = intensity * (1.32 if index < 2 else 0.96)
 	for decal in floor_glows:
 		decal.visible = intensity > 0.0
-		(decal.material_override as ShaderMaterial).set_shader_parameter("intensity", 0.48 * intensity)
+		(decal.material_override as ShaderMaterial).set_shader_parameter("intensity", 0.58 * intensity)
 
 func set_reduced(enabled: bool) -> void:
 	if reduced != enabled:

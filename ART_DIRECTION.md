@@ -2,7 +2,26 @@
 
 Stacja Północ przy Trasie 17 to stylizowana makieta drogowa. Dachy o zaokrąglonych narożnikach, turkusowa emalia, ciepłe kruszywo i przygaszona roślinność tworzą wspólny język materiałów. Bursztyn wyróżnia stację, a koral, szałwia i chłodny błękit rozróżniają obiekty w tle. Kamera ortograficzna utrzymuje czytelność przy małym ekranie.
 
-## Architektura i otoczenie
+## 0.3.1 · Modernizacja wizualna
+
+W czterech dołączonych kadrach Roadside Empire budynki mają zwarte obrysy, zadaszenia są większe od ich podstaw, a pojazdy i postacie wyróżniają się na nawierzchni. Wyższa kamera pokazuje wejścia oraz to, co dzieje się za budynkami. Place z jasnego piasku przechodzą w zieleń. Wyposażenie jest skupione przy usługach, a kierunkowe słońce i ciemniejsze styki z podłożem dodają bryłom głębi. Jasne karty ulepszeń pokazują ikonę, opis i koszt w tym samym wierszu. Animacje oceniano podczas uruchomionej rozgrywki Highway Business Tycoon. Kolaż referencyjny zawiera nieruchome kadry.
+
+Pierwsze zrzuty Stacji Północ pokazały rozległe płaskie pobocza, mało kontrastu między porami dnia oraz ciemny HUD zajmujący znaczną część widoku telefonu. Dla tego samego stanowiska w Godocie porównano kąt około 36°, 45° i 54°. Przy 36° dach bardziej zasłania witrynę, a przy 54° postać i szyld są mniej czytelne. Ustawienie około 45° z obrotem o około 26° mieści dystrybutor, sklep i pas ruchu w pionowym kadrze. [Porównania z silnika](screenshots/README.md)
+
+| Element | Zmiana i ocena w grze |
+| --- | --- |
+| Stacja paliw i sklep | Zadaszenie ma warstwowe krawędzie, rąbki, kasetony ze znakiem Trasy 17 i pionowe listwy LED. Doświetlone regały są widoczne pod ciemniejszą ramą drzwi. Pylon ma dwie dodatkowe diody i delikatną zmianę jasności wieczorem. |
+| Myjnia i warsztat | Pionowe LED-y rozpoznawalne przy ciemniejszym świetle, dodatkowe oświetlenie nad podnośnikiem i wyposażenie przy zapleczu. Piana i para startują wraz z obsługą klienta. |
+| Restauracja, motel i parking | Restauracja zyskała lampy wiszące i gęstszy podział płóciennych parasoli. Okna motelu mają parapety i ciepłe światło po zmroku. Parking ma ławkę, usztywnienia pergoli i odblaski na kołoodbojach. |
+| Plac ciężarowy i etapy usług | Osobne zadaszenie obejmuje trzy linie stanowisk TIR. W działających usługach na progach 1, 15, 35, 65 i 90 pojawiają się kolejno konsole, świetliki, panele, moduły mechaniczne i latarnie dachowe. Stanowiska paliwowe i ich dystrybutory odpowiadają pojemności usługi. |
+| Flota 20 modeli | Szyby mają przejście od chłodnego dołu do jaśniejszej górnej krawędzi. Część rodzin zyskała listwy boczne. Koła skręcają, a przechył nadwozia reaguje na ruszanie i hamowanie. Po zmroku reflektory rzucają dwie smugi na asfalt. |
+| Postacie i kierownicy | Nowe kształty fryzur, czapek i otwartych oprawek pozwalają odróżnić role. Chód i bieg mają płynniejsze przeniesienie ciężaru. Ciało i głowa poruszają się delikatnie podczas oczekiwania i tankowania. |
+| Otoczenie | Nasypy przechodzą w trawiaste i piaszczyste pobocza. Zbiornik retencyjny, ławki, kaktusy i pasy trzcin urozmaicają obrzeża. Przy warsztacie i ciężarówkach stoją opony, beczki, palety i skrzynie. Nawierzchnia korzysta z mapy ziarna z mipmapami, pasów przetarć opon i cieni kontaktowych. |
+| Światło i HUD | Cztery profile słońca, odbijające światło nieba materiały i cieplejsze oprawy wnętrz oddzielają dzień, złotą godzinę, wieczór i noc. Kremowe panele mają renderowane ikony 3D, przyciski z gradientem, animację otwarcia oraz liczenie wpływów w kasie. |
+
+W zbliżeniu twarze i tkaniny nadal korzystają ze stylizowanych kształtów bez detali powierzchni. Obrzeża placu ciężarowego są oszczędniejsze od zabudowanej części kompleksu. Pomiar GPU, temperatury i stabilności 60 FPS wymaga telefonu. [Raport testów](TEST_REPORT.md)
+
+## Architektura i otoczenie w 0.2.0
 
 | Element | Ocena po przeglądzie w silniku |
 | --- | --- |

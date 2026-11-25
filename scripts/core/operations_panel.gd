@@ -13,6 +13,7 @@ var back: Button
 var scroll: ScrollContainer
 var rows: VBoxContainer
 var page := ""
+var opening: Tween
 
 func setup(game: Node3D, hud: CanvasLayer) -> void:
 	controller = game
@@ -29,13 +30,13 @@ func setup(game: Node3D, hud: CanvasLayer) -> void:
 	panel.offset_right = -42
 	panel.offset_top = 218
 	panel.offset_bottom = -140
-	panel.add_theme_stylebox_override("panel", hud.style(hud.INK, hud.RIM, 28, 31))
+	panel.add_theme_stylebox_override("panel", hud.sculpted(hud.IVORY, 35, 31))
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 26)
 	panel.add_child(stack)
 	var top := HBoxContainer.new()
 	stack.add_child(top)
-	header = hud.caption(top, 36, hud.CREAM, hud.HEAVY)
+	header = hud.caption(top, 42, hud.INK, hud.HEAVY)
 	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	back = hud.action(top, 146, 72, false)
@@ -51,6 +52,7 @@ func setup(game: Node3D, hud: CanvasLayer) -> void:
 	visible = false
 
 func show_page(name: String) -> void:
+	var entering := not visible or page != name
 	if name != page:
 		scroll.scroll_vertical = 0
 	page = name
@@ -61,6 +63,15 @@ func show_page(name: String) -> void:
 	panel.offset_bottom = 0.0 if compact else -140.0
 	visible = true
 	refresh()
+	if entering:
+		panel.pivot_offset = panel.size * 0.5
+		panel.modulate.a = 0.78
+		panel.scale = Vector2(0.98, 0.98)
+		if opening != null and opening.is_running():
+			opening.kill()
+		opening = create_tween().set_parallel().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		opening.tween_property(panel, "scale", Vector2.ONE, 0.20)
+		opening.tween_property(panel, "modulate:a", 1.0, 0.17)
 
 func hide_page() -> void:
 	visible = false
@@ -88,7 +99,7 @@ func box(title: String, detail := "") -> VBoxContainer:
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 12)
 	surface.add_child(stack)
-	var main: Label = theme_source.caption(stack, 30, theme_source.CREAM, theme_source.HEAVY)
+	var main: Label = theme_source.caption(stack, 30, theme_source.INK, theme_source.HEAVY)
 	main.text = title
 	main.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if not detail.is_empty():

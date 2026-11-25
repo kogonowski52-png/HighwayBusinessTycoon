@@ -52,7 +52,7 @@ func run() -> void:
 	root.borderless = true
 	if suite != "studio":
 		await play_scene()
-	if suite != "game":
+	if suite not in ["game", "camera"]:
 		await vehicle_studies()
 		await character_studies()
 		await building_studies()
@@ -72,6 +72,15 @@ func play_scene() -> void:
 	game.set_physics_process(false)
 	game.traffic.dispatch.spawning = false
 	await process_frame
+	if suite == "camera":
+		var target: Vector3 = game.campus.focus("fuel") + Vector3(-0.54, 0.52, -0.88)
+		for sample in [["36-stopni.png", Vector3(9.4, 26.5, 35.0), 24.8],
+			["45-stopni.png", Vector3(15.3, 34.7, 31.5), 24.1],
+			["54-stopnie.png", Vector3(17.4, 48.1, 29.6), 23.5]]:
+			game.aim_camera(target, sample[1], sample[2])
+			await capture(sample[0])
+		game.free()
+		return
 	var dispatch: HbtDispatch = game.traffic.dispatch
 	var fuel := dispatch.visit_at("fuel", 0)
 	check(game.economy.level("fuel") == 1 and game.traffic.vehicles[fuel.number].model_id == "sprint", "main scene starts with first tier and Sprint")
@@ -152,6 +161,34 @@ func play_scene() -> void:
 	if not captures.is_empty():
 		await create_timer(0.37).timeout
 	await capture("15-myjnia-woda.png")
+	var landscape_mesh := Art.extract_mesh("landscape", "bank")
+	check((landscape_mesh.surface_get_material(0) as StandardMaterial3D).vertex_color_use_as_albedo,
+		"new terrain imports its vertex palette")
+	for tier in Campus.THRESHOLDS:
+		var stage := Campus.THRESHOLDS.find(tier)
+		for site in Campus.ROOFS:
+			store.levels[site] = tier
+		game.campus.update_sites(store)
+		for site in Campus.ROOFS:
+			var group: MultiMesh = game.campus.roof_batches[stage]
+			var slot: int = game.campus.roof_slots[stage].get(site, -1)
+			var anchoring := slot >= 0 and slot < group.instance_count
+			if anchoring and DisplayServer.get_name() != "headless":
+				anchoring = group.get_instance_transform(slot).origin.is_equal_approx(game.campus.roof_anchor(site, stage))
+			check(game.campus.roof_counts[site] == stage + 1 and anchoring
+				and group.mesh == Art.extract_mesh("architecture", Campus.ROOF_MODULES[stage]),
+				"%s roof module at tier %d" % [site, tier])
+	check(game.campus.extra_islands.truck[2].visible, "third freight pump follows the capacity threshold")
+	set_window(Vector2i(1728, 1010))
+	await process_frame
+	game.aim_camera(Vector3(8.6, 0.0, -4.6), Vector3(14.0, 40.0, 33.0), 87.0)
+	await capture("16-pelny-kompleks.png")
+	game.set_look(Lighting.Look.NIGHT)
+	game.lighting.set_reduced(true)
+	var lights := 0
+	for lamp in game.lighting.practical_lights:
+		lights += int(lamp.visible)
+	check(lights == 3, "reduced quality keeps local lights budgeted")
 	game.free()
 
 func vehicle_studies() -> void:
@@ -278,7 +315,7 @@ func capture(filename: String, settle := true) -> void:
 	await RenderingServer.frame_post_draw
 	var pixels := root.get_texture().get_image()
 	check(pixels != null and pixels.save_png(captures.path_join(filename)) == OK, "captured " + filename)
-	if filename in ["01-stacja-w-grze.png", "02-mapa-dzien.png", "06-stacja-noc.png"]:
+	if filename in ["01-stacja-w-grze.png", "02-mapa-dzien.png", "06-stacja-noc.png", "16-pelny-kompleks.png"]:
 		var draw_calls := root.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_DRAW_CALLS_IN_FRAME)
 		var triangles := root.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_PRIMITIVES_IN_FRAME)
 		print("%s viewport: %d draws, %d primitives" % [filename, draw_calls, triangles])

@@ -38,6 +38,10 @@ godot --path . --script tests/art_gallery.gd -- --capture-dir=/pełna/ścieżka
 
 Można wygenerować pojedynczą rodzinę, dodając na końcu polecenia Blendera `-- architecture`, `-- vehicles`, `-- characters` lub `-- landscape`. Do zapisu PNG uruchom Godota z oknem i wskaż istniejący katalog. Gotowe kadry są w [galerii](docs/art-gallery/README.md).
 
+Wersja 0.3.1 ma osobną galerię z ujęciami przed i po modernizacji. Trzy kąty kamery można zapisać poleceniem `godot --path . --script tests/art_gallery.gd -- --suite=camera --capture-dir=/pełna/ścieżka`. [Porównanie grafiki](screenshots/README.md)
+
+Teksturę gruntu i panele generuje `python3 tools/art/surfaces.py` z biblioteką Pillow. Ikony renderuje `blender -b -t 4 --python-exit-code 1 --python tools/art/hud_icons.py`.
+
 ## Android
 
 Preset **Android** używa pakietu `pl.krystiandevelopment.highwaytycoon`, orientacji pionowej i architektur arm64 oraz x86_64. W Godocie zainstaluj szablony eksportu zgodne z wersją edytora i ustaw ścieżki Android SDK i JDK. Eksport uruchomisz z terminala.

@@ -2,7 +2,7 @@
 from math import cos, pi, sin, tau
 import random
 
-from kit import Model, clear_objects, export
+from kit import Model, clear_objects, export, ring_faces
 
 METAL = "586e6a"
 DARK = "29464a"
@@ -27,7 +27,6 @@ def pine():
                 vertices.append((r * cos(t) - .12 + i * .056,
                                  height + dy * 1.20 - .47 + .106 * sin(4 * t + i) * (1 - dy),
                                  r * sin(t) * .91))
-        from kit import ring_faces
         faces, smooth = ring_faces(16, len(levels), caps=True)
         model.add(vertices, faces, ("326352", "43785e", "53876a", "729970")[i], smooth=smooth)
     return model
@@ -45,7 +44,7 @@ def broadleaf():
         (.58, 2.70, .70, .84, .77, .73, "85a660"), (-.47, 2.71, .87, .87, .85, .68, "668f49"),
     ]
     for x, y, z, w, h, d, color in leaves:
-        model.orb((x, y, z), (w, h, d), color, 14, 10, irregular=.18)
+        model.orb((x, y, z), (w, h, d), color, 14, 10, irregular=.077)
     for x, y, z in [(-.68, 2.47, .30), (.53, 2.57, -.26), (.42, 2.54, .54)]:
         model.pipe([(.03, 1.38, .03), (x * .62, y * .87, z * .76), (x, y, z)],
                    [.14, .093, .058], "917257", sides=10)
@@ -95,6 +94,117 @@ def meadow():
         if i in (1, 4, 7):
             model.orb((x, st+.016, z), (.047, .041, .043),
                       ("f0c66b", "ffe29a", "bd8b64")[i % 3], 7, 4)
+    return model
+
+
+def contour(angle, radius):
+    width = radius * (1 + .081 * sin(3 * angle + .5) + .062 * cos(5 * angle))
+    return cos(angle) * width, sin(angle) * width
+
+
+def landform(profile, closed=True):
+    sides = 36
+    points, colors = [], []
+    for radius, height, tint in profile:
+        for i in range(sides):
+            angle = i * tau / sides
+            x, z = contour(angle, radius)
+            points.append((x, height, z))
+            colors.append(tint)
+    faces, smooth = ring_faces(sides, len(profile), caps=closed)
+    model = Model()
+    model.add(points, faces, profile[0][2], smooth=smooth, vertex_colors=colors)
+    return model
+
+
+def bank():
+    return landform([(1, -.04, "78985e"), (.85, .12, "7a9c63"),
+                     (.61, .52, "8fad70"), (.38, .79, "a4b67a"), (.13, .92, "aabb80")])
+
+
+def wetland():
+    return landform([(1.06, -.040, "7b9b5e"), (1.01, .049, "94a873"), (.97, .087, "b0ae80"),
+                     (.92, .055, "a49e75"), (.88, -.015, "7d957b")], closed=False)
+
+
+def water():
+    vertices = []
+    for i in range(36):
+        x, z = contour(i * tau / 36, .936)
+        vertices.append((x, .036, z))
+    model = Model()
+    model.add(vertices, [tuple(reversed(range(36)))], "69aca2")
+    return model
+
+
+def reeds():
+    model = Model()
+    rng = random.Random(812)
+    for i in range(11):
+        x, z = rng.uniform(-.38, .38), rng.uniform(-.24, .24)
+        height = rng.uniform(.31, .70)
+        dx, dz = rng.uniform(-.15, .15), rng.uniform(-.11, .11)
+        stem = [(x, -.035, z), (x + dx * .46, height * .55, z + dz * .65), (x + dx, height, z + dz)]
+        model.pipe(stem, [.022, .016, .006], ("517950", "73905a", "8d9c60")[i % 3], sides=6)
+        if i % 3 == 0:
+            model.orb(stem[-1], (.033, .083, .031), "8a654c", 8, 6)
+    return model
+
+
+def overlook():
+    model = Model()
+    model.custom_box((0, .055, 0), (6.75, .19, 3.21), "cbb891", .66, .065)
+    for z in [-1.04, -.78, -.52, -.26, 0, .26, .52, .78, 1.04]:
+        model.box((0, .177, z), (5.73, .075, .244), "ab875f" if z < 0 else "bd986f", .028)
+    for x in [-1.54, 1.54]:
+        for dx in [-.56, .56]:
+            model.pipe([(x + dx, .214, -.80), (x + dx, .49, -.78), (x + dx, .78, -1.02)],
+                       .040, DARK, "Metal", 8)
+        model.box((x, .513, -.66), (1.45, .087, .41), "d0a376", .033)
+        model.box((x, .733, -.97), (1.46, .14, .082), "be9166", .038)
+    for x in [-2.77, 2.77]:
+        model.box((x, .39, .46), (.355, .44, .389), TEAL, .077, "Paint")
+        model.box((x, .617, .46), (.302, .072, .326), "998670", .030)
+        for j in range(3):
+            model.orb((x - .12 + j * .116, .68 + j * .014, .48), (.17, .20, .159),
+                      ("648d5b", "729b61", "a0ae67")[j], 10, 6, irregular=.12)
+    return model
+
+
+def cactus():
+    model = Model()
+    for pos, scale, yaw in [((0, .62, 0), 1.0, .18), ((-.29, .44, .014), .65, -.20), ((.3, .44, -.06), .59, .28)]:
+        x, y, z = pos
+        model.orb(pos, (.27 * scale, .61 * scale, .207 * scale), "56906b", 18, 13,
+                  yaw=yaw, irregular=.14)
+        for i in [-1, 0, 1]:
+            dx = i * .115 * scale
+            model.pipe([(x + dx * .77, y - .36 * scale, z + .145 * scale),
+                        (x + dx, y, z + .207 * scale),
+                        (x + dx * .76, y + .39 * scale, z + .143 * scale)],
+                       .019 * scale, "76a77b", sides=6)
+    model.orb((-.158, 1.20, .041), (.096, .082, .085), "e6a064", 12, 8, irregular=.10)
+    model.orb((-.157, 1.22, .078), (.050, .051, .048), "f8cf80", 10, 6)
+    return model
+
+
+def service_yard():
+    model = Model()
+    for x in [-.73, .37]:
+        for z in [-.46, -.26, -.06, .14, .34]:
+            model.box((x, .106, z), (.95, .078, .17), "aa7b4d", .018)
+    for x, size, y in [(-.69, (.69, .50, .61), .39), (-.69, (.49, .37, .49), .82)]:
+        model.box((x, y, -.07), size, "bb8c5d", .054)
+        for dx in [-.19, .19]:
+            model.box((x + dx, y, -.07 + size[2] * .508), (.076, size[1] * .87, .042), "dfb482", .015)
+    for x, z, tint in [(0.14, .19, "cc885f"), (.65, -.27, "598b87")]:
+        model.pipe([(x, .19, z), (x, .65, z)], .198, tint, "Paint", 16)
+        for height in [.23, .58]:
+            model.pipe([(x, height, z), (x, height + .043, z)], .21, METAL, "Metal", 16)
+        model.pipe([(x + .062, .647, z), (x + .062, .667, z)], .049, DARK, "Metal", 12)
+    for y in [.123, .30, .48]:
+        model.pipe([(1.18, y - .071, .32), (1.18, y + .071, .32)], .27, "465052", "Rubber", 16)
+        model.pipe([(1.18, y + .071, .32), (1.18, y + .080, .32)], .139, "282f32", "Rubber", 12)
     return model
 
 
@@ -154,11 +264,15 @@ def route_sign():
 
 
 MODELS = dict(pine=pine, broadleaf=broadleaf, golden_tree=golden_tree, hedge=hedge, stone=stone,
-              meadow=meadow, lamp=lamp, rail=rail, billboard=billboard, pole=utility_pole, route_sign=route_sign)
+              meadow=meadow, bank=bank, wetland=wetland, reeds=reeds, overlook=overlook,
+              cactus=cactus, service_yard=service_yard,
+              lamp=lamp, rail=rail, billboard=billboard, pole=utility_pole, route_sign=route_sign)
 
 
 def generate(root):
     for name, make in MODELS.items():
         clear_objects()
         make().mesh(name.capitalize())
+        if name == "wetland":
+            water().mesh("Water")
         export(root / "assets/models/landscape" / f"{name}.glb")

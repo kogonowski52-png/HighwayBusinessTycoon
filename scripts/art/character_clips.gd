@@ -57,7 +57,7 @@ static func pose(clip: String, phase: float) -> Dictionary:
 		angles["knee_r"] = Vector3(maxf(0.0, -opposite) * 43.0, 0, 0)
 		angles["foot_l"] = Vector3(-maxf(0.0, opposite) * 11.0, 0, 0)
 		angles["foot_r"] = Vector3(-maxf(0.0, -opposite) * 11.0, 0, 0)
-		angles["bounce"] = absf(wave) * (0.115 if clip == "run" else 0.045)
+		angles["bounce"] = (1.0 - cos(phase * 2.0)) * (0.048 if clip == "run" else 0.016)
 		angles["spine"] = Vector3(13.0 if clip == "run" else 4.0, 6.5 * wave, 3.3 * wave)
 		angles["arm_l"] = Vector3(-20.0 * wave, 0, 5.0)
 		angles["arm_r"] = Vector3(20.0 * wave, 0, -5.0)
@@ -70,6 +70,9 @@ static func pose(clip: String, phase: float) -> Dictionary:
 			angles["elbow_r"] = Vector3(-16, 0, 0)
 		return angles
 	match clip:
+		"idle":
+			angles["bounce"] = 0.012 + 0.012 * wave
+			angles["head"] = Vector3(-1.9 * wave, 4.7 * opposite, 1.9 * wave)
 		"service":
 			var greet := maxf(0.0, sin(phase))
 			angles["arm_r"] = Vector3(-28 - 48 * greet, -8, -10)
@@ -77,7 +80,8 @@ static func pose(clip: String, phase: float) -> Dictionary:
 			angles["hand_r"] = Vector3(8.0 * wave, 12.5 * opposite, 0)
 			angles["head"] = Vector3(-2.0, opposite * 8.0, 3.0 * wave)
 		"fuel":
-			angles["spine"] = Vector3(6, -4, -5)
+			angles["spine"] = Vector3(6.0 + 1.30 * opposite, -4, -5)
+			angles["bounce"] = -0.016 + wave * 0.010
 			angles["head"] = Vector3(14, -5, -3.2 * wave)
 			angles["arm_l"] = Vector3(-37 - 3.4 * wave, -10, 5)
 			angles["elbow_l"] = Vector3(-47 + 4.5 * wave, 4, 2)

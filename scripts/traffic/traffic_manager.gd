@@ -33,8 +33,7 @@ func physics_step(delta: float) -> void:
 		var car: Node3D = vehicles[ticket.number]
 		car.position = ticket.location
 		car.rotation.y = ticket.yaw
-		if not is_zero_approx(ticket.signed_distance):
-			car.spin(ticket.signed_distance)
+		car.suspension(ticket.signed_distance, ticket.steer if ticket.distance > 0.02 else 0, delta)
 		car.update_signals(ticket.distance < 0.01, ticket.steer if ticket.distance > 0.02 else 0, delta)
 	for car in background:
 		var distance := 7.35 * delta

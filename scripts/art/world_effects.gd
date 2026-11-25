@@ -24,13 +24,16 @@ func _ready() -> void:
 	steam = vapor(washer + Vector3(0.09, 0.46, 1.94), Color("#ddeee1"), 12, 1.47, Vector3(0, 0.12, 0.18))
 	steam.scale_amount_min = 0.34
 	steam.scale_amount_max = 0.62
+	steam.emitting = false
 	smoke = vapor(Campus.WORKSHOP_AT + Vector3(2.74, 3.86, -1.86), Color("#a9a99b"), 10, 2.36,
 		Vector3(0.13, 0.02, 0))
 	smoke.scale_amount_max = 0.64
+	smoke.emitting = false
 	foam = drops(washer + Vector3(0, 0.43, 1.18), Color("#e8f5e3"), 21, 0.75,
 		Vector3(0, 0.50, 0.32), 0.08)
 	foam.gravity = Vector3(0, -1.15, 0)
 	foam.emission_box_extents = Vector3(0.74, 0.11, 0.48)
+	foam.emitting = false
 	water = drops(washer + Vector3(0, 2.15, 0.88), Color("#8cd4d0"), 32, 0.60,
 		Vector3(0, -1, 0.08), 0.046)
 	water.gravity = Vector3(0, -4.6, 0)
@@ -38,6 +41,7 @@ func _ready() -> void:
 	water.initial_velocity_max = 2.14
 	water.spread = 19.0
 	water.emission_box_extents = Vector3(1.19, 0.13, 0.61)
+	water.emitting = false
 	mote = drops(Vector3(-9.65, 0.63, -3.3), Color("#f2ce84"), 15, 3.30,
 		Vector3(0.68, 0.52, 0.33), 0.026)
 	mote.emission_box_extents = Vector3(2.0, 0.42, 2.1)
