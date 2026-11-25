@@ -24,6 +24,10 @@ Na rozbudowanym kompleksie z HUD-em w kadrze 1600 × 1080 zarejestrowano 704 wyw
 
 Lokalny APK ma 71 798 549 bajtów. SHA-256 pliku to `d2edcd1ab7314d4b49a25161afc591ce04c84d852704520a91bee5cd80cc22d8`. Certyfikat zgadza się z lokalną kompilacją 0.3.2. Manifest zawiera uprawnienie `VIBRATE`. Gra działa bez uprawnienia do internetu. Eksport pomija galerię i zestawy testów. [Raport balansu](docs/balance-0.4.0.md)
 
+### APK z GitHuba
+
+Pobrano APK 0.4.0 z tagu `v0.4.0` i commitu `b6a6cf8`. Archiwum ma 71 798 549 bajtów. SHA-256 `eb835315f725fd5d2b91f80a15df3e6dc9913543cefe3e860c578bda7448fe73` zgadza się z wydaniem. Sprawdzono podpis v2/v3, wersję 0.4.0, kod 6, obie architektury i uprawnienie do wibracji. Certyfikat kompilacji GitHuba jest nowy. Aktualizacja na urządzeniu wymaga zgodnego certyfikatu starego i nowego APK. [Wydanie](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.4.0) · [Przebieg GitHub Actions](https://github.com/kogonowski52-png/HighwayBusinessTycoon/actions/runs/45643795824)
+
 ## 0.3.2 · Przebudowa Trasy 17
 
 Testy wykonano w Godocie 4.7.2 Stable na Linuxie, w rendererze Compatibility z Mesa llvmpipe. Modele wygenerowano w Blenderze 4.3.2. Galeria zawiera 22 kadry z uruchomionej gry i plansz modeli, trzy ujęcia wariantów w tej samej scenie oraz porównanie z ujęciami z commitu `7ea8bf9`. [Galeria 0.3.2](screenshots/0.3.2/README.md)

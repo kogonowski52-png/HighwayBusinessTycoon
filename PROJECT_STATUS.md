@@ -5,6 +5,7 @@
 - Pierwotna lokalizacja ma 11 działających usług i 26 stanowisk. Wulkanizacja, parking TIR i ładowarki EV mają własne modele, pracowników, cenniki, kolejki i wyposażenie widoczne przy rozbudowie. [Zrzuty z gry](screenshots/0.4.0/README.md)
 - Poziomy gracza, 110 nowych misji, 15 kart menedżerów i rozbudowa zarobków offline działają za waluty zdobywane w grze. Samouczek prowadzi przez rzeczywiste tankowanie, zakup i zatrudnienie. [Projekt gry](GAME_DESIGN.md)
 - Migracja zachowuje dotychczasowych pracowników, karty, ustawienia i niewypłacone wpływy. Symulator przechodzi sześć horyzontów na trzech ziarnach. [Raport testów](TEST_REPORT.md) · [Balans](docs/balance-0.4.0.md)
+- Podpisany testowy APK z tagu `v0.4.0` został opublikowany i zweryfikowany po pobraniu. [APK Android](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/download/v0.4.0/HighwayBusinessTycoon-0.4.0-debug.apk)
 - Test instalacji, dźwięku, wibracji i płynności na fizycznym Androidzie pozostaje otwarty. Charakterystyka zarobków offline opiera się na lokalnym zegarze i limicie naliczania.
 
 ## 0.3.2 · Przebudowa geometrii Trasy 17
