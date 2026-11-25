@@ -3,8 +3,6 @@ name: Android debug release
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
-    branches: [main]
-    paths: ['.github/workflows/android-debug.yml']
   workflow_dispatch:
     inputs:
       tag:
@@ -23,16 +21,12 @@ jobs:
     env:
       GODOT_VERSION: '4.7.2'
       ANDROID_BUILD_TOOLS: '36.0.0'
-      REQUESTED_TAG: ${{ inputs.tag || (github.ref_type == 'tag' && github.ref_name) || '' }}
+      REQUESTED_TAG: ${{ inputs.tag || github.ref_name }}
     steps:
       - name: Resolve version and APK path
         shell: bash
         run: |
           tag="$REQUESTED_TAG"
-          if [[ -z "$tag" ]]; then
-            tags=$(git ls-remote --tags --refs --sort=-version:refname "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git")
-            tag=$(awk '$2 ~ /^refs\/tags\/v[0-9]+\.[0-9]+\.[0-9]+$/ { sub(/^refs\/tags\//, "", $2); print $2; exit }' <<< "$tags")
-          fi
           [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
           printf 'RELEASE_TAG=%s\nAPK=builds/HighwayBusinessTycoon-%s-debug.apk\n' "$tag" "${tag#v}" >> "$GITHUB_ENV"
 
@@ -40,6 +34,27 @@ jobs:
         with:
           ref: refs/tags/${{ env.RELEASE_TAG }}
           persist-credentials: false
+
+      - name: Load the persistent Android test signing identity
+        shell: bash
+        env:
+          TEST_KEYSTORE_BASE64: ${{ secrets.ANDROID_TEST_KEYSTORE_BASE64 }}
+          TEST_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_TEST_KEYSTORE_PASSWORD }}
+        run: |
+          if [[ -z "$TEST_KEYSTORE_BASE64" || -z "$TEST_KEYSTORE_PASSWORD" ]]; then
+            echo '::error::Configure both persistent Android test signing secrets before publishing. See docs/ANDROID_SIGNING.md.'
+            exit 1
+          fi
+          umask 077
+          mkdir -p "$RUNNER_TEMP/hbt-signing"
+          printf '%s' "$TEST_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/hbt-signing/test.p12"
+          fingerprint=$("$JAVA_HOME_21_X64/bin/keytool" -exportcert -alias androiddebugkey \
+            -keystore "$RUNNER_TEMP/hbt-signing/test.p12" -storepass:env TEST_KEYSTORE_PASSWORD \
+            | sha256sum | cut -d ' ' -f 1)
+          if [[ "$fingerprint" != "$(cat tools/android/test-certificate.sha256)" ]]; then
+            echo '::error::Stored key does not match the enrolled test certificate.'
+            exit 1
+          fi
 
       - name: Prepare Godot and Android SDK
         shell: bash
@@ -67,32 +82,31 @@ jobs:
             "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;$ANDROID_BUILD_TOOLS"
           fi
 
-          "$JAVA_HOME_21_X64/bin/keytool" -genkeypair -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname 'CN=Android Debug,O=Android,C=US' -alias androiddebugkey \
-            -keystore "$godot_dir/debug.keystore" -storepass android -keypass android
           cat > "$godot_dir/editor_data/editor_settings-4.7.tres" <<SETTINGS
           [gd_resource type="EditorSettings" format=3]
 
           [resource]
           export/android/android_sdk_path = "$ANDROID_HOME"
           export/android/java_sdk_path = "$JAVA_HOME_21_X64"
-          export/android/debug_keystore = "$godot_dir/debug.keystore"
           SETTINGS
           printf '%s\n' "$godot_dir" >> "$GITHUB_PATH"
 
       - name: Build and verify APK
         shell: bash
+        env:
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: ${{ secrets.ANDROID_TEST_KEYSTORE_PASSWORD }}
         run: |
+          export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$RUNNER_TEMP/hbt-signing/test.p12"
           godot --headless --editor --import --path . --quit
           godot --headless --path . --export-debug Android "$APK"
-          build_tools="$ANDROID_HOME/build-tools/$ANDROID_BUILD_TOOLS"
-          "$build_tools/apksigner" verify --verbose "$APK"
-          badging=$("$build_tools/aapt" dump badging "$APK")
-          printf '%s\n' "$badging" | sed -n '/^package:/p; /^native-code:/p'
-          [[ "$badging" == *"name='pl.krystiandevelopment.highwaytycoon'"* ]]
-          [[ "$badging" == *"versionName='${RELEASE_TAG#v}'"* ]]
-          [[ "$badging" == *"native-code: 'arm64-v8a' 'x86_64'"* ]]
-          [[ "$badging" != *'android.permission.INTERNET'* ]]
+          export ANDROID_BUILD_TOOLS_DIR="$ANDROID_HOME/build-tools/$ANDROID_BUILD_TOOLS"
+          tools/android/verify-test-apk.sh "$APK" "${RELEASE_TAG#v}"
+
+      - name: Remove the runner key copy
+        if: always()
+        shell: bash
+        run: rm -f "$RUNNER_TEMP/hbt-signing/test.p12"
 
       - name: Store verified APK as a workflow artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

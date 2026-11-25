@@ -1,0 +1,31 @@
+# Podpisywanie testowych wydań Androida
+
+Pakiet zachowuje identyfikator `pl.krystiandevelopment.highwaytycoon`. Wydanie 0.6.0 ma kod 6000, a kolejne wydania używają wzoru `major × 1 000 000 + minor × 1 000 + patch`, przy składowych od 0 do 999. Weryfikator odrzuca APK z kodem niezgodnym z wersją, błędnym identyfikatorem lub innym certyfikatem.
+
+| Kompilacja | Kod | SHA-256 certyfikatu |
+| --- | ---: | --- |
+| GitHub 0.4.0 | 6 | `541a8dacb5709777437f3e8e388f6f4e5b6624fe16e5b24c4d26bf4b1a0f149b` |
+| GitHub 0.5.0 | 7 | `cd16aa3a3773054f82bea5551330e64be8f93af907f6a1dbc1a041a8ce8ea2bc` |
+| Lokalny 0.5.0 i stały podpis testowy od 0.6.0 | 7, 6000 i wyższe | `e43f4ee684e3e0341672d4b9fdc03561baea103a17141f11cd37ebacdae85d62` |
+
+Poprzedni workflow tworzył osobny klucz na każdym runnerze. Sprawdzono oba wydania i dwa dostępne magazyny. Klucze użyte przez GitHub 0.4.0 i 0.5.0 wygasły wraz z runnerami, a publiczne certyfikaty pozwalają jedynie weryfikować podpisy. Udało się odzyskać klucz lokalnego 0.5.0. Przeniesiono go do PKCS#12 chronionego losowym hasłem. Kontrola podpisu w repozytorium używa wyłącznie publicznego odcisku.
+
+## Trwałe przechowanie i publikacja
+
+Właściciel przechowuje zaszyfrowany plik PKCS#12 w prywatnym sejfie z kopią poza Cloud. Hasło zapisuje oddzielnie w menedżerze haseł. GitHub Actions odczytuje kopię pliku i hasło z dwóch sekretów repozytorium `ANDROID_TEST_KEYSTORE_BASE64` oraz `ANDROID_TEST_KEYSTORE_PASSWORD`. Właściciel może je ustawić ze swojego zaufanego komputera po zalogowaniu do GitHub CLI z uprawnieniem zarządzania sekretami.
+
+```bash
+base64 < HighwayBusinessTycoon-test-signing.p12 | tr -d '\n' | \
+  gh secret set ANDROID_TEST_KEYSTORE_BASE64 --repo kogonowski52-png/HighwayBusinessTycoon
+gh secret set ANDROID_TEST_KEYSTORE_PASSWORD --repo kogonowski52-png/HighwayBusinessTycoon
+```
+
+Drugie polecenie wczytuje hasło ze standardowego wejścia lub w trybie interaktywnym. Workflow weryfikuje odcisk, używa klucza w katalogu tymczasowym runnera i usuwa tę kopię po eksporcie. Gdy brakuje sekretu lub odcisk jest inny, publikacja zatrzymuje się. Po konfiguracji ponownie uruchom workflow dla istniejącego tagu `v0.6.0`.
+
+## Aktualizacja i zapis
+
+APK z tym samym identyfikatorem, tym samym podpisem i wyższym kodem jest zgodny z aktualizacją w miejscu. `tools/android/verify-test-apk.sh` przyjmuje poprzedni APK jako trzeci argument i sprawdza te trzy warunki. Migracja gry obejmuje plik `roadside.cfg` i jego atomowe kopie. Próba na urządzeniu obejmuje zainstalowanie starszego lokalnego APK, zrobienie zapisu, `adb install -r` dla nowej wersji i odczyt postępu.
+
+Instalacje GitHub 0.4.0 i 0.5.0 wymagają jednorazowego przeniesienia zapisu. Wariant debug pozwala skopiować dane przez `adb run-as pl.krystiandevelopment.highwaytycoon` na zaufanym komputerze z autoryzowanym debugowaniem USB. Przed zmianą instalacji zlokalizuj plik `roadside.cfg` poleceniem `adb shell run-as pl.krystiandevelopment.highwaytycoon find files -name 'roadside.cfg*'`. Zapisz plik główny oraz istniejące kopie poleceniem `adb exec-out run-as pl.krystiandevelopment.highwaytycoon cat <ścieżka> > <kopia>`. Zweryfikuj zawartość kopii przed migracją. Po instalacji stabilnego APK przywróć pliki do analogicznego katalogu użytkownika przed pierwszym uruchomieniem gry.
+
+Próba aktualizacji na urządzeniu wymaga fizycznego Androida lub emulatora. Lokalna kontrola porównuje podpisy dwóch gotowych plików i kod wersji, a osobny test Godota sprawdza odczyt autentycznego zapisu 0.5.0.
