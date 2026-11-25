@@ -32,6 +32,9 @@ Próba publikacji `v0.6.0` zatrzymała się na braku pary sekretów. Dostęp z C
 4. Otwórz **Actions → Android debug release → Run workflow**, wpisz `v0.6.1` w polu `tag` i uruchom kompilację. Po pomyślnym przebiegu APK jest do pobrania w Releases. [Ustawienia sekretów](https://github.com/kogonowski52-png/HighwayBusinessTycoon/settings/secrets/actions) · [Workflow wydania](https://github.com/kogonowski52-png/HighwayBusinessTycoon/actions/workflows/android-debug.yml)
 
 
+Przebieg `v0.6.1` zatrzymał się przy ładowaniu certyfikatu, ponieważ runner nie otrzymał wymaganej pary sekretów. API sekretów zwróciło `Forbidden` z Cloud. Lokalny podpisany plik `HighwayBusinessTycoon-0.6.1-test.apk` ma SHA-256 `3d158c903ee36dac19c080501a5a5ac08a9e76febdafffc1375e0901e207bc6b`. [Przebieg 0.6.1](https://github.com/kogonowski52-png/HighwayBusinessTycoon/actions/runs/45702931277)
+
+
 ## Aktualizacja i zapis
 
 APK z tym samym identyfikatorem, tym samym podpisem i wyższym kodem jest zgodny z aktualizacją w miejscu. `tools/android/verify-test-apk.sh` przyjmuje poprzedni APK jako trzeci argument i sprawdza te trzy warunki. Migracja gry obejmuje plik `roadside.cfg` i jego atomowe kopie. Próba na urządzeniu obejmuje zainstalowanie starszego lokalnego APK, zrobienie zapisu, `adb install -r` dla nowej wersji i odczyt postępu.
