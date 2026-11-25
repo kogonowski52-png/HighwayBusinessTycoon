@@ -1,5 +1,11 @@
 # Kierunek artystyczny
 
+## Regionalne dioramy 0.6.1
+
+Riverbend wykorzystuje zielony, falujący płaskowyż, ciepłe dachówki, plantacje i dwa mosty nad rzeką. Alpine Pass tworzą zakręty, warstwy śniegu, drewniane hoteliki i stacja kolejki. Coral Key wprowadza pastelową architekturę nadmorską, palmy, turkusowe fale i latarnię. Metro City kontrastuje z nimi nocnym oświetleniem, pionowymi elewacjami, gęstą zabudową i dużymi rampami przeładunkowymi.
+
+Blender wypala okluzję w palecie wierzchołków. Silnik składa osobne części modernizacji, używa geometrii instancjonowanej dla roślin i oznakowania, a oświetlenie kontaktowe utrzymuje w Compatibility z ograniczoną liczbą dynamicznych lamp. Każdy region dodaje dopasowane detale dotychczasowej floty. [Kadry z Godota](screenshots/0.6.1/README.md)
+
 Stacja Północ przy Trasie 17 to stylizowana makieta drogowa. Dachy o zaokrąglonych narożnikach, turkusowa emalia, ciepłe kruszywo i przygaszona roślinność tworzą wspólny język materiałów. Bursztyn wyróżnia stację, a koral, szałwia i chłodny błękit rozróżniają obiekty w tle. Kamera ortograficzna utrzymuje czytelność przy małym ekranie.
 
 ## 0.6.0 · Copper Mile

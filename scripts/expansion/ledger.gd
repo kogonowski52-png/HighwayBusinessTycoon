@@ -1,6 +1,8 @@
 extends RefCounted
 ## All counted actions come from settled visits, paid construction or delivered parcels.
 
+const Atlas = preload("res://data/world/atlas.gd")
+const Regions = preload("res://data/world/regions.gd")
 const Calendar = preload("res://data/world/expedition_calendar.gd")
 const VEHICLES = preload("res://data/visual/vehicle_catalog.gd")
 const Managers = preload("res://data/economy/managers.gd")
@@ -12,6 +14,7 @@ var event_totals: Dictionary = {}
 var finished_events: Array = []
 var contracts: Dictionary = {}
 var seen_vehicles: Dictionary = {}
+var sightings: Dictionary = {}
 var cosmetics: Dictionary = {}
 var chosen: Dictionary = {}
 var prizes: Dictionary = {}
@@ -25,6 +28,7 @@ func restore(data: Dictionary) -> void:
 	finished_events = history.slice(-8) if history is Array else []
 	contracts = HbtEconomy.safe_dict(data.get("contracts"))
 	seen_vehicles = HbtEconomy.safe_dict(data.get("seen_vehicles"))
+	sightings = HbtEconomy.safe_dict(data.get("sightings"))
 	cosmetics = HbtEconomy.safe_dict(data.get("cosmetics"))
 	chosen = HbtEconomy.safe_dict(data.get("chosen"))
 	prizes = HbtEconomy.safe_dict(data.get("prizes"))
@@ -33,7 +37,7 @@ func restore(data: Dictionary) -> void:
 func snapshot() -> Dictionary:
 	return {"high_water": high_water, "week": week, "event_totals": event_totals,
 		"finished_events": finished_events, "contracts": contracts, "seen_vehicles": seen_vehicles,
-		"cosmetics": cosmetics, "chosen": chosen, "prizes": prizes, "prestige_points": prestige_points}
+		"sightings": sightings, "cosmetics": cosmetics, "chosen": chosen, "prizes": prizes, "prestige_points": prestige_points}
 
 func advance(clock: int) -> void:
 	high_water = maxi(high_water, clock)
@@ -58,10 +62,11 @@ func visit(site: HbtEconomy, ticket: HbtVisit) -> void:
 		return
 	var model: String = ticket.client.model
 	var service := ticket.service
-	seen_vehicles[model] = true
+	spot(site.district, model)
 	var earned := ticket.invoice.decimal()
 	var signal_data := {
 		"visits": 1, "fuel": int(service == "fuel"),
+		"deliveries": int(ticket.trade in ["inbound", "outbound"] or (site.district == "valley" and service == "market" and model in ["parcel", "post"])),
 		"liters": 42 if service == "fuel" else 165 if service == "truck" and site.district == "north" else 0,
 		"trucks": int(ticket.client.kind == "truck"), "vip": int(ticket.client.type == "vip"),
 		"repairs": int(service in ["workshop", "tires"] or (site.district == "desert" and service == "truck")),
@@ -71,7 +76,18 @@ func visit(site: HbtEconomy, ticket: HbtVisit) -> void:
 		"special": int(ticket.client.get("campaign", false)),
 		"turnover": LIMIT if earned.length() > 9 else mini(LIMIT, earned.to_int()),
 	}
+	signal_data["sales_" + service] = 1
 	increment(site, signal_data)
+
+func spot(site: String, model: String) -> bool:
+	var fresh := not seen_vehicles.has(model)
+	seen_vehicles[model] = true
+	var album := HbtEconomy.safe_dict(sightings.get(site))
+	if model in Atlas.STAMPS.get(site, []) and not album.has(model):
+		album[model] = true
+		sightings[site] = album
+		return true
+	return fresh
 
 func increment(site: HbtEconomy, activity: Dictionary) -> void:
 	advance(site.clock)
@@ -114,10 +130,13 @@ func id_for(site: String, metric: String) -> String:
 
 func suitable(site: HbtEconomy, metric: String) -> bool:
 	match metric:
-		"trucks": return site.level("truck") > 0
+		"trucks": return site.level("truck") > 0 or site.level("logistics") > 0 or site.level("warehouse") > 0 or site.level("truck_park") > 0
 		"vip": return site.metric("reputation") >= 5
 		"repairs": return site.level("workshop") > 0 or site.level("tires") > 0 or (site.district == "desert" and site.level("truck") > 0)
-		"deliveries": return site.level("market") > 0
+		"deliveries", "local_metro": return site.level("market") > 0 or site.level("logistics") > 0 or site.level("warehouse") > 0
+		"local_valley": return site.level("market") > 0
+		"local_alpine": return site.level("motel") > 0
+		"local_ocean": return site.level("vip_park") > 0
 		_: return true
 
 func accept(site: HbtEconomy, metric: String) -> bool:
@@ -125,13 +144,21 @@ func accept(site: HbtEconomy, metric: String) -> bool:
 	var key := id_for(site.district, metric)
 	if contracts.has(key) or active_contracts(site.district) >= 3 or not suitable(site, metric):
 		return false
-	for rule in Calendar.CONTRACTS:
+	for rule in offers(site.district):
 		if rule.id == metric:
-			contracts[key] = {"metric": metric, "site": site.district, "due": high_water + rule.seconds,
+			contracts[key] = {"metric": rule.get("counter", metric), "offer": metric, "site": site.district, "due": high_water + rule.seconds,
 				"goal": rule.goal, "have": 0, "done": false, "paid": false, "cash": rule.cash, "diamond": rule.diamond}
 			site.dirty = true
 			return true
 	return false
+
+func offers(district: String) -> Array:
+	var list := Calendar.CONTRACTS.duplicate()
+	if Regions.LOCAL_CONTRACTS.has(district):
+		var profile: Dictionary = Regions.LOCAL_CONTRACTS[district]
+		list.push_front({"id": "local_" + district, "counter": profile.field, "tier": 3, "goal": profile.count,
+			"seconds": profile.time, "cash": profile.cash, "diamond": 4})
+	return list
 
 func active_contracts(district: String) -> int:
 	var count := 0
@@ -149,30 +176,36 @@ func claim_contract(site: HbtEconomy, key: String) -> bool:
 	site.touch()
 	return true
 
-func items(group: String) -> Array:
+func items(group: String, district := "north") -> Array:
 	match group:
 		"cars": return VEHICLES.VEHICLES.keys().filter(func(id: String) -> bool: return id not in ["atlas", "cargo"])
 		"trucks": return ["atlas", "cargo"]
-		"managers": return Managers.ROSTER.keys()
+		"routes": return Atlas.STAMPS.get(district, [])
+		"managers": return Managers.catalog(district)
 		_: return Calendar.COSMETICS.get(group, [])
 
 func owned(site: HbtEconomy, group: String, item: String) -> bool:
 	match group:
 		"cars", "trucks": return seen_vehicles.get(item, false)
 		"managers": return site.cards.has(item)
+		"routes": return HbtEconomy.safe_dict(sightings.get(site.district)).get(item, false)
 		_: return cosmetics.get(item, false)
 
 func collected(site: HbtEconomy, group: String) -> int:
-	return items(group).filter(func(item: String) -> bool: return owned(site, group, item)).size()
+	return items(group, site.district).filter(func(item: String) -> bool: return owned(site, group, item)).size()
 
 func set_reward(site: HbtEconomy, group: String) -> bool:
-	var list := items(group)
-	if prizes.has(group) or list.is_empty() or collected(site, group) != list.size():
+	var list := items(group, site.district)
+	var token := prize_key(site, group)
+	if prizes.has(token) or list.is_empty() or collected(site, group) != list.size():
 		return false
-	prizes[group] = true
+	prizes[token] = true
 	site.grant_reward({"diamond": 6, "cash": 500})
 	site.touch()
 	return true
+
+func prize_key(site: HbtEconomy, group: String) -> String:
+	return "%s/%s" % [group, site.district] if group == "routes" else group
 
 func select_cosmetic(site: HbtEconomy, group: String, item: String) -> bool:
 	if not Calendar.COSMETICS.has(group) or item not in items(group) or not owned(site, group, item):

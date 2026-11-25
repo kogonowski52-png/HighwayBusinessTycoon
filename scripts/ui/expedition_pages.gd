@@ -1,6 +1,7 @@
 extends RefCounted
 
 const Atlas = preload("res://data/world/atlas.gd")
+const Regions = preload("res://data/world/regions.gd")
 const Calendar = preload("res://data/world/expedition_calendar.gd")
 const Preview = preload("res://scripts/ui/expedition_preview.gd")
 const Vehicles = preload("res://data/visual/vehicle_catalog.gd")
@@ -39,7 +40,7 @@ func signature(page: String) -> String:
 	var site: HbtEconomy = game.economy
 	var local := [page, site.language]
 	match page:
-		"atlas": local.append_array([world.active, world.districts.size(), world.available("desert")])
+		"atlas": local.append_array([world.active, world.districts.size(), Atlas.DESTINATIONS.keys().filter(world.available)])
 		"district":
 			local.append_array([destination, world.available(destination), world.completion(destination)])
 			if world.districts.has(destination):
@@ -49,7 +50,7 @@ func signature(page: String) -> String:
 		"contracts":
 			local.append_array([site.day_index(), world.ledger.contracts, world.ledger.active_contracts(site.district),
 				site.levels, site.metric("reputation") >= 5])
-		"collections": local.append_array([collection, collection_item, position, world.ledger.seen_vehicles,
+		"collections": local.append_array([collection, collection_item, position, world.ledger.seen_vehicles, world.ledger.sightings,
 			site.cards.keys(), world.ledger.cosmetics, world.ledger.chosen, world.ledger.prizes])
 		"prestige", "prestige_confirm": local.append_array([site.prestige_rank, world.completion(site.district)])
 		"climate": local.append_array([site.preferences.weather, site.preferences.auto_day, game.weather.weather])
@@ -107,7 +108,7 @@ func show_atlas() -> void:
 	for key in ["seasons", "contracts", "collections"]:
 		var action: Button = panel.button(quick, text(key + "_header"), panel.show_page.bind(key))
 		action.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for id in ["north", "desert"]:
+	for id in Atlas.DESTINATIONS:
 		var estate: Button = panel.button(panel.rows, game.district_name(id), open_district.bind(id), false, id == campaign.active)
 		hud.button_art(estate, hud.ROAD, 56)
 	var tools: HBoxContainer = HBoxContainer.new()
@@ -139,7 +140,14 @@ func show_district() -> void:
 				panel.button(card, text("district_stay"), panel.hide_page, false, true)
 		else:
 			var opened: Label = hud.caption(card, 26, hud.INK)
-			opened.text = text("district_require") % [region.fuel, region.rep, balance(region.cost)]
+			opened.text = text("district_gate") % [game.district_name(region["from"]), region.fuel, region.rep, balance(region.cost)]
+			if region.has("gate"):
+				var sponsor: HbtEconomy = campaign.districts.get(region["from"])
+				if sponsor == null:
+					sponsor = HbtEconomy.new(region["from"])
+				var service: HbtService = sponsor.facilities[region.gate]
+				var title_text := service.name_en if game.economy.language == "en" else service.name_pl
+				opened.text += "\n" + text("district_service_gate") % [title_text, region.tier]
 			opened.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			panel.button(card, text("district_open") % balance(region.cost), game.travel_to.bind(destination),
 				not campaign.available(destination), true)
@@ -201,24 +209,30 @@ func show_contracts() -> void:
 		var current: Dictionary = ledger.contracts[key]
 		if current.site != site.district or current.paid:
 			continue
-		var card: VBoxContainer = panel.box(text("metric_" + current.metric), "%d / %d" % [current.have, current.goal])
+		var card: VBoxContainer = panel.box(contract_label(current.get("offer", current.metric)), "%d / %d" % [current.have, current.goal])
 		panel.mission_bar(card, current.have, current.goal)
 		if current.done:
 			panel.button(card, text("claim"), game.claim_contract.bind(key), false, true)
 		else:
 			var due: Label = hud.caption(card, 24, hud.GOLD)
 			clocks.append({"label": due, "when": current.due, "prefix": "season_time"})
-	for rule in Calendar.CONTRACTS:
+	for rule in ledger.offers(site.district):
 		var key: String = ledger.id_for(site.district, rule.id)
 		if ledger.contracts.has(key):
 			continue
-		var card: VBoxContainer = panel.box(text("metric_" + rule.id), text("contract_details") % [
+		var card: VBoxContainer = panel.box(contract_label(rule.id), text("contract_details") % [
 			rule.tier, rule.goal, game.clock_text(rule.seconds), balance(rule.cash), rule.diamond])
 		var eligible: bool = ledger.suitable(site, rule.id)
 		panel.button(card, text("contract_accept" if eligible else "contract_need_service"),
 			game.start_contract.bind(rule.id), not eligible or ledger.active_contracts(site.district) >= 3, eligible)
 	panel.button(panel.rows, text("atlas_return"), panel.show_page.bind("atlas"))
 	update_clock()
+
+func contract_label(id: String) -> String:
+	if id.begins_with("local_") and Regions.LOCAL_CONTRACTS.has(id.trim_prefix("local_")):
+		var language: String = game.economy.language
+		return Regions.LOCAL_CONTRACTS[id.trim_prefix("local_")][language]
+	return text("metric_" + id)
 
 func update_clock() -> void:
 	if panel == null or not panel.modal_open():
@@ -238,12 +252,12 @@ func remaining(seconds: int) -> String:
 func show_collections() -> void:
 	var ledger: RefCounted = game.campaign.ledger
 	var site: HbtEconomy = game.economy
-	var entries: Array = ledger.items(collection)
+	var entries: Array = ledger.items(collection, site.district)
 	if collection_item not in entries:
 		collection_item = entries.front()
 	var owned: int = ledger.collected(site, collection)
 	panel.feature(hud.NAV.managers, text("collections_header"), text("collection_sources"))
-	for row in [["cars", "trucks", "managers"], ["decor", "signs", "facades"]]:
+	for row in [["cars", "trucks", "managers"], ["decor", "signs", "facades"], ["routes"]]:
 		var choices := HBoxContainer.new()
 		panel.rows.add_child(choices)
 		for key in row:
@@ -270,7 +284,7 @@ func show_collections() -> void:
 		var selected: bool = ledger.chosen.get(site.district, {}).get(collection, "") == collection_item
 		panel.button(panel.rows, text("collection_remove" if selected else "collection_equip"),
 			game.equip_collection.bind(collection, collection_item), false, true)
-	if not ledger.prizes.has(collection):
+	if not ledger.prizes.has(ledger.prize_key(site, collection)):
 		panel.button(panel.rows, text("collection_claim"), game.redeem_collection.bind(collection), owned != entries.size(), true)
 	panel.button(panel.rows, text("atlas_return"), panel.show_page.bind("atlas"))
 
@@ -281,7 +295,7 @@ func choose_set(key: String) -> void:
 	panel.refresh()
 
 func browse(step: int) -> void:
-	var list: Array = game.campaign.ledger.items(collection)
+	var list: Array = game.campaign.ledger.items(collection, game.economy.district)
 	position = clampi(position + step, 0, list.size() - 1)
 	collection_item = list[position]
 	panel.refresh()

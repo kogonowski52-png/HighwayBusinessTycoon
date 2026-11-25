@@ -7,6 +7,13 @@ const COPPER_LIVERIES := {"range": ["c57955", "78a499"], "mesa": ["e2aa70", "748
 	"vela": ["c64635", "5f7f84"], "kestrel": ["d9a255", "713d4c"], "atlas": ["9f5136", "d3ab7c"],
 	"cargo": ["60968c", "ac7765"]}
 
+const LOCAL_FLEETS := {
+	"valley": {"parcel": ["86a880", "dabd8a"], "post": ["ce8e63", "82aca2"], "pine": ["8caa80", "a58363"]},
+	"alpine": {"horizon": ["7596bb", "47877d"], "trail": ["bc8063", "5d8ea6"], "summit": ["6c9a9d", "ad6661"]},
+	"ocean": {"coast": ["67c0b5", "ffc38e"], "vela": ["ec9472", "74b4b2"], "regency": ["92b4c1", "b895b7"]},
+	"metro": {"cargo": ["6995a8", "db8953"], "atlas": ["70989c", "857baf"], "pulse": ["8ac1b9", "cea8a4"]},
+}
+
 static var brake_lit: StandardMaterial3D
 static var indicator_lit: StandardMaterial3D
 static var head_lit: StandardMaterial3D
@@ -29,7 +36,7 @@ var lit_at_night := false
 var eased_speed := 0.0
 var steering := 0.0
 
-func build(id: String, variant := 0, local_trim := false) -> void:
+func build(id: String, variant := 0, local_trim := false, region := "") -> void:
 	if is_instance_valid(decoration):
 		remove_child(decoration)
 		decoration.queue_free()
@@ -45,10 +52,15 @@ func build(id: String, variant := 0, local_trim := false) -> void:
 	steering = 0.0
 	var chassis := car.find_child("Chassis", true, false) as MeshInstance3D
 	var palette: Array = COPPER_LIVERIES.get(id, record.paint) if local_trim else record.paint
+	var fleet: Dictionary = LOCAL_FLEETS.get(region, {})
+	if fleet.has(id):
+		palette = fleet[id]
 	var swatch := Color.html(palette[posmod(variant, palette.size())])
 	apply_paint(chassis, swatch)
 	if local_trim:
 		add_copper_details(id, swatch)
+	if fleet.has(id):
+		add_region_trim(region, id, swatch)
 
 	brake_lamps = car.find_child("BrakeLamps", true, false) as MeshInstance3D
 	left_lamps = car.find_child("IndicatorLeft", true, false) as MeshInstance3D
@@ -158,3 +170,20 @@ func add_copper_details(id: String, paint: Color) -> void:
 		var at := Vector3(side * side_width, .695, .17)
 		Kit.box(chassis_art, at, Vector3(.031, .077, float(record.length) * .40), Color("#f1d18d"))
 		Kit.box(chassis_art, at - Vector3(0, .067, 0), Vector3(.034, .026, float(record.length) * .40), paint.darkened(.32))
+
+func add_region_trim(region: String, id: String, swatch: Color) -> void:
+	var contrast := Color("#ece0ba") if region != "metro" else Color("#f5ab61")
+	if id in ["parcel", "post", "horizon", "cargo", "atlas"]:
+		var tall := id in ["horizon", "cargo", "atlas"]
+		for side in [-1.0, 1.0]:
+			var at := Vector3(side * float(record.width) * .505, 1.07 if tall else .87, -.49)
+			var width: float = float(record.length) * (.36 if tall else .33)
+			Kit.box(chassis_art, at, Vector3(.026, .104, width), contrast)
+			var strip := Kit.box(chassis_art, at + Vector3(0, .12, -width * .31), Vector3(.035, .32, .078), swatch.darkened(.30))
+			strip.rotation.x = -.50
+	if region == "alpine" and id in ["trail", "summit"]:
+		var rack := Art.place(chassis_art, "desert", "truck_kit", Vector3(-.01, 1.47, -.31))
+		rack.scale = Vector3(.68, .45, .72)
+	if region == "ocean" and id == "vela":
+		for side in [-1.0, 1.0]:
+			Kit.box(chassis_art, Vector3(side * .064, .624, 1.52), Vector3(.037, .018, .91), contrast)

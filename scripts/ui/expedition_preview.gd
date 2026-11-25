@@ -2,6 +2,7 @@ extends RefCounted
 ## A small isolated 3D viewport for the atlas and the selected collectible.
 
 const Art = preload("res://scripts/art/visual_library.gd")
+const Regions = preload("res://data/world/regions.gd")
 const Atlas = preload("res://data/world/atlas.gd")
 const Vehicles = preload("res://data/visual/vehicle_catalog.gd")
 const CAR = preload("res://scenes/vehicles/compact.tscn")
@@ -54,18 +55,14 @@ static func atlas(parent: Control) -> TextureRect:
 			"desert":
 				Art.place(terrain, "desert", "buttress", object + Vector3(-.38, 0, -.25)).scale = Vector3.ONE * .34
 				Art.place(terrain, "desert", "copper_mile", object + Vector3(.33, 0, .14)).scale = Vector3.ONE * .195
-			"valley":
-				for offset in [-.46, .23, .78]:
-					Art.place(terrain, "desert", "agave", object + Vector3(offset, 0, .22)).scale = Vector3.ONE * 1.35
-			"alpine":
-				for offset in [-.76, .12]:
-					var cone := Kit.cylinder(terrain, object + Vector3(offset, .38, 0), .67, .05, 1.16, Color("#f2e9d7"), 6)
-					cone.rotation.y = offset
-			"ocean":
-				Art.place(terrain, "desert", "event_summer", object).scale = Vector3.ONE * .48
-			"metro":
-				for offset in [-.62, .06, .65]:
-					Kit.box(terrain, object + Vector3(offset, .61, 0), Vector3(.45, 1.24 + offset * .44, .86), Color("#ced0b8"))
+			_:
+				Art.place(terrain, "regions", key + "_fuel", object + Vector3(.2, 0, .14)).scale = Vector3.ONE * .20
+				if key in ["valley", "alpine"]:
+					Art.place(terrain, "regions", key + "_ridge_25", object + Vector3(-.26, 0, -.37)).scale = Vector3.ONE * .17
+				elif key == "ocean":
+					Art.place(terrain, "regions", "ocean_lighthouse", object + Vector3(-.26, 0, -.37)).scale = Vector3.ONE * .21
+				else:
+					Art.place(terrain, "regions", "metro_tower_1", object + Vector3(.73, 0, -.28)).scale = Vector3.ONE * .14
 	for marks in [
 		[Vector3(-3.65, .05, -2.48), Vector3(-2.95, .05, -1.29), Vector3(-2.65, .05, .25), Vector3(-3.10, .05, 2.82)],
 		[Vector3(.52, .05, .3), Vector3(.69, .05, -1.54), Vector3(.80, .05, -3.64)],
@@ -123,7 +120,24 @@ static func detail(parent: Control, group: String, item: String) -> void:
 		subject = Art.place(presentation, "architecture", "canopy_ridge")
 		width = 11.9
 		focus_y = 1.12
-	elif group in ["cars", "trucks"]:
+	elif Regions.has_region(group):
+		subject = Art.place(presentation, "regions", group + "_fuel")
+		match group:
+			"valley":
+				Art.place(presentation, "regions", "valley_bridge", Vector3(-5.7, -.14, 2.8)).scale = Vector3.ONE * .52
+				Art.place(presentation, "regions", "valley_foliage", Vector3(4.1, 0, -1.6))
+			"alpine":
+				Art.place(presentation, "regions", "alpine_ridge_25", Vector3(-4.1, -.12, -2.7)).scale = Vector3.ONE * .61
+				Art.place(presentation, "regions", "alpine_foliage", Vector3(4.2, 0, .6))
+			"ocean":
+				Art.place(presentation, "regions", "ocean_lighthouse", Vector3(-4.3, 0, -2.1)).scale = Vector3.ONE * .74
+				Art.place(presentation, "regions", "ocean_foliage", Vector3(3.3, 0, 1.5))
+			"metro":
+				Art.place(presentation, "regions", "metro_tower_1", Vector3(-3.65, 0, -3.9)).scale = Vector3.ONE * .39
+				Art.place(presentation, "regions", "metro_tower_2", Vector3(3.9, 0, -3.1)).scale = Vector3.ONE * .53
+		width = 14.2
+		focus_y = 1.43
+	elif group in ["cars", "trucks", "routes"]:
 		subject = CAR.instantiate()
 		presentation.add_child(subject)
 		subject.build(item, 1)

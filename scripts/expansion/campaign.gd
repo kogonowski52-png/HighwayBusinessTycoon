@@ -22,13 +22,17 @@ func restore(wall := -1) -> void:
 	var world := HbtEconomy.safe_dict(root.get("world"))
 	ledger.restore(HbtEconomy.safe_dict(world.get("ledger")))
 	var saved := HbtEconomy.safe_dict(world.get("estates"))
-	if saved.get("desert") is Dictionary:
-		var desert := HbtEconomy.new("desert")
-		desert.storage = storage
-		desert.restore_profile(saved.desert, north.clock, false)
-		districts.desert = desert
-		share_identity(north)
-		desert.capture_absence(north.clock)
+	for id in Atlas.DESTINATIONS:
+		if id == "north" or not saved.get(id) is Dictionary or not Atlas.DESTINATIONS[id].has("scene"):
+			continue
+		var estate := HbtEconomy.new(id)
+		estate.storage = storage
+		estate.restore_profile(saved[id], north.clock, false)
+		districts[id] = estate
+	share_identity(north)
+	for id in districts:
+		if id != "north":
+			districts[id].capture_absence(north.clock)
 	var last: Variant = world.get("active", "north")
 	active = last if last is String and districts.has(last) else "north"
 	ledger.advance(north.clock)
@@ -77,8 +81,11 @@ func available(id: String) -> bool:
 		return false
 	if districts.has(id):
 		return true
-	var north: HbtEconomy = districts.north
-	return north.level("fuel") >= int(offer.fuel) and north.metric("reputation") >= int(offer.rep) 		and north.can_afford(HbtAmount.from(offer.cost))
+	var sponsor: HbtEconomy = districts.get(offer.get("from", "north"))
+	if sponsor == null:
+		return false
+	return sponsor.level("fuel") >= int(offer.fuel) and sponsor.metric("reputation") >= int(offer.rep) \
+		and sponsor.level(offer.get("gate", "")) >= int(offer.get("tier", 0)) and sponsor.can_afford(HbtAmount.from(offer.cost))
 
 func travel(id: String) -> Error:
 	if not available(id) or id == active:
@@ -86,10 +93,12 @@ func travel(id: String) -> Error:
 	var old_id := active
 	var source := current()
 	var existed := districts.has(id)
-	var before_wallet := source.amount("cash")
-	var before_spent := source.spent
+	var offer: Dictionary = Atlas.DESTINATIONS[id]
+	var sponsor: HbtEconomy = districts.get(offer.get("from", "north"), source)
+	var before_wallet := sponsor.amount("cash")
+	var before_spent := sponsor.spent
 	if not existed:
-		if not source.debit(HbtAmount.from(Atlas.DESTINATIONS[id].cost)):
+		if not sponsor.debit(HbtAmount.from(offer.cost)):
 			return ERR_UNAVAILABLE
 		var opened := HbtEconomy.new(id)
 		opened.storage = storage
@@ -97,6 +106,8 @@ func travel(id: String) -> Error:
 		opened.high_water = source.clock
 		districts[id] = opened
 	var arrival: HbtEconomy = districts[id]
+	var prior_ledger := ledger.snapshot().duplicate(true)
+	var source_water := source.high_water
 	var old_offline := [arrival.clock, arrival.high_water, arrival.offline_pending, arrival.offline_seconds, arrival.offline_away_seconds]
 	share_identity(source)
 	source.high_water = maxi(source.high_water, source.clock)
@@ -105,8 +116,10 @@ func travel(id: String) -> Error:
 	var error := checkpoint()
 	if error != OK:
 		active = old_id
-		source.wallet.cash = before_wallet
-		source.spent = before_spent
+		ledger.restore(prior_ledger)
+		source.high_water = source_water
+		sponsor.wallet.cash = before_wallet
+		sponsor.spent = before_spent
 		if existed:
 			arrival.clock = old_offline[0]
 			arrival.high_water = old_offline[1]

@@ -1,5 +1,6 @@
 extends Node3D
 
+const Regions = preload("res://data/world/regions.gd")
 const Art = preload("res://scripts/art/visual_library.gd")
 
 enum Look { DAY, GOLDEN, EVENING, NIGHT, DAWN }
@@ -58,6 +59,19 @@ func _ready() -> void:
 	set_look(current)
 
 func setup_practicals() -> void:
+	if Regions.has_region(district):
+		var plan: Dictionary = Regions.LAYOUTS[district]
+		for id in plan.plots:
+			var plot: Vector2 = plan.plots[id][0]
+			var warm := Color("#ffc583") if id != "charge" else Color("#86eee5")
+			var heavy: bool = plan.plots[id][1] == "truck"
+			practical(Vector3(plot.x, 3.88 if heavy else 2.56, plot.y + 3.12), 8.0 if heavy else 5.7, warm)
+			floor_glows.append(Art.light_pool(self, Vector3(plot.x, -.009, plot.y + 4.33),
+				Vector2(14.0, 8.1) if heavy else Vector2(7.75, 5.8), warm, .79))
+		if district == "metro":
+			for x in [-24.0, 0.0, 24.0]:
+				practical(Vector3(x, 3.60, 6.33), 7.60, Color("#c9ecff"))
+		return
 	if district == "desert":
 		for point in [Vector3(-1, 3.11, .32), Vector3(-12.8, 2.03, -4.31), Vector3(28.1, 4.31, -21.33),
 			Vector3(-13.4, 2.32, -21.54), Vector3(12.75, 2.74, -20.08), Vector3(32.0, 2.54, -4.88)]:
@@ -108,6 +122,24 @@ func set_look(look: Look) -> void:
 		sun.light_energy = .83 if look == Look.DAY else .92
 	var intensity: float = preset.practicals
 	RenderingServer.global_shader_parameter_set(&"hbt_practical_level", lerpf(0.16, 1.64, intensity))
+	if look in [Look.DAY, Look.GOLDEN]:
+		match district:
+			"valley":
+				sun.light_color = Color("#fff1d2")
+				sun.light_energy *= 1.10
+			"alpine":
+				environment.ambient_light_color = Color("#b8cde3")
+				environment.ambient_light_energy = .47
+				sun.light_color = Color("#ffe7c6")
+				sun.light_energy *= .88
+				sun.rotation_degrees = Vector3(-43, -48, 0)
+			"ocean":
+				environment.ambient_light_color = Color("#cae7df")
+				sun.light_color = Color("#fff0cb")
+				sun.light_energy *= 1.22
+	if district == "metro" and look == Look.NIGHT:
+		environment.ambient_light_energy = .33
+		sun.light_energy = .28
 	RenderingServer.global_shader_parameter_set(&"hbt_ambient_motion", 0.0 if reduced else 1.0)
 	environment.glow_enabled = supports_glow and not reduced and look in [Look.EVENING, Look.NIGHT]
 	for index in range(practical_lights.size()):

@@ -77,6 +77,8 @@ func _process(_delta: float) -> void:
 		buttons[id].visible = shown.has(id)
 
 func world_anchor(id: String) -> Vector3:
+	if controller.is_regional():
+		return controller.campus.pin_at(id)
 	if controller.is_desert():
 		return controller.campus.focus(id) + Vector3(0, float(Desert.ROOFLINE[id]) + 0.26, -1.26)
 	if Building.ROOFS.has(id):

@@ -1,5 +1,7 @@
 # Ekspansja Trasy 17
 
+Poniższy opis utrwala wydanie 0.6.0. Aktualny stan wszystkich sześciu regionów i weryfikację braków przedstawia audyt 0.6.1. [Etap 5](STAGE5_STATUS.md)
+
 Atlas otwiera się przyciskiem **Atlas** przy widoku mapy. Copper Mile wymaga poziomu 3 na dystrybutorach Trasy 17, reputacji 6 i 670 zł. Gracz płaci przy otwarciu, a potem podróżuje bez opłat. Karta pokazuje rangę, odblokowane usługi, procent rozwoju i godzinową estymację offline opartą o obsadę. Szacunek różni się od bieżącej sprzedaży. Animacja podróży otwiera inną scenę i wyłącza krok symulacji poprzedniej.
 
 | Region | Zawartość w 0.6.0 |

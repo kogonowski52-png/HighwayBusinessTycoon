@@ -209,14 +209,16 @@ func portrait(id: String) -> Texture2D:
 
 func managers() -> void:
 	var store: HbtEconomy = game.economy
-	panel.feature(hud.CARDS, game.t("manager_collection") % [store.cards.size(), Managers.ROSTER.size()],
+	var list := Managers.catalog(store.district)
+	var owned_count := list.filter(func(id: String) -> bool: return store.cards.has(id)).size()
+	panel.feature(hud.CARDS, game.t("manager_collection") % [owned_count, list.size()],
 		game.t("manager_capacity") % [store.equipped.size(), store.CONFIG.max_active_managers])
 	var shelf := GridContainer.new()
 	shelf.columns = 3
 	shelf.add_theme_constant_override("h_separation", 8)
 	shelf.add_theme_constant_override("v_separation", 12)
 	panel.rows.add_child(shelf)
-	for key in Managers.ROSTER:
+	for key in list:
 		var profile: Dictionary = Managers.ROSTER[key]
 		var owned := store.cards.has(key)
 		var card: Button = panel.button(shelf, profile.name, open_manager.bind(key))

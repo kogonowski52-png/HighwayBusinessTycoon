@@ -10,6 +10,7 @@ const RARITY := {"common": Color("#dae9db"), "rare": Color("#d8e9f3"),
 	"epic": Color("#ebe0f3"), "legendary": Color("#f6e2b6")}
 const Extra = preload("res://scripts/ui/presentation_pages.gd")
 const Campus = preload("res://scripts/buildings/roadside_campus.gd")
+const RegionalCampus = preload("res://scripts/buildings/regional_campus.gd")
 const DesertCampus = preload("res://scripts/buildings/desert_campus.gd")
 const Expedition = preload("res://scripts/ui/expedition_pages.gd")
 
@@ -287,12 +288,28 @@ func show_upgrades() -> void:
 	var purchase: Button = button(card, controller.hud.upgrade.text, controller.invest, controller.hud.upgrade.disabled, true)
 	tutorial_targets["upgrade_buy"] = purchase
 	theme_source.button_art(purchase, theme_source.UPGRADE_ART, 56)
-	var thresholds: Array = DesertCampus.THRESHOLDS if controller.is_desert() else [1, 2, 3, 4, 5] if site == "fuel" else Campus.THRESHOLDS
+	var thresholds: Array = [1, 2, 3, 4, 5] if site == "fuel" else Campus.THRESHOLDS
+	if controller.is_regional():
+		thresholds = RegionalCampus.THRESHOLDS
+	elif controller.is_desert():
+		thresholds = DesertCampus.THRESHOLDS
+	if tier > 0:
+		var inventory := store.commerce.statistics(site, tier)
+		if not inventory.is_empty():
+			match site:
+				"logistics", "warehouse":
+					box(controller.t("commerce_stock") % [inventory.stock, inventory.capacity],
+						controller.t("commerce_freight") % [inventory.inbound, inventory.outbound])
+				"dealership":
+					box(controller.t("commerce_showroom") % [inventory.stock, inventory.capacity],
+						controller.t("commerce_sold") % inventory.sold)
+				"mall":
+					box(controller.t("commerce_shoppers") % inventory.shoppers, controller.t("venue_capacity") % store.capacity(site))
 	for index in range(thresholds.size()):
 		var stage_number: int = thresholds[index]
 		var achieved := tier >= stage_number
 		var icon_set: Array = theme_source.STAGE_ART
-		var picture: Texture2D = icon_set[index] if site == "fuel" and not controller.is_desert() else theme_source.NAV.sites
+		var picture: Texture2D = icon_set[index] if site == "fuel" and store.district == "north" else theme_source.NAV.sites
 		var tile := PanelContainer.new()
 		tile.add_theme_stylebox_override("panel", theme_source.style(Color("#e8efd9") if achieved else Color("#f6ecda"), theme_source.RIM, 19, 12))
 		rows.add_child(tile)
@@ -305,6 +322,10 @@ func show_upgrades() -> void:
 		copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		copy.alignment = BoxContainer.ALIGNMENT_CENTER
 		var prefix := "desert_stage_" if controller.is_desert() else ("fuel_stage_" if site == "fuel" else "roof_stage_")
+		if controller.is_regional():
+			prefix = "regional_stage_"
+			if index == 1 and site in ["warehouse", "logistics"]:
+				prefix = "industry_stage_"
 		var name_key := prefix + str(index + 1)
 		var name: Label = theme_source.caption(copy, 29, theme_source.INK, theme_source.HEAVY)
 		name.text = controller.t(name_key)

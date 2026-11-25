@@ -1,6 +1,7 @@
 extends Node3D
 
 const Routes = preload("res://data/economy/routes.gd")
+const RegionalRoutes = preload("res://data/world/regional_routes.gd")
 const Actor = preload("res://scripts/customers/customer_manager.gd")
 const Managers = preload("res://data/economy/managers.gd")
 const MANAGER_SPOTS := {
@@ -9,7 +10,7 @@ const MANAGER_SPOTS := {
 	"leon": Vector3(-7.31, 0.30, -14.42), "vera": Vector3(-8.17, 0.30, -14.45),
 }
 
-var routes: Script = Routes
+var routes: Object = Routes
 var staff: Dictionary = {}
 var directors: Dictionary = {}
 var manual: Dictionary = {}
@@ -86,16 +87,21 @@ func update_visitor(visit: HbtVisit, delta: float) -> void:
 		var role := "driver" if visit.client.kind == "truck" else "customer"
 		visitors[visit.number] = person(role, visit.footpath[0])
 	var guest: Actor = visitors[visit.number]
+	var delivery: bool = routes is RegionalRoutes and routes.district == "valley" and visit.service == "market" and visit.client.model in ["parcel", "post"]
+	if delivery and not is_instance_valid(guest.prop):
+		guest.attach_prop("Crate")
 	var next := visit.foot_position(visit.walked)
 	var shift := next - guest.position
 	guest.position = next
+	if delivery:
+		guest.prop.visible = visit.walked > .90 and visit.phase != HbtVisit.Phase.EXIT_WAIT
 	if visit.phase != HbtVisit.Phase.EXIT_WAIT and visit.walked < 0.91:
 		guest.rotation.y = visit.yaw + PI * 0.5
 		guest.pose_at("exit_car", visit.walked / 0.91 * 0.51)
 		return
 	if shift.length_squared() > 0.000005:
 		guest.rotation.y = lerp_angle(guest.rotation.y, atan2(shift.x, shift.z), minf(delta * 12.0, 1.0))
-		guest.play("walk")
+		guest.play("carry" if delivery and guest.prop.visible else "walk")
 	else:
 		guest.play("service" if visit.phase == HbtVisit.Phase.WORKING else "idle")
 
@@ -121,7 +127,10 @@ func manager_post(id: String) -> Vector3:
 	if routes == Routes and MANAGER_SPOTS.has(id):
 		return MANAGER_SPOTS[id]
 	var site: String = Managers.ROSTER[id].site
-	if routes != Routes and site not in routes.FRONTS:
+	if routes is RegionalRoutes:
+		if not routes.layout.plots.has(site):
+			site = "fuel"
+	elif routes != Routes and site not in routes.FRONTS:
 		site = "fuel"
 	return routes.worker_at(site, 0) + Vector3(-0.74, 0.0, -0.50)
 

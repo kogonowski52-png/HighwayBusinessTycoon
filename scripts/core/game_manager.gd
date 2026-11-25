@@ -1,11 +1,17 @@
 extends Node3D
 
+const Art = preload("res://scripts/art/visual_library.gd")
 const Routes = preload("res://data/economy/routes.gd")
 const DesertRoutes = preload("res://data/world/desert_routes.gd")
 const Atlas = preload("res://data/world/atlas.gd")
 const DesertLandscape = preload("res://scripts/buildings/desert_landscape.gd")
 const DesertCampus = preload("res://scripts/buildings/desert_campus.gd")
 const DesertStation = preload("res://scripts/buildings/desert_station.gd")
+const Regions = preload("res://data/world/regions.gd")
+const RegionalRoutes = preload("res://data/world/regional_routes.gd")
+const RegionalLandscape = preload("res://scripts/buildings/regional_landscape.gd")
+const RegionalCampus = preload("res://scripts/buildings/regional_campus.gd")
+const RegionalStation = preload("res://scripts/buildings/regional_station.gd")
 const Weather = preload("res://scripts/art/expedition_weather.gd")
 const TrafficManager = preload("res://scripts/traffic/traffic_manager.gd")
 const Landscape = preload("res://scripts/buildings/roadside_landscape.gd")
@@ -28,12 +34,12 @@ const BOOK = preload("res://data/economy/progression.gd")
 const LOOK_LABELS := ["day", "golden", "evening", "night", "dawn"]
 const Phase = HbtVisit.Phase
 const SERVICE_SOUND := {"fuel": "pump", "truck": "pump", "wash": "wash",
-	"workshop": "workshop", "tires": "workshop", "restaurant": "diner", "drive_through": "diner", "cafe": "diner"}
+	"workshop": "workshop", "tires": "workshop", "restaurant": "diner", "drive_through": "diner", "cafe": "diner", "mall": "diner", "logistics": "workshop", "warehouse": "workshop", "dealership": "diner"}
 
 @export var district_profile: HbtDistrict
 var economy := HbtEconomy.new()
 var campaign: HbtCampaign
-var routes: Script = Routes
+var routes: Object = Routes
 var traveling := false
 var arrived_from_trip := false
 var weather: Node3D
@@ -110,7 +116,7 @@ func _ready() -> void:
 	fuel_art_level = -1
 	weather = Weather.new()
 	add_child(weather)
-	weather.setup(lighting, is_desert())
+	weather.setup(lighting, economy.district, routes)
 	weather.display_collection(campaign.ledger.chosen.get(campaign.active, {}))
 	add_child(traffic)
 	traffic.sighting.connect(on_sighting)
@@ -119,7 +125,7 @@ func _ready() -> void:
 	add_child(crew)
 	add_child(driver)
 	driver.position = routes.worker_at("fuel", 0)
-	driver.rotation.y = -1.2 if is_desert() else -2.56
+	driver.rotation.y = -1.2 if economy.district != "north" else -2.56
 	add_child(hud)
 	add_child(operations)
 	operations.setup(self, hud)
@@ -151,6 +157,8 @@ func _ready() -> void:
 	frame_camera()
 	on_economy_changed()
 	mounted = true
+	if economy.district == "metro" and not economy.preferences.auto_day:
+		set_look(Lighting.Look.NIGHT)
 	update_expedition()
 	get_tree().auto_accept_quit = false
 	economy.checkpoint()
@@ -160,7 +168,14 @@ func _ready() -> void:
 		travel_veil(t("journey_arrived") % district_name(campaign.active), false)
 
 func setup_district() -> void:
-	if is_desert():
+	if is_regional():
+		routes = RegionalRoutes.new(economy.district)
+		station = RegionalStation.new(routes)
+		landscape = RegionalLandscape.new(routes)
+		campus = RegionalCampus.new(routes)
+		lighting.district = economy.district
+		traffic.district = economy.district
+	elif is_desert():
 		var profile := district_profile if district_profile != null else HbtEconomy.DESERT
 		routes = DesertRoutes
 		station = DesertStation.new()
@@ -177,6 +192,9 @@ func setup_district() -> void:
 func is_desert() -> bool:
 	return economy.district == "desert"
 
+func is_regional() -> bool:
+	return Regions.has_region(economy.district)
+
 func setup_camera() -> void:
 	add_child(camera)
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
@@ -189,6 +207,12 @@ func motion_enabled() -> bool:
 func frame_camera() -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
 	var aspect := viewport_size.x / maxf(1.0, viewport_size.y)
+	if is_regional():
+		var plan: Dictionary = Regions.LAYOUTS[economy.district]
+		var center: Vector3 = plan.center if overview else campus.focus(selected)
+		var width := maxf(94.0, aspect * 81.0) if overview else maxf(float(plan.width), aspect * 38.0)
+		camera_rig.frame(center, Vector3(16, 36, 31), width, not mounted or not motion_enabled())
+		return
 	if is_desert():
 		var center: Vector3 = Vector3(6, .0, -9.6) if overview else campus.focus(selected) + Vector3(-.31, .54, -.24)
 		camera_rig.frame(center, Vector3(19, 36, 29), maxf(90.0, aspect * 78.0) if overview else maxf(25.6, aspect * 33.0),
@@ -263,7 +287,7 @@ func update_scene(delta: float) -> void:
 	var primary_manual := primary != null and primary.phase == Phase.WORKING and primary.worker == -1
 	driver.represent_service(primary_ready and economy.crew.fuel.is_empty(), primary_manual, delta)
 	var filling := traffic.dispatch.first_at("fuel", Phase.WORKING)
-	if filling == null and not is_desert():
+	if filling == null and economy.district == "north":
 		filling = traffic.dispatch.first_at("truck", Phase.WORKING)
 	if filling != null:
 		var worker: Node3D = driver if filling == primary and primary_manual else crew.performer(filling)
@@ -342,6 +366,9 @@ func _exit_tree() -> void:
 	if mounted and not traveling and economy.dirty:
 		economy.checkpoint()
 	if mounted:
+		economy.commerce.reservations.clear()
+		if is_regional():
+			Art.release_region(economy.district)
 		economy.save_hook = Callable()
 
 func select_site(id: String) -> void:
@@ -557,14 +584,14 @@ func claim_rewarded(base: HbtAmount) -> void:
 
 func on_economy_changed() -> void:
 	campus.update_sites(economy)
-	var art_level: int = campus.roof_counts.fuel if is_desert() else mini(5, economy.level("fuel"))
-	if is_desert():
+	var art_level: int = mini(5, economy.level("fuel")) if economy.district == "north" else campus.roof_counts.fuel
+	if economy.district != "north":
 		station.set_bays(economy.capacity("fuel"))
 	else:
 		station.set_market_open(economy.level("market") > 0)
 	if fuel_art_level != art_level:
 		fuel_art_level = art_level
-		if not is_desert():
+		if economy.district == "north":
 			station.setup(art_level)
 		landscape.set_forecourt_tier(art_level)
 	crew.roster(economy)
@@ -660,7 +687,7 @@ func refresh() -> void:
 	hud.lighting.tooltip_text = t("lighting_tip")
 	hud.view.text = t("station_view" if overview else "map")
 	hud.view.tooltip_text = t("view_tip")
-	hud.location.text = Atlas.DESTINATIONS[campaign.active].area if is_desert() else t("location")
+	hud.location.text = Atlas.DESTINATIONS[campaign.active].area if economy.district != "north" else t("location")
 	hud.title.text = district_name(campaign.active)
 	hud.pages.atlas.text = t("atlas_button")
 	hud.cash_caption.text = t("cash_short")
@@ -680,7 +707,7 @@ func refresh() -> void:
 	hud.upgrade_preview.text = t("look_action")
 	if quantity != 1:
 		hud.upgrade_preview.text = "MAX" if quantity == 0 else "+%d" % quantity
-	var pumps := selected == "fuel" or (selected == "truck" and not is_desert())
+	var pumps := selected == "fuel" or (selected == "truck" and economy.district == "north")
 	hud.detail_icon.texture = hud.PUMP if pumps else hud.NAV.sites
 	hud.serve.icon = hud.PUMP if pumps else hud.NAV.sites
 	var tier := economy.level(selected)
@@ -756,8 +783,7 @@ func toggle_auto_day() -> void:
 	operations.refresh()
 
 func on_sighting(id: String) -> void:
-	if not campaign.ledger.seen_vehicles.has(id):
-		campaign.ledger.seen_vehicles[id] = true
+	if campaign.ledger.spot(economy.district, id):
 		economy.dirty = true
 
 func on_supply_delivery() -> void:

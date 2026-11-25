@@ -53,7 +53,7 @@ static func profiles() -> Array[HbtService]:
 		definitions.append(service)
 	return definitions
 
-static func missions(definitions: Dictionary) -> Dictionary:
+static func missions(definitions: Dictionary, prefix := "district") -> Dictionary:
 	var result := {}
 	var chapter := 0
 	for id in definitions:
@@ -71,7 +71,7 @@ static func missions(definitions: Dictionary) -> Dictionary:
 		]
 		for index in range(rules.size()):
 			var rule: Array = rules[index]
-			var key := "district_%s_%02d" % [id, index]
+			var key := "%s_%s_%02d" % [prefix, id, index]
 			var reward := {"cash": rule[3]} if rule[3] > 0 else {"diamond": 3 + rule[4], "event": 2 + rule[4]}
 			result[key] = {"id": key, "site": id, "rank": rank, "counter": rule[1], "goal": rule[2],
 				"reward": reward, "wave": rule[4], "label": rule[0]}

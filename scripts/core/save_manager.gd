@@ -1,6 +1,6 @@
 extends RefCounted
 
-const SCHEMA := 6
+const SCHEMA := 7
 const TEMP := ".tmp"
 const BACKUP := ".backup"
 const BACKUP_TEMP := ".backup.tmp"

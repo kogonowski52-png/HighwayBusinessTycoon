@@ -1,6 +1,6 @@
 # Podpisywanie testowych wydań Androida
 
-Pakiet zachowuje identyfikator `pl.krystiandevelopment.highwaytycoon`. Wydanie 0.6.0 ma kod 6000, a kolejne wydania używają wzoru `major × 1 000 000 + minor × 1 000 + patch`, przy składowych od 0 do 999. Weryfikator odrzuca APK z kodem niezgodnym z wersją, błędnym identyfikatorem lub innym certyfikatem. Publikacje są wykonywane kolejno, a workflow odrzuca wersję starszą od opublikowanej.
+Pakiet zachowuje identyfikator `pl.krystiandevelopment.highwaytycoon`. Wersja 0.6.0 ma kod 6000, a 0.6.1 ma kod 6001. Wersje używają wzoru `major × 1 000 000 + minor × 1 000 + patch`, przy składowych od 0 do 999. Weryfikator odrzuca APK z kodem niezgodnym z wersją, błędnym identyfikatorem lub innym certyfikatem. Publikacje są wykonywane kolejno, a workflow odrzuca wersję starszą od opublikowanej.
 
 | Kompilacja | Kod | SHA-256 certyfikatu |
 | --- | ---: | --- |
@@ -20,9 +20,17 @@ base64 < HighwayBusinessTycoon-test-signing.p12 | tr -d '\n' | \
 gh secret set ANDROID_TEST_KEYSTORE_PASSWORD --repo kogonowski52-png/HighwayBusinessTycoon
 ```
 
-Drugie polecenie wczytuje hasło ze standardowego wejścia lub w trybie interaktywnym. Workflow weryfikuje odcisk, używa klucza w katalogu tymczasowym runnera i usuwa tę kopię po eksporcie. Gdy brakuje sekretu lub odcisk jest inny, publikacja zatrzymuje się. Po konfiguracji ponownie uruchom workflow dla istniejącego tagu `v0.6.0`.
+Drugie polecenie wczytuje hasło ze standardowego wejścia lub w trybie interaktywnym. Workflow weryfikuje odcisk, używa klucza w katalogu tymczasowym runnera i usuwa tę kopię po eksporcie. Gdy brakuje sekretu lub odcisk jest inny, publikacja zatrzymuje się. Po konfiguracji uruchom workflow dla odpowiedniego tagu.
 
 Próba publikacji `v0.6.0` zatrzymała się na braku pary sekretów. Dostęp z Cloud do API zarządzania sekretami został odrzucony. Sprawdzony APK i zapasowy szyfrowany magazyn przygotowano w prywatnym katalogu pobierania. Ustawienie sekretów w repozytorium oraz przeniesienie kopii do sejfu właściciela pozostają otwarte. [Przebieg GitHub Actions](https://github.com/kogonowski52-png/HighwayBusinessTycoon/actions/runs/45664015493)
+
+### Publikacja 0.6.1 z przeglądarki
+
+1. Na zaufanym komputerze przygotuj jednoliniową zawartość istniejącego magazynu poleceniem `base64 < HighwayBusinessTycoon-test-signing.p12 | tr -d '\n'`.
+2. W repozytorium otwórz **Settings → Secrets and variables → Actions → New repository secret**. Dodaj `ANDROID_TEST_KEYSTORE_BASE64` z treścią z pierwszego kroku.
+3. Dodaj `ANDROID_TEST_KEYSTORE_PASSWORD` z hasłem tego samego magazynu.
+4. Otwórz **Actions → Android debug release → Run workflow**, wpisz `v0.6.1` w polu `tag` i uruchom kompilację. Po pomyślnym przebiegu APK jest do pobrania w Releases. [Ustawienia sekretów](https://github.com/kogonowski52-png/HighwayBusinessTycoon/settings/secrets/actions) · [Workflow wydania](https://github.com/kogonowski52-png/HighwayBusinessTycoon/actions/workflows/android-debug.yml)
+
 
 ## Aktualizacja i zapis
 
@@ -37,4 +45,4 @@ adb shell run-as pl.krystiandevelopment.highwaytycoon mkdir -p files
 adb shell -T "run-as pl.krystiandevelopment.highwaytycoon sh -c 'cat > files/roadside.cfg'" < roadside.cfg
 ```
 
-Próba aktualizacji na urządzeniu wymaga fizycznego Androida lub emulatora. Lokalna kontrola porównuje podpisy dwóch gotowych plików i kod wersji, a osobny test Godota sprawdza odczyt autentycznego zapisu 0.5.0.
+Próba aktualizacji na urządzeniu wymaga fizycznego Androida lub emulatora. Lokalna kontrola porównuje podpisy dwóch gotowych plików i kod wersji, a osobny test Godota sprawdza odczyt autentycznych zapisów 0.5.0 i 0.6.0.

@@ -25,6 +25,9 @@ var distance := 0.0
 var signed_distance := 0.0
 var steer := 0
 var invoice: HbtAmount
+var trade := ""
+var stock_delta := 0
+var sold_model := ""
 var paid := false
 var bounced := false
 var footpath := PackedVector3Array()

@@ -16,6 +16,8 @@ const Staff = preload("res://scripts/employees/staff_rules.gd")
 const SaveManager = preload("res://scripts/core/save_manager.gd")
 const DESERT: HbtDistrict = preload("res://data/world/desert.tres")
 const DesertBusiness = preload("res://data/world/desert_businesses.gd")
+const Regions = preload("res://data/world/regions.gd")
+const Commerce = preload("res://scripts/economy/regional_commerce.gd")
 const BPS := 10_000
 const CURRENCIES := ["cash", "diamond", "reputation", "event"]
 const MANAGER_WORKER := -2
@@ -61,6 +63,7 @@ var _reward_count := -1
 var _curve: Dictionary = {}
 var _sales: Array[Dictionary] = []
 var district := "north"
+var commerce := Commerce.new()
 var milestones: Array = BOOK.MILESTONES
 var campaign_data: Dictionary = {}
 var save_hook: Callable
@@ -71,6 +74,8 @@ var special_guest: Dictionary = {}
 func _init(location := "north") -> void:
 	district = location
 	var definitions: Array[HbtService] = DesertBusiness.profiles() if district == "desert" else CONFIG.services
+	if Regions.has_region(district):
+		definitions = Regions.profiles(district)
 	for profile in definitions:
 		facilities[profile.id] = profile
 		_curve[profile.id] = build_curve(profile)
@@ -78,6 +83,9 @@ func _init(location := "north") -> void:
 	if district == "desert":
 		missions = DesertBusiness.missions(facilities)
 		milestones = DesertBusiness.LANDMARKS
+	elif Regions.has_region(district):
+		missions = DesertBusiness.missions(facilities, district)
+		milestones = Regions.roster_goals(district)
 	else:
 		missions = Journey.items(facilities)
 	for item in missions.values():
@@ -86,7 +94,10 @@ func _init(location := "north") -> void:
 
 func reset() -> void:
 	wallet.clear()
+	commerce.reset()
 	var starting_cash := DESERT.opening_cash if district == "desert" else CONFIG.opening_cash
+	if Regions.has_region(district):
+		starting_cash = Regions.ECONOMICS[district][0]
 	for currency in CURRENCIES:
 		wallet[currency] = HbtAmount.from(starting_cash if currency == "cash" else 0)
 	for id in facilities:
@@ -173,6 +184,7 @@ func restore_profile(data: Dictionary, wall: int, accrue := true) -> void:
 				crew[id].append(Staff.sanitize(safe_dict(employees[index])))
 		var record := safe_dict(sales.get(id))
 		per_service[id] = {"count": counter(record.get("count", 0)), "gross": HbtAmount.from(record.get("gross", "0"))}
+	commerce.restore(safe_dict(data.get("commerce")), levels)
 	var owned := safe_dict(data.get("cards"))
 	var ranks := safe_dict(data.get("manager_ranks"))
 	for id in BOOK.MANAGERS:
@@ -182,7 +194,7 @@ func restore_profile(data: Dictionary, wall: int, accrue := true) -> void:
 	var active: Variant = data.get("equipped")
 	if active is Array:
 		for id in active:
-			if cards.has(id) and id not in equipped and equipped.size() < CONFIG.max_active_managers:
+			if cards.has(id) and Managers.ROSTER[id].get("district", district) == district and id not in equipped and equipped.size() < CONFIG.max_active_managers:
 				equipped.append(id)
 	var rewards := safe_dict(data.get("claimed"))
 	for item in milestones:
@@ -252,6 +264,8 @@ func snapshot() -> Dictionary:
 		"high_water": high_water, "boost_until": boost_until,
 		"event_day": event_day, "event_services": event_services, "event_claimed": event_claimed,
 	}
+	if not commerce.state.is_empty():
+		result["commerce"] = commerce.state
 	if prestige_rank > 0:
 		result["prestige_rank"] = prestige_rank
 	if not campaign_data.is_empty():
@@ -451,6 +465,8 @@ func manager_for(key: String, site := "") -> String:
 	var best := ""
 	for id in equipped:
 		var card: Dictionary = BOOK.MANAGERS[id]
+		if card.get("district", district) != district:
+			continue
 		if card.skill == key and (card.site.is_empty() or card.site == site):
 			if best.is_empty() or manager_effect(id) > manager_effect(best) \
 				or (key == "collect" and manager_rank(id) > manager_rank(best)):
@@ -490,6 +506,8 @@ func train_manager(id: String) -> bool:
 	return true
 
 func assign(id: String) -> bool:
+	if BOOK.MANAGERS.get(id, {}).get("district", district) != district:
+		return false
 	if not cards.has(id):
 		return false
 	if id in equipped:
@@ -706,6 +724,8 @@ func claim_achievement(id: String) -> bool:
 func current_event() -> Dictionary:
 	if district == "desert":
 		return DesertBusiness.DAILIES[posmod(day_index(), DesertBusiness.DAILIES.size())]
+	if Regions.has_region(district):
+		return Regions.daily(district, day_index())
 	return BOOK.EVENTS[posmod(day_index(), BOOK.EVENTS.size())]
 
 func daily_progress() -> int:
@@ -745,6 +765,9 @@ func arrival_period() -> float:
 	var reputation := float(metric("reputation"))
 	var interval := DESERT.arrival_seconds if district == "desert" else CONFIG.arrival_seconds
 	var floor_seconds := DESERT.minimum_arrival_seconds if district == "desert" else CONFIG.minimum_arrival_seconds
+	if Regions.has_region(district):
+		interval = Regions.ECONOMICS[district][1]
+		floor_seconds = Regions.ECONOMICS[district][2]
 	var shortened := interval / (1.0 + minf(reputation / 350.0, 0.64))
 	return maxf(floor_seconds, shortened * float(BPS) / (BPS + skill("traffic")))
 

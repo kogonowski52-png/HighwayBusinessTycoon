@@ -72,7 +72,8 @@ def render(role, index, folder):
     bpy.ops.render.render(write_still=True)
 
 
-destination = output_root() / "assets/ui/managers"
-destination.mkdir(parents=True, exist_ok=True)
-for number, director in enumerate(DIRECTORS + NEW_DIRECTORS):
-    render(director, number, destination)
+if __name__ == "__main__":
+    destination = output_root() / "assets/ui/managers"
+    destination.mkdir(parents=True, exist_ok=True)
+    for number, director in enumerate(DIRECTORS + NEW_DIRECTORS):
+        render(director, number, destination)

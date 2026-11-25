@@ -1,5 +1,12 @@
 # Historia zmian
 
+## 0.6.1 · Sześć działających regionów
+
+- Otwarto Green Valley, Alpine Pass, Ocean Coast i Metro City. Każda lokalizacja ma własny układ, architekturę, flotę i profil finansowy.
+- Meridian Junction uruchamia doki przeładunkowe, magazyn z rezerwacją towaru, salon ze sprzedażą i Crossline z niezależnymi stanowiskami. Progi modernizacji montują cztery grupy geometrii ponad modelem otwarcia.
+- Atlas odblokowuje mapy kolejno i rozlicza opłatę w regionie, który spełnił warunki. Dodano 320 misji, siedem kart z oryginalnymi postaciami i portretami, cztery kontrakty oraz album trasy w każdym z sześciu regionów.
+- Schemat 7 odczytuje i zachowuje kampanie 0.6.0, niezależne dane gospodarcze, umowy i niewypłacony dochód. APK ma kod 6001 i certyfikat lokalnej linii od 0.5.0.
+
 ## 0.6.0 · Ekspansja Copper Mile
 
 - Otwarto Desert Highway z własnym ruchem, zapisem, stawkami i dochodami offline. Atlas prezentuje sześć regionów i uruchamia podróż pomiędzy dwiema dostępnymi lokalizacjami.

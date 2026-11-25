@@ -1,5 +1,11 @@
 # Projekt gry · Trasa 17
 
+## Kampania sześciu tras
+
+Stacja Północ finansuje Copper Mile, następnie trasa prowadzi przez Green Valley, Alpine Pass i Ocean Coast do Metro City. Dostęp wymaga gotówki, określonej reputacji i rozwoju biznesu poprzednika. Powroty są bezpłatne. Zlecenia, pracownicy, aktywne karty, postęp rozbudowy i wpływy są przypisane do regionu. Karty posiadane przez gracza, ustawienia i kalendarz są wspólne.
+
+Przeładunek w Meridian i składowanie w Junction rozliczają przyjęcie lub wydanie towaru po zakończeniu wizyty. Apex Motors rozlicza sprzedaż dostępnego auta, a Crossline obsługuje niezależne stanowiska przy parkingu. Szacunki offline nie zmieniają fizycznych dostaw ani stanu samochodów na ekspozycji. Album regionu nagradza spotkanie trzech wskazanych pojazdów na danej trasie. [Reguły etapu 5](docs/STAGE5_STATUS.md)
+
 Gracz uruchamia kolejne usługi obsługi drogowej. Ruch widoczny na mapie wpływa na sprzedaż. Wyposażenie, pracownicy i menedżerowie przyspieszają proces. Wszystkie nagrody potrzebne do postępu pochodzą z rozgrywki.
 
 W rozwoju sieci gracz kupuje dostęp do Copper Mile z zysków Stacji Północ. Dwie lokalizacje mają własne inwestycje, załogi, statystyki i zarobki w czasie postoju. Rozliczone wizyty zasilają tygodniowe wydarzenia, kontrakty i kolekcje, a komplet rozbudów lokalnych pozwala zdobyć prestiż. [Ekspansja i reguły kampanii](docs/EXPANSION.md)

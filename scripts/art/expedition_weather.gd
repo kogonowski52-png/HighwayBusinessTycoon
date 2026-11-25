@@ -9,10 +9,14 @@ var ornaments := Node3D.new()
 var wardrobe := Node3D.new()
 var lighting: Node3D
 var desert := false
+var district := "north"
+var routes: Object
 
-func setup(world_lighting: Node3D, is_desert: bool) -> void:
+func setup(world_lighting: Node3D, region: String, course: Object) -> void:
 	lighting = world_lighting
-	desert = is_desert
+	district = region
+	routes = course
+	desert = region == "desert"
 	add_child(ornaments)
 	add_child(wardrobe)
 	add_child(effect)
@@ -31,20 +35,24 @@ func follow(at: Vector3) -> void:
 func apply(site: HbtEconomy, event: Dictionary, quality: int, choice: String) -> void:
 	var condition := choice
 	if choice == "auto":
-		condition = event.weather if event.live else "wind" if desert else "clear"
+		condition = event.weather if event.live else "wind" if desert else "snow" if district == "alpine" else "clear"
 		if desert and condition == "haze":
 			condition = "wind"
+		if district == "alpine" and condition in ["rain", "clear"]:
+			condition = "snow"
+		if district == "ocean" and condition == "snow":
+			condition = "haze"
 	var changed := condition != weather or effect.mesh == null
 	weather = condition
 	var fog: Environment = lighting.environment
 	fog.fog_enabled = condition != "clear"
-	fog.fog_density = .011 if condition == "haze" else .007
+	fog.fog_density = .011 if condition == "haze" else .0038 if district == "alpine" else .007
 	fog.fog_light_color = Color("#efbf93") if desert else Color("#c7d8e5")
 	site.conditions = {}
 	match condition:
 		"wind": site.conditions = {"showers": 1.27, "cafe": 1.15, "wash": 1.13}
 		"rain": site.conditions = {"cafe": 1.19, "restaurant": 1.18, "wash": .79, "motel": 1.12}
-		"snow": site.conditions = {"workshop": 1.22, "truck": 1.12, "motel": 1.24}
+		"snow": site.conditions = {"workshop": 1.22, "truck": 1.12, "motel": 1.24, "restaurant": 1.19}
 	if changed:
 		configure_particles(condition)
 	var cap: int = [18, 31, 48][quality]
@@ -90,6 +98,9 @@ func replace_event_ornaments(tag: String) -> void:
 	if tag.is_empty():
 		return
 	var positions := [Vector3(-7.1, 0, -.8), Vector3(4.65, 0, -4.9), Vector3(17.2, 0, -5.8)] if desert else 		[Vector3(9.1, 0, 2.24), Vector3(-2.24, 0, -2.45), Vector3(-10.2, 0, -.79)]
+	if HbtEconomy.Regions.has_region(district):
+		var station: Vector3 = routes.origin("fuel")
+		positions = [station + Vector3(4.5, 0, .10), station + Vector3(-4.45, 0, -.45)]
 	for at: Vector3 in positions:
 		Art.place(ornaments, "desert", "event_" + tag, at)
 
@@ -97,12 +108,14 @@ func display_collection(equipped: Dictionary) -> void:
 	clear(wardrobe)
 	var paths := {"decor": "event_", "signs": "event_", "facades": "upgrade_"}
 	var bank := Vector3(-6.0, 0, -3.3) if desert else Vector3(5.45, 0, -.06)
+	if HbtEconomy.Regions.has_region(district):
+		bank = routes.origin("fuel") + Vector3(4.32, 0, -1.2)
 	var index := 0
 	for group in paths:
 		if equipped.has(group):
 			var item: String = equipped[group]
 			var at := bank + Vector3(index * 1.31, 0, 0)
-			if item == "copper_arch":
+			if item == "copper_arch" and not HbtEconomy.Regions.has_region(district):
 				at = Vector3(-.28, 3.73, -.06) if desert else Vector3(1.09, 3.01, .40)
 			Art.place(wardrobe, "desert", paths[group] + item, at)
 		index += 1

@@ -17,7 +17,7 @@ const QUEUE_SPEED := 5.1
 
 var economy: HbtEconomy
 var demand: Demand
-var routes: Script
+var routes: Object
 var live: Dictionary = {}
 var lanes := {"car": [], "truck": []}
 var bays: Dictionary = {}
@@ -32,7 +32,7 @@ var recovered := 0
 var capacity_rejected := 0
 var peak_queue := 0
 
-func _init(store: HbtEconomy, seed: int, route_map: Script = Routes) -> void:
+func _init(store: HbtEconomy, seed: int, route_map: Object = Routes) -> void:
 	routes = route_map
 	economy = store
 	demand = Demand.new(seed)
@@ -57,7 +57,7 @@ func try_admit(forced := "", requested := "") -> HbtVisit:
 		capacity_rejected += 1
 		return null
 	var selected := demand.pick(economy, client, queued_by_service()) if requested.is_empty() else requested
-	if selected.is_empty() or economy.level(selected) == 0 or not Demand.accepts(economy.facilities[selected], client):
+	if not economy.facilities.has(selected) or economy.level(selected) == 0 or not Demand.accepts(economy.facilities[selected], client):
 		return null
 	var visit := make_visit(client, selected)
 	visit.location = routes.entrance(lane)
@@ -116,6 +116,8 @@ func tick(delta: float) -> void:
 			if worker != -1:
 				begin(ticket, worker)
 	peak_queue = maxi(peak_queue, lanes.car.size() + lanes.truck.size())
+	if economy.commerce.tick(delta, economy.level("dealership")):
+		economy.dirty = true
 	if spawning:
 		arrival_in -= delta
 		if arrival_in <= 0.0:
@@ -223,13 +225,17 @@ func begin(ticket: HbtVisit, worker: int) -> void:
 		ticket.director = economy.manager_for("automation", ticket.service)
 	ticket.duration += preparation
 	ticket.timer = ticket.duration
+	economy.commerce.begin(ticket, economy.level(ticket.service))
 	ticket.invoice = economy.payout(ticket.service, ticket.client.tip, worker)
+	if ticket.trade == "viewing":
+		ticket.invoice = ticket.invoice.divided(3)
 	started.emit(ticket)
 	state_changed.emit()
 
 func finish(ticket: HbtVisit) -> void:
 	ticket.phase = Phase.EXIT_WAIT
 	ticket.paid = true
+	economy.commerce.settle(ticket, economy.level(ticket.service))
 	economy.serve(ticket.service, ticket.invoice, ticket.client.reputation, ticket.worker)
 	completed.emit(ticket)
 	state_changed.emit()
@@ -374,6 +380,8 @@ func recover(ticket: HbtVisit) -> void:
 	state_changed.emit()
 
 func dispose(ticket: HbtVisit) -> void:
+	if not ticket.paid and not ticket.trade.is_empty():
+		economy.commerce.release(ticket)
 	release(ticket)
 	release_bay(ticket)
 	lanes[ticket.client.kind].erase(ticket)

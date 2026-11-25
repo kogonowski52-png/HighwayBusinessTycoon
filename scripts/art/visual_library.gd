@@ -39,6 +39,16 @@ static func extract_mesh(family: String, key: String, part := "") -> Mesh:
 		model.free()
 	return meshes[identity]
 
+static func release_region(region: String) -> void:
+	var model_path := "res://assets/models/regions/" + region + "_"
+	var mesh_key := "regions/" + region + "_"
+	for key: String in scenes.keys():
+		if key.begins_with(model_path):
+			scenes.erase(key)
+	for key: String in meshes.keys():
+		if key.begins_with(mesh_key):
+			meshes.erase(key)
+
 static func sign(parent: Node3D, at: Vector3, message: String, height: float, tint: Color) -> Label3D:
 	var label := Label3D.new()
 	label.position = at

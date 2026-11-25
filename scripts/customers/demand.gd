@@ -3,6 +3,7 @@ extends RefCounted
 const DATA = preload("res://data/economy/customers.gd")
 const Catalog = preload("res://scripts/traffic/vehicle_catalog.gd")
 const Desert = preload("res://data/world/desert_businesses.gd")
+const Regions = preload("res://data/world/regions.gd")
 const DESERT_FLEET := {"local": "range", "traveler": "mesa", "tourist": "kestrel", "family": "summit",
 	"business": "regency", "vip": "vela"}
 
@@ -13,12 +14,14 @@ func _init(seed: int) -> void:
 
 func customer(economy: HbtEconomy, forced := "") -> Dictionary:
 	var weights := {}
+	var layout: Dictionary = Regions.LAYOUTS.get(economy.district, {})
 	for key in DATA.PROFILES:
 		var row: Dictionary = DATA.PROFILES[key]
 		if economy.metric("reputation") >= int(row.get("minimum_rep", 0)) \
-			and (key != "trucker" or economy.level("truck") > 0) \
+			and (key != "trucker" or has_trucks(economy)) \
 			and (key != "electric" or economy.level("charge") > 0):
-			weights[key] = row.weight
+			var factors: Dictionary = layout.get("weights", {})
+			weights[key] = maxi(1, roundi(float(row.weight) * float(factors.get(key, 1.0))))
 	var id := weighted(weights) if forced.is_empty() else forced
 	var campaign_model := ""
 	if forced.is_empty() and not economy.special_guest.is_empty() and random.randf() < 0.29:
@@ -35,6 +38,8 @@ func customer(economy: HbtEconomy, forced := "") -> Dictionary:
 	var model: String = profile.car
 	if economy.district == "desert":
 		model = DESERT_FLEET.get(id, model)
+	if not layout.is_empty():
+		model = layout.guests.get(id, model)
 	if id == "trucker" and random.randf() < 0.45:
 		model = "atlas"
 	if not campaign_model.is_empty():
@@ -58,7 +63,14 @@ func pick(economy: HbtEconomy, visitor: Dictionary, queues: Dictionary, free_onl
 	return weighted(weights)
 
 func interests(economy: HbtEconomy, customer_type: String) -> Dictionary:
+	if Regions.has_region(economy.district):
+		return Regions.interests(economy.district, customer_type)
 	return Desert.interests(customer_type) if economy.district == "desert" else DATA.PROFILES[customer_type].services
+
+static func has_trucks(economy: HbtEconomy) -> bool:
+	if economy.district == "metro":
+		return economy.level("logistics") > 0 or economy.level("warehouse") > 0 or economy.level("truck_park") > 0
+	return economy.level("truck") > 0
 
 static func accepts(facility: HbtService, visitor: Dictionary) -> bool:
 	var electric: bool = visitor.model == "pulse"

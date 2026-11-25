@@ -1,5 +1,38 @@
 # Raport testów
 
+## 0.6.1 · Sześć lokalizacji
+
+Godot 4.7.2 Stable zaimportował projekt i uruchomił próby na Linuksie. Do testów użyto izolowanych profili. Renderowanie okien działało w Compatibility na Mesa llvmpipe. [Galeria 51 kadrów i film](screenshots/0.6.1/README.md) · [Balans kampanii](docs/balance-0.6.1.md) · [Wydajność](docs/performance-0.6.1.md)
+
+| Próba | Wynik |
+| --- | --- |
+| Ruch, lokalne kontrakty, misje, menedżerowie, zapis sześciu regionów i rozliczenia Metro | 93/93 |
+| Gra w oknie, rzeczywiste podróże przez atlas, aktywni pracownicy, płatności i 51 ujęć | 164/164 |
+| Kampania 30 dni w trzech przebiegach i sześciu horyzontach | 46/46, 41 czynnych usług do siódmego dnia |
+| Autentyczny zapis z tagu `v0.6.0` | 5/5 przy przygotowaniu na starym kodzie, 6/6 przy migracji i ponownym odczycie |
+| Trasy Stacji Północ, rezerwacje i cierpliwość | 30/30 |
+| Ekonomia, zapis i awaryjne odtwarzanie | 69/69 |
+| Gra na stacji oraz kontrola grafiki i animacji | 27/27 i 113/113 |
+| Kariera, starsze migracje i pełne przejście karierowe | 199/199 i 44/44 |
+| Preferencje, dźwięk, kalendarz, panele i zimny start | 278/278 i 49/49, zimny start zaliczony |
+| Podróże Copper Mile, sezonowe programy, kontrakty, kolekcje i prestiż | 64/64 i 45/45 |
+| Regresja balansu North i Desert, bez zapisu dodatkowego pliku raportowego | 45/45 i 45/45 |
+| Próba wydajności sześciu lokalizacji i trzech ustawień jakości | 112/112, 18 próbek klatek i maksimum RSS |
+| Nagranie w Movie Maker | 605 klatek, 486 × 864 przy 30 FPS, H.264 i dźwięk stereo AAC. Test potwierdził rozliczenie dostawy. |
+
+| Nowa trasa | Wyjazdy w 25 min próby | Awaryjne usuwanie | Szczyt kolejki |
+| --- | ---: | ---: | ---: |
+| Green Valley | 145 | 0 | 3 |
+| Alpine Pass | 130 | 0 | 3 |
+| Ocean Coast | 141 | 0 | 3 |
+| Metro City | 235 | 0 | 5 |
+
+Każda nowa usługa przeszła osobną próbę z wjazdem, rezerwacją, pracownikiem, płatnością i zwolnieniem stanowiska. Mieszane próby rozliczyły lokalne kontrakty. Magazyn i logistyka utrzymały stan równy przyjęciom pomniejszonym o wydania. Salon testował sprzedaż oraz odnowę zapasu. Crossline zarejestrowało obsłużonych kupujących. Wszystkie cztery nowe biznesy pokazują pięć stanów geometrii.
+
+Próby zapisu potwierdziły lokalny koszt pierwszej podróży, wycofanie przy nieudanym zapisie, powrót z ulepszeniami i pojedynczą wypłatę offline. W migracji porównano rzeczywiste pola obu gospodarek, kontrakty, posiadane karty, załogi, kalendarz, misje, waluty i preferencje. Nowe zapisy mają schemat 7.
+
+APK przeszedł kontrolę integralności. `applicationId` to `pl.krystiandevelopment.highwaytycoon`, a `versionCode` to `6001`. Certyfikat zgadza się ze stabilnym lokalnym podpisem `0.5.0` i `0.6.0`. Kontrola manifestów potwierdziła rosnący kod, Android od API 24 oraz architektury arm64-v8a i x86_64. Próba instalacji i pomiary na fizycznym Androidzie pozostają otwarte. [Podpis i dystrybucja](docs/ANDROID_SIGNING.md)
+
 ## 0.6.0 · Ekspansja Copper Mile
 
 Godot 4.7.2 Stable, Compatibility, Linux i Mesa llvmpipe. Import oraz wszystkie próby przeprowadzono z izolowanymi ścieżkami danych. Blender 4.3.2 wyeksportował 31 nowych modeli. [39 zrzutów z silnika](screenshots/0.6.0/README.md) · [Balans](docs/balance-0.6.0.md) · [Wydajność](docs/performance-0.6.0.md)

@@ -1,5 +1,13 @@
 # Stan projektu
 
+## 0.6.1 · Sześć działających regionów
+
+- Do Stacji Północ i Copper Mile dołączyły Green Valley, Alpine Pass, Ocean Coast oraz Metro City. Kampania obejmuje 41 usług, 590 zadań rozdziałowych, 22 menedżerów i niezależne zarobki każdego regionu. [Audyt etapu 5](docs/STAGE5_STATUS.md) · [Galeria](screenshots/0.6.1/README.md)
+- Meridian Freight, Junction Warehouse, Apex Motors i Crossline przeszły próby tras, wynagrodzeń z obsługi, rozbudowy i zapisu. Dostawy, sprzedaż i odwiedziny mają widoczne skutki w scenie. [Raport testów](TEST_REPORT.md)
+- Trzy przebiegi 30-dniowe potwierdziły możliwość otwarcia wszystkich usług bez płatności. Zachowano lokalne zapisy, kalendarz, wydarzenia, kontrakty, kolekcje i prestiż. [Balans](docs/balance-0.6.1.md)
+- APK testowe ma kod 6001 i podpis zgodny z lokalnymi wydaniami 0.5.0 oraz 0.6.0. Status publikacji i sposób dodania sekretów opisuje instrukcja. [Instrukcja wydania](docs/ANDROID_SIGNING.md)
+- Pomiary wydajności pochodzą z Godota na Linuksie. Próba instalacji i pomiary na fizycznym Androidzie pozostają otwarte. [Wydajność](docs/performance-0.6.1.md)
+
 ## 0.6.0 · Ekspansja Copper Mile
 
 - Atlas prowadzi do dwóch grywalnych lokalizacji. Desert Highway ma własny układ i scenerię 3D, dziesięć czynnych usług, niezależną gospodarkę i 160 nowych misji rozdziałowych. Razem ze Stacją Północ jest ich 270. [Zrzuty i nagranie](screenshots/0.6.0/README.md)

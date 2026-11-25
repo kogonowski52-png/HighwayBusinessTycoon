@@ -1,5 +1,9 @@
 # Licencje zasobów
 
+## Zasoby regionalne 0.6.1
+
+Autorskie skrypty Blendera przygotowują architekturę, geometrię rozbudowy, mosty, tarasy, latarnię i elementy skyline oraz siedem rigów i portretów. Są w `tools/art/regional_atlas.py`, `tools/art/regional_scenery.py` i `tools/art/regional_managers.py`. Modele używają palet i wypalanej okluzji projektu. Oświetlenie, woda, animowana roślinność i warianty oznakowania floty powstały w kodzie projektu. Nagranie używa istniejącej muzyki gry. Wydanie nie dodaje zewnętrznych pakietów zasobów.
+
 | Zasób | Pochodzenie | Licencja lub źródło |
 | --- | --- | --- |
 | Modele stacji, samochodów, klienta, pracowników, menedżerów, terenu i wyposażenia | Autorskie generatory w `tools/art/`, eksportowane w Blenderze do GLB | Zasób projektu |
