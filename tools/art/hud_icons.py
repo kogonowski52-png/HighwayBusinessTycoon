@@ -205,11 +205,12 @@ def render(name, make):
     bpy.ops.render.render(write_still=True)
 
 
-for key, make in dict(cash=wallet, fuel=fuel, road=road, sites=sites, staff=people, goals=goals, finance=finance,
-                      diamond=diamond, reputation=reput, event=ticket, upgrade=upgrade).items():
-    render(key, make)
+if __name__ == "__main__":
+    for key, make in dict(cash=wallet, fuel=fuel, road=road, sites=sites, staff=people, goals=goals, finance=finance,
+                          diamond=diamond, reputation=reput, event=ticket, upgrade=upgrade).items():
+        render(key, make)
 
-from station_designs import worn, rehab, service, cantilever, ridge
+    from station_designs import worn, rehab, service, cantilever, ridge
 
-for number, make in enumerate((worn, rehab, service, cantilever, ridge), start=1):
-    render(f"stage_{number}", make)
+    for number, make in enumerate((worn, rehab, service, cantilever, ridge), start=1):
+        render(f"stage_{number}", make)

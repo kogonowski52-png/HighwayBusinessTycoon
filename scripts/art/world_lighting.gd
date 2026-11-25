@@ -23,6 +23,7 @@ var practical_lights: Array[OmniLight3D] = []
 var floor_glows: Array[MeshInstance3D] = []
 var has_practicals := true
 var reduced := false
+var quality := 2
 var current := Look.DAY
 
 func _ready() -> void:
@@ -95,13 +96,19 @@ func set_look(look: Look) -> void:
 	environment.glow_enabled = supports_glow and not reduced and look >= Look.EVENING
 	for index in range(practical_lights.size()):
 		var lamp := practical_lights[index]
-		lamp.visible = intensity > 0.0 and (not reduced or index < 3)
+		lamp.visible = intensity > 0.0 and index < [3, 5, practical_lights.size()][quality]
 		lamp.light_energy = intensity * (1.32 if index < 2 else 0.96)
 	for decal in floor_glows:
 		decal.visible = intensity > 0.0
 		(decal.material_override as ShaderMaterial).set_shader_parameter("intensity", 0.58 * intensity)
 
 func set_reduced(enabled: bool) -> void:
-	if reduced != enabled:
-		reduced = enabled
+	set_quality(0 if enabled else 2)
+
+func set_quality(tier: int) -> void:
+	if quality != tier:
+		quality = tier
+		reduced = quality == 0
+		sun.directional_shadow_max_distance = [40.0, 57.0, 74.0][quality]
+		sun.shadow_blur = [1.0, 1.28, 1.6][quality]
 		set_look(current)

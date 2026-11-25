@@ -50,7 +50,7 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	var target := control_for(step)
-	var over_panel: bool = controller.operations.visible
+	var over_panel: bool = controller.operations.modal_open()
 	bubble.visible = not over_panel or is_instance_valid(target)
 	glow.visible = is_instance_valid(target) and target.is_visible_in_tree()
 	if not bubble.visible:
@@ -61,7 +61,7 @@ func _process(delta: float) -> void:
 	instruction.text = controller.t("guide_%d" % step)
 	skip.text = controller.t("guide_skip")
 	bubble.size = Vector2(stage.size.x - 78, 0)
-	var y: float = 34 if over_panel else hud.status.get_global_rect().position.y - bubble.size.y - 108
+	var y: float = 36 + hud.inset.y if over_panel else hud.bottom.get_global_rect().position.y - bubble.size.y - 13
 	bubble.position = Vector2(39, y)
 	if glow.visible:
 		var rect := target.get_global_rect()
@@ -74,7 +74,7 @@ func _process(delta: float) -> void:
 
 func control_for(step: int) -> Control:
 	var panel: CanvasLayer = controller.operations
-	if panel.visible:
+	if panel.modal_open():
 		match step:
 			1: return panel.tutorial_targets.get("upgrade_buy")
 			2:

@@ -9,6 +9,9 @@ const LEGACY = preload("res://data/station.tres")
 const BOOK = preload("res://data/economy/progression.gd")
 const Managers = preload("res://data/economy/managers.gd")
 const Journey = preload("res://data/economy/journey.gd")
+const Recognition = preload("res://data/economy/recognition.gd")
+const RecognitionState = preload("res://scripts/economy/recognition_state.gd")
+const Preferences = preload("res://scripts/core/player_preferences.gd")
 const Staff = preload("res://scripts/employees/staff_rules.gd")
 const SaveManager = preload("res://scripts/core/save_manager.gd")
 const BPS := 10_000
@@ -33,6 +36,8 @@ var player_xp := 0
 var paid_player_level := 1
 var tutorial_step := 0
 var feedback_enabled := true
+var preferences := Preferences.new()
+var recognition := RecognitionState.new()
 var language := "pl"
 var low_power := false
 var customers := 0
@@ -83,6 +88,8 @@ func reset() -> void:
 	paid_player_level = 1
 	tutorial_step = 0
 	feedback_enabled = true
+	preferences = Preferences.new()
+	recognition = RecognitionState.new()
 	customers = 0
 	gross = HbtAmount.new()
 	spent = HbtAmount.new()
@@ -169,6 +176,8 @@ func restore(wall := -1) -> void:
 	paid_player_level = clampi(int(data.get("paid_player_level", 1)), 1, player_level())
 	tutorial_step = clampi(int(data.get("tutorial_step", 0 if data.is_empty() else TUTORIAL_DONE)), 0, TUTORIAL_DONE)
 	feedback_enabled = data.get("feedback_enabled", true) == true
+	preferences.restore(safe_dict(data.get("preferences")), feedback_enabled)
+	recognition.restore(safe_dict(data.get("recognition")))
 	event_day = int(data.get("event_day", -1))
 	event_services = counter(data.get("event_services", 0))
 	event_claimed = int(data.get("event_claimed", -1))
@@ -211,6 +220,7 @@ func snapshot() -> Dictionary:
 		"cards": cards, "manager_ranks": manager_ranks, "equipped": equipped, "claimed": claimed,
 		"player_xp": player_xp, "paid_player_level": paid_player_level, "tutorial_step": tutorial_step,
 		"language": language, "low_power": low_power, "feedback_enabled": feedback_enabled,
+		"preferences": preferences.snapshot(), "recognition": recognition.snapshot(),
 		"customers": customers, "gross": gross.decimal(), "spent": spent.decimal(),
 		"offline_pending": offline_pending.decimal(), "offline_seconds": offline_seconds,
 		"offline_tier": offline_tier, "offline_away_seconds": offline_away_seconds,
@@ -357,6 +367,7 @@ func serve(id: String, value: HbtAmount, reputation: int, worker: int) -> void:
 	if worker >= 0:
 		crew[id][worker].xp = mini(1_000_000, crew[id][worker].xp + 1)
 	customers += 1
+	recognition.record_visit(id, equipped)
 	add_xp(2 + reputation)
 	per_service[id].count += 1
 	per_service[id].gross = per_service[id].gross.plus(value)
@@ -595,6 +606,67 @@ func finish_tutorial() -> void:
 @warning_ignore("integer_division")
 func day_index() -> int:
 	return maxi(high_water, clock) / 86_400
+
+func calendar_offer() -> Array:
+	return Recognition.CALENDAR[recognition.slot()]
+
+func claim_calendar() -> Array:
+	var day := day_index()
+	if storage.read_only or not recognition.is_available(day):
+		return []
+	var offer := calendar_offer()
+	recognition.last_day = day
+	recognition.daily_count += 1
+	match offer[0]:
+		"voucher": recognition.vouchers += int(offer[1])
+		"card":
+			if cards.has(offer[1]):
+				offer = ["diamond", Recognition.DUPLICATE_DIAMONDS]
+				credit("diamond", HbtAmount.from(offer[1]))
+			else:
+				cards[offer[1]] = true
+		_:
+			credit(offer[0], HbtAmount.from(offer[1]))
+	touch()
+	return offer
+
+func redeem_voucher() -> bool:
+	if recognition.vouchers <= 0 or boost_until > clock:
+		return false
+	recognition.vouchers -= 1
+	boost_until = clock + CONFIG.boost_seconds
+	touch()
+	return true
+
+func achievement_progress(item: Dictionary) -> int:
+	var goal: int = item.goal
+	match item.group:
+		"gross":
+			return goal if gross.compare(HbtAmount.from(goal)) >= 0 else gross.decimal().to_int()
+		"upgrades":
+			var count := 0
+			for tier in levels.values():
+				count += maxi(0, int(tier) - 1)
+			return mini(goal, count)
+		"training":
+			var count := 0
+			for site in facilities:
+				count += metric("site_training", site)
+			return mini(goal, count)
+		"cards": return mini(goal, cards.size())
+		"calendar": return mini(goal, recognition.daily_count)
+	return mini(goal, metric(item.group))
+
+func claim_achievement(id: String) -> bool:
+	if storage.read_only or not Recognition.collection.has(id) or recognition.achievement_claimed.has(id):
+		return false
+	var item: Dictionary = Recognition.collection[id]
+	if achievement_progress(item) < int(item.goal):
+		return false
+	recognition.achievement_claimed[id] = true
+	credit("diamond", HbtAmount.from(item.reward))
+	touch()
+	return true
 
 func current_event() -> Dictionary:
 	return BOOK.EVENTS[posmod(day_index(), BOOK.EVENTS.size())]

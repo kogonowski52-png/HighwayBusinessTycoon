@@ -6,10 +6,13 @@ const Landscape = preload("res://scripts/buildings/roadside_landscape.gd")
 const Campus = preload("res://scripts/buildings/roadside_campus.gd")
 const Lighting = preload("res://scripts/art/world_lighting.gd")
 const Effects = preload("res://scripts/art/world_effects.gd")
+const VenueActivity = preload("res://scripts/art/venue_activity.gd")
 const Crew = preload("res://scripts/employees/world_crew.gd")
 const Ads = preload("res://scripts/monetization/offline_ads.gd")
 const Operations = preload("res://scripts/core/operations_panel.gd")
 const Tutorial = preload("res://scripts/core/tutorial.gd")
+const Rig = preload("res://scripts/ui/camera_rig.gd")
+const SiteButtons = preload("res://scripts/ui/site_buttons.gd")
 const Feedback = preload("res://scripts/core/feedback.gd")
 const Station = preload("res://scenes/buildings/fuel_station.tscn")
 const Driver = preload("res://scenes/characters/driver.tscn")
@@ -18,6 +21,8 @@ const Strings = preload("res://localization/strings.gd")
 const BOOK = preload("res://data/economy/progression.gd")
 const LOOK_LABELS := ["day", "golden", "evening", "night"]
 const Phase = HbtVisit.Phase
+const SERVICE_SOUND := {"fuel": "pump", "truck": "pump", "wash": "wash",
+	"workshop": "workshop", "tires": "workshop", "restaurant": "diner"}
 
 var economy := HbtEconomy.new()
 var traffic := TrafficManager.new()
@@ -27,6 +32,7 @@ var driver := Driver.instantiate()
 var hud := Hud.instantiate()
 var campus := Campus.new()
 var crew := Crew.new()
+var venue_activity := VenueActivity.new()
 var operations := Operations.new()
 var camera := Camera3D.new()
 var lighting := Lighting.new()
@@ -34,6 +40,15 @@ var effects := Effects.new()
 var ads := Ads.new()
 var tutorial := Tutorial.new()
 var feedback := Feedback.new()
+var camera_rig := Rig.new()
+var site_buttons := SiteButtons.new()
+var preferences_timer := Timer.new()
+@onready var route_audio: Node = get_node("/root/RouteAudio")
+var entry_language := ""
+var shown_cards: Dictionary
+var known_diamonds := HbtAmount.new()
+var sound_elapsed := 0.0
+var calendar_day := -1
 
 var selected := "fuel"
 var quantity := 1
@@ -56,6 +71,11 @@ func _ready() -> void:
 		if argument.begins_with("--save-path="):
 			economy.storage.path = argument.trim_prefix("--save-path=")
 	economy.restore(wall_override)
+	if entry_language in ["pl", "en"]:
+		economy.language = entry_language
+	shown_cards = economy.cards.duplicate()
+	known_diamonds = economy.amount("diamond")
+	calendar_day = economy.day_index()
 	displayed_rank = economy.player_level()
 	guided_step = economy.tutorial_step
 	simulation_clock = float(economy.clock)
@@ -63,6 +83,7 @@ func _ready() -> void:
 	setup_camera()
 	add_child(landscape)
 	add_child(campus)
+	add_child(venue_activity)
 	add_child(effects)
 	add_child(station)
 	fuel_art_level = mini(5, economy.level("fuel"))
@@ -80,23 +101,29 @@ func _ready() -> void:
 	operations.setup(self, hud)
 	add_child(tutorial)
 	tutorial.setup(self, hud)
+	add_child(camera_rig)
+	camera_rig.bind_to(self, camera)
+	add_child(site_buttons)
+	site_buttons.bind_to(self)
 	add_child(feedback)
+	add_child(preferences_timer)
+	preferences_timer.one_shot = true
+	preferences_timer.timeout.connect(economy.checkpoint)
+	route_audio.set_track("day")
 	economy.changed.connect(on_economy_changed)
 	traffic.dispatch.state_changed.connect(refresh)
 	traffic.dispatch.completed.connect(on_sale)
 	hud.serve_requested.connect(serve_customer)
 	hud.upgrade_requested.connect(invest)
-	hud.language_requested.connect(toggle_language)
-	hud.power_requested.connect(toggle_power)
 	hud.lighting_requested.connect(cycle_lighting)
 	hud.view_requested.connect(toggle_view)
 	hud.page_requested.connect(open_page)
-	hud.quantity_requested.connect(select_quantity)
 	hud.income_requested.connect(income_action)
 	ads.attach()
 	ads.earned.connect(claim_rewarded)
 	ads.availability_changed.connect(operations.refresh)
 	get_viewport().size_changed.connect(frame_camera)
+	get_viewport().size_changed.connect(operations.apply_layout)
 	frame_camera()
 	on_economy_changed()
 	mounted = true
@@ -111,26 +138,29 @@ func setup_camera() -> void:
 	camera.keep_aspect = Camera3D.KEEP_WIDTH
 	camera.current = true
 
+func motion_enabled() -> bool:
+	return not economy.low_power and DisplayServer.get_name() != "headless"
+
 func frame_camera() -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
 	var aspect := viewport_size.x / maxf(1.0, viewport_size.y)
 	if overview:
-		aim_camera(Vector3(4.5, 0.0, -4.3), Vector3(16.0, 39.0, 32.5), maxf(94.0, aspect * 69.0))
+		camera_rig.frame(Vector3(4.5, 0.0, -4.3), Vector3(16.0, 39.0, 32.5), maxf(94.0, aspect * 69.0), not mounted or not motion_enabled())
 	else:
 		var subject: Vector3 = campus.focus(selected) + Vector3(-0.54, 0.62, -0.88)
 		if selected == "tires":
-			aim_camera(Campus.TIRES_AT + Vector3(0.4, 0.95, 1.1), Vector3(-5.8, 8.5, 8.0), maxf(17.2, aspect * 24.0))
+			camera_rig.frame(Campus.TIRES_AT + Vector3(0.4, 0.95, 1.1), Vector3(-5.8, 8.5, 8.0),
+				maxf(17.2, aspect * 24.0), not mounted or not motion_enabled())
 		else:
-			aim_camera(subject, Vector3(15.3, 34.7, 31.5), maxf(22.6, aspect * 31.5))
+			camera_rig.frame(subject, Vector3(15.3, 34.7, 31.5), maxf(22.6, aspect * 31.5), not mounted or not motion_enabled())
 
 func aim_camera(target: Vector3, offset: Vector3, width: float) -> void:
-	camera.position = target + offset
-	camera.look_at(target)
-	camera.size = width
+	camera_rig.frame(target, offset, width, true)
 
 func set_look(preset: Lighting.Look) -> void:
 	lighting.set_look(preset)
 	traffic.set_night(preset >= Lighting.Look.EVENING)
+	route_audio.set_track("night" if preset >= Lighting.Look.EVENING else "day")
 	refresh()
 
 func cycle_lighting() -> void:
@@ -151,6 +181,15 @@ func tick_game(delta: float) -> void:
 	traffic.physics_step(delta)
 	crew.update(economy, traffic.dispatch, delta)
 	update_scene(delta)
+	sound_elapsed += delta
+	if sound_elapsed > 0.19:
+		sound_elapsed = 0.0
+		update_soundscape()
+	var day := economy.day_index()
+	if calendar_day != day:
+		calendar_day = day
+		if operations.modal_open() and operations.page == "calendar":
+			operations.refresh()
 	autosave += delta
 	if autosave >= economy.CONFIG.checkpoint_seconds:
 		autosave = 0.0
@@ -178,6 +217,8 @@ func update_scene(delta: float) -> void:
 		effects.set_hose(false, Vector3.ZERO)
 	effects.set_activity(traffic.dispatch.first_at("wash", Phase.WORKING), traffic.dispatch.first_at("workshop", Phase.WORKING))
 	campus.update_chargers(traffic.dispatch)
+	venue_activity.service_activity(traffic.dispatch, delta)
+	venue_activity.move_delivery(delta)
 	var road_car: HbtVisit
 	for ticket: HbtVisit in traffic.dispatch.live.values():
 		if ticket.distance > 0.04 and ticket.location.z > -1.5 and ticket.location.z < 6.9 \
@@ -188,7 +229,23 @@ func update_scene(delta: float) -> void:
 	effects.drive_on_dust(road_car != null, at)
 	station.set_service_progress(primary.progress() if primary != null else 0.0)
 	var job := traffic.dispatch.first_at(selected, Phase.WORKING)
-	hud.progress.value = job.progress() if job != null else 0.0
+	var progress := job.progress() if job != null else 0.0
+	hud.progress.value = lerpf(hud.progress.value, progress, 1.0 - exp(-24.0 * delta)) if job != null else 0.0
+
+func update_soundscape() -> void:
+	var focus := camera_rig.focus
+	var layers := {"wind": 0.26 if lighting.current >= Lighting.Look.EVENING else 0.35, "cars": 0.12}
+	for visit: HbtVisit in traffic.dispatch.live.values():
+		var nearness := 1.0 - clampf(visit.location.distance_to(focus) / 22.0, 0.0, 1.0)
+		if visit.distance > 0.01:
+			var key := "truck" if visit.client.kind == "truck" else "cars"
+			layers[key] = maxf(layers.get(key, 0.0), nearness * 0.62)
+		if visit.phase != Phase.WORKING:
+			continue
+		if SERVICE_SOUND.has(visit.service):
+			var cue: String = SERVICE_SOUND[visit.service]
+			layers[cue] = maxf(layers.get(cue, 0.0), nearness * 0.70)
+	route_audio.update_field(layers, operations.modal_open())
 
 func _notification(what: int) -> void:
 	if not mounted:
@@ -213,7 +270,7 @@ func _notification(what: int) -> void:
 					operations.show_page("offline")
 				refresh()
 		NOTIFICATION_WM_GO_BACK_REQUEST:
-			if operations.visible:
+			if operations.modal_open():
 				operations.hide_page()
 			else:
 				economy.checkpoint()
@@ -237,15 +294,17 @@ func select_site(id: String) -> void:
 func select_quantity(count: int) -> void:
 	quantity = count
 	refresh()
+	if operations.modal_open() and operations.page == "upgrades":
+		operations.refresh()
 
 func serve_customer() -> void:
 	traffic.dispatch.start_manual(selected)
 
 func open_page(name: String) -> void:
+	camera_rig.release_gestures()
+	camera_rig.cancel_film(true)
 	if economy.tutorial_step == 2 and name == "goals":
 		operations.goals_tab = "career"
-	if economy.tutorial_step == 3 and name == "team":
-		operations.team_tab = "team_staff"
 	if economy.tutorial_step == 5 and name == "sites":
 		economy.finish_tutorial()
 		economy.checkpoint()
@@ -258,25 +317,32 @@ func skip_tutorial() -> void:
 	economy.checkpoint()
 
 func invest() -> void:
-	var installed: int = campus.roof_counts[selected]
+	var id := selected
+	var installed: int = campus.roof_counts[id]
 	var before_art := fuel_art_level
-	if economy.level(selected) == 0:
-		if economy.unlock(selected):
-			campus.animate_install(selected, installed)
-			effects.construction(Routes.position_of(selected, 0))
-			feedback.play("build", true)
-			hud.announce(t("opened_notice") % site_name(selected), hud.UPGRADE_ART, not economy.low_power)
-			economy.checkpoint()
+	var previous_bays := economy.capacity(id)
+	var opening := economy.level(id) == 0
+	var bought := int(economy.unlock(id)) if opening else economy.buy_levels(id, quantity)
+	if bought <= 0:
 		return
-	var count := economy.buy_levels(selected, quantity)
-	if count <= 0:
-		return
-	if selected == "fuel" and fuel_art_level > before_art:
+	var after_bays := economy.capacity(id)
+	var rebuilt: bool = fuel_art_level > before_art or campus.roof_counts[id] > installed or after_bays > previous_bays
+	if id == "fuel" and fuel_art_level > before_art:
 		station.animate_construction()
-	campus.animate_install(selected, installed)
-	effects.construction(Routes.position_of(selected, 0))
-	feedback.play("build", true)
-	show_message(t("bought_levels") % count)
+	campus.animate_install(id, installed)
+	feedback.play("new_site" if opening else "build", true)
+	if rebuilt or opening:
+		var at := Routes.position_of(id, 0)
+		effects.construction(at)
+		if operations.modal_open() and operations.page == "upgrades":
+			operations.hide_page()
+		camera_rig.start_film(campus.focus(id), func() -> void:
+			var caption := t("opened_notice" if opening else "venue_expanded") % site_name(id)
+			if after_bays > previous_bays:
+				caption += "\n" + t("venue_capacity") % after_bays
+			hud.announce(caption, hud.UPGRADE_ART, motion_enabled()))
+	if not opening:
+		show_message(t("bought_levels") % bought)
 	economy.checkpoint()
 
 func hire_worker() -> void:
@@ -303,7 +369,27 @@ func train_manager(id: String) -> void:
 
 func claim_milestone(id: String) -> void:
 	if economy.claim_reward(id):
-		reward_feedback()
+		reward_feedback("mission")
+		economy.checkpoint()
+
+func claim_calendar() -> void:
+	var offer := economy.claim_calendar()
+	if offer.is_empty():
+		return
+	reward_feedback("reward", offer[0] == "cash")
+	if offer[0] != "card":
+		hud.announce(t("calendar_received") % operations.extra.reward_name(offer),
+			operations.extra.reward_icon(offer), motion_enabled())
+	economy.checkpoint()
+
+func claim_achievement(id: String) -> void:
+	if economy.claim_achievement(id):
+		reward_feedback("mission", false)
+		economy.checkpoint()
+
+func redeem_voucher() -> void:
+	if economy.redeem_voucher():
+		feedback.play("reward", true)
 		economy.checkpoint()
 
 func claim_player_reward() -> void:
@@ -325,18 +411,40 @@ func buy_boost() -> void:
 		economy.checkpoint()
 
 func toggle_language() -> void:
-	economy.language = "en" if economy.language == "pl" else "pl"
-	economy.touch()
-	economy.checkpoint()
+	set_language("en" if economy.language == "pl" else "pl")
+
+func set_language(value: String) -> void:
+	economy.language = "en" if value.to_lower() == "en" else "pl"
+	apply_setting()
+
+func set_quality(index: int) -> void:
+	economy.preferences.quality = clampi(index, 0, 2)
+	apply_setting()
+
+func set_fps(choice: int) -> void:
+	economy.preferences.fps = 30 if choice in [0, 30] else 60
+	apply_setting()
 
 func toggle_power() -> void:
 	economy.low_power = not economy.low_power
-	economy.touch()
-	economy.checkpoint()
+	apply_setting()
 
-func toggle_feedback() -> void:
-	economy.feedback_enabled = not economy.feedback_enabled
+func toggle_haptics() -> void:
+	economy.preferences.haptics = not economy.preferences.haptics
+	economy.feedback_enabled = economy.preferences.haptics
+	apply_setting()
+
+func set_volume(channel: String, level: float) -> void:
+	if channel in economy.preferences.volumes:
+		economy.preferences.volumes[channel] = clampf(level, 0.0, 1.0)
+		route_audio.apply(economy.preferences)
+		economy.dirty = true
+		preferences_timer.start(0.3)
+
+func apply_setting() -> void:
 	economy.touch()
+	if operations.modal_open() and operations.page == "settings":
+		operations.refresh()
 	economy.checkpoint()
 
 func upgrade_offline() -> void:
@@ -392,7 +500,16 @@ func on_economy_changed() -> void:
 		landscape.set_forecourt_tier(art_level)
 	campus.update_sites(economy)
 	crew.roster(economy)
-	feedback.enabled = economy.feedback_enabled
+	route_audio.apply(economy.preferences)
+	if mounted:
+		for id in economy.cards:
+			if not shown_cards.has(id):
+				feedback.play("manager", true)
+				hud.announce(t("manager_received") % BOOK.MANAGERS[id].name, operations.extra.portrait(id), motion_enabled())
+		if economy.amount("diamond").compare(known_diamonds) > 0 and motion_enabled():
+			hud.animate_reward(get_viewport().get_visible_rect().get_center(), true, "diamond")
+	shown_cards = economy.cards.duplicate()
+	known_diamonds = economy.amount("diamond")
 	if economy.tutorial_step != guided_step:
 		guided_step = economy.tutorial_step
 		if guided_step < 5:
@@ -400,16 +517,24 @@ func on_economy_changed() -> void:
 	if economy.player_level() > displayed_rank:
 		displayed_rank = economy.player_level()
 		promotion_feedback(t("career_level") % displayed_rank, hud.REPUTATION)
-	Engine.max_fps = 30 if economy.low_power else 60
-	lighting.set_reduced(economy.low_power)
-	effects.reduced = economy.low_power
-	var render_scale := 0.80 if economy.low_power else 1.0
+	Engine.max_fps = economy.preferences.effective_fps(economy.low_power)
+	var quality: int = economy.preferences.effective_quality(economy.low_power)
+	lighting.set_quality(quality)
+	effects.reduced = quality == 0
+	var render_scale: float = [0.74, 0.88, 1.0][quality]
 	if not is_equal_approx(get_viewport().scaling_3d_scale, render_scale):
 		get_viewport().scaling_3d_scale = render_scale
-	operations.call_deferred("refresh")
+	var samples := Viewport.MSAA_2X if quality == 2 else Viewport.MSAA_DISABLED
+	if get_viewport().msaa_3d != samples:
+		get_viewport().msaa_3d = samples
+	if operations.page not in ["settings", "help", "privacy", "licenses"]:
+		operations.call_deferred("refresh")
+	site_buttons.refresh()
 	refresh()
 
 func on_sale(ticket: HbtVisit) -> void:
+	if ticket.service == "market":
+		venue_activity.on_shop_sale(economy.per_service.market.count, traffic.night)
 	var in_register := ticket.worker != -1 and economy.skill("collect", ticket.service) == 0
 	if ticket.service == selected:
 		show_message(t("register_sale" if in_register else "sale") % money(ticket.invoice))
@@ -421,9 +546,9 @@ func on_sale(ticket: HbtVisit) -> void:
 	if ticket.worker == -1:
 		economy.checkpoint()
 
-func reward_feedback() -> void:
-	feedback.play("reward", true)
-	if not economy.low_power:
+func reward_feedback(cue := "reward", cash := true) -> void:
+	feedback.play(cue, true)
+	if cash and motion_enabled():
 		hud.animate_reward(get_viewport().get_visible_rect().get_center(), true)
 
 func promotion_feedback(value: String, icon: Texture2D) -> void:
@@ -465,26 +590,26 @@ func refresh() -> void:
 	hud.lighting.tooltip_text = t("lighting_tip")
 	hud.view.text = t("station_view" if overview else "map")
 	hud.view.tooltip_text = t("view_tip")
-	hud.language.text = economy.language.to_upper()
-	hud.power.text = "%d FPS" % Engine.max_fps
-	hud.location.text = "%s · %s" % [t("location"), t("short_rank") % economy.player_level()]
+	hud.location.text = t("location")
 	hud.title.text = t("name")
-	hud.cash_caption.text = t("cash")
-	hud.update_cash(economy.amount("cash"), economy.language, t("money"), not economy.low_power)
-	hud.traffic_caption.text = t("road")
-	hud.queued.text = str(traffic.dispatch.lanes.car.size() + traffic.dispatch.lanes.truck.size())
-	hud.people_caption.text = t("customers")
-	hud.people.text = HbtAmount.from(economy.customers).compact(economy.language)
+	hud.cash_caption.text = t("cash_short")
+	hud.update_cash(economy.amount("cash"), economy.language, t("money"), motion_enabled())
 	for key in hud.wallet_stats:
 		hud.wallet_names[key].text = t(key)
-		hud.wallet_stats[key].text = economy.amount(key).compact(economy.language)
-	for name in hud.pages:
-		hud.pages[name].text = t(name)
-	var ready_goals := economy.ready_rewards()
-	if ready_goals > 0:
-		hud.pages.goals.text = t("goals_ready") % ready_goals
+		hud.update_balance(key, economy.amount(key), economy.language, motion_enabled())
+	for name in ["sites", "team", "managers", "goals", "shop"]:
+		hud.pages[name].text = t("nav_" + name)
+	for name in ["finance", "calendar", "settings", "rank"]:
+		hud.pages[name].tooltip_text = t(name + "_header")
+	hud.rank.text = t("player_short") % economy.player_level()
+	hud.badges.rank.visible = economy.player_level() > economy.paid_player_level
+	hud.badges.goals.visible = economy.ready_rewards() > 0
+	hud.badges.calendar.visible = economy.recognition.is_available(economy.day_index())
 	hud.station.text = site_name(selected)
 	hud.upgrade_preview.text = t("look_action")
+	if quantity != 1:
+		hud.upgrade_preview.text = "MAX" if quantity == 0 else "+%d" % quantity
+	hud.detail_icon.texture = hud.PUMP if selected in ["fuel", "truck"] else hud.NAV.sites
 	hud.serve.icon = hud.PUMP if selected in ["fuel", "truck"] else hud.NAV.sites
 	var tier := economy.level(selected)
 	hud.level.text = t("level") % [tier, economy.CONFIG.max_level] if tier > 0 else t("site_closed").to_upper()
@@ -493,9 +618,6 @@ func refresh() -> void:
 	var job := traffic.dispatch.first_at(selected, Phase.WORKING)
 	hud.serve.text = t("serve_fuel" if selected in ["fuel", "truck"] else "serve_work")
 	hud.serve.disabled = checkout == null
-	for option in hud.quantities:
-		hud.quantities[option].set_pressed_no_signal(option == quantity)
-		hud.quantities[option].disabled = tier == 0 or tier >= economy.CONFIG.max_level
 	if tier == 0:
 		var unlock_cost := HbtAmount.from(economy.facilities[selected].unlock_cost)
 		hud.upgrade.text = t("unlock") % money(unlock_cost)
@@ -504,9 +626,9 @@ func refresh() -> void:
 		var estimate := economy.quote_upgrade(selected, quantity)
 		hud.upgrade.text = t("max") if tier == economy.CONFIG.max_level else t("upgrade") % money(estimate.cost)
 		hud.upgrade.disabled = not estimate.affordable
+	hud.set_upgrade_ready(not hud.upgrade.disabled, motion_enabled())
 	var waiting: int = traffic.dispatch.queued_by_service().get(selected, 0) - traffic.dispatch.bays[selected].size()
-	hud.reserve.visible = tier > 0
-	hud.reserve.text = t("site_state") % [traffic.dispatch.bays[selected].size(), economy.capacity(selected), maxi(0, waiting)]
+	hud.station.tooltip_text = t("site_state") % [traffic.dispatch.bays[selected].size(), economy.capacity(selected), maxi(0, waiting)]
 	if economy.save_error != OK:
 		hud.status.text = t("save_error")
 	elif tier == 0:

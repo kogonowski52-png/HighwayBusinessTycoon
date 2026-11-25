@@ -6,15 +6,17 @@ Mobilny tycoon 3D rozwijany w Godocie. Stacja Północ przy Trasie 17 ma autorsk
 
 Rozpoczynasz ze 120 zł i klientem przy dystrybutorze. Samouczek prowadzi przez pierwszą sprzedaż, zakup poziomu, odbiór nagród, zatrudnienie i wpływy z kasy. Każdy krok dzieje się w normalnej rozgrywce.
 
-W menu **Obiekty** wybierasz usługę i sprawdzasz warunki otwarcia. Każdy obiekt ma 100 poziomów, kupowanych pojedynczo, po 10, po 25 albo za maksymalną dostępną kwotę. **Zespół** zawiera zatrudnianie, szkolenia, awanse i 15 rozwijanych kart menedżerów. **Cele** pokazują poziom gracza, 110 misji w 11 rozdziałach, wcześniejsze cele i wydarzenia dzienne. **Finanse** pokazują zarobek z ostatniej minuty, premię czasową, stan kas i rozwój limitu offline. Wulkanizacja, parking TIR i ładowarki EV działają w tym samym systemie przyjazdów oraz rezerwacji co wcześniejsze obiekty.
+W **Rozbudowie** wybierasz usługę i sprawdzasz warunki otwarcia. W karcie **Etapy** kupisz 1, 10, 25 lub maksymalną liczbę ze 100 poziomów usługi. **Pracownicy** prowadzą do zatrudniania, szkoleń i awansów. W **Menedżerach** sprawdzisz 15 portretów, przypisanie, doświadczenie i następny bonus. **Misje** obejmują karierę, 11 rozdziałów, wydarzenia oraz 50 odznak. W **Sklepie** wymieniasz środki zdobyte w grze i aktywujesz zebrane kupony. Ikona kalendarza otwiera 30-dniowy cykl nagród. Ikona statystyk pokazuje wpływy, stan kas, aktywne premie i limit offline.
+
+Przeciągnij mapę jednym palcem i zmień przybliżenie dwoma. W oknie komputera obsługują to przeciągnięcie myszą i kółko. Znaczniki nad budynkami przybliżają usługę albo otwierają jej ulepszenia. Ustawienia obejmują trzy kanały dźwięku, wibracje, PL i EN, trzy poziomy grafiki, limit 30 lub 60 FPS oraz oszczędzanie baterii.
 
 Stan zapisuje się automatycznie i przy wyjściu. Nowe profile naliczają dochód offline przez maksymalnie dwie godziny. Limit można rozbudować do dwunastu godzin. Profile z edycji z limitem ośmiu godzin zachowują go przy migracji. Gotówka, diamenty, reputacja i punkty wydarzeń są zapisywane jako dokładne liczby dziesiętne.
 
-[Galeria rozgrywki 0.4.0](screenshots/0.4.0/README.md) · [Balans i symulacja](docs/balance-0.4.0.md)
+[Galeria rozgrywki 0.5.0](screenshots/0.5.0/README.md) · [Porównanie z 0.4.0](screenshots/0.5.0/porownanie-0.4.0.jpg) · [Balans i symulacja](docs/balance-0.4.0.md)
 
 ## Uruchomienie
 
-Otwórz `project.godot` w stabilnym Godocie 4.6.3 lub zgodnym nowszym wydaniu. Etap sprawdzono w 4.7.2. W edytorze wciśnij F6 dla otwartej sceny `scenes/world/roadside.tscn` lub F5 dla całego projektu.
+Otwórz `project.godot` w stabilnym Godocie 4.6.3 lub zgodnym nowszym wydaniu. Etap sprawdzono w 4.7.2. W edytorze wciśnij F5, aby uruchomić ekran startowy, albo F6 w scenie `scenes/world/roadside.tscn`, aby wejść bezpośrednio na mapę.
 
 ```sh
 godot --headless --editor --import --path . --quit
@@ -26,9 +28,18 @@ godot --headless --path . --script tests/station_smoke.gd
 godot --headless --path . --script tests/art_gallery.gd
 godot --headless --path . --script tests/career_checks.gd
 godot --headless --path . --script tests/career_window.gd
+godot --headless --path . --script tests/presentation_checks.gd
+godot --headless --path . --script tests/presentation_window.gd
+godot --headless --path . --script tests/presentation_recording.gd -- --boot-check
 ```
 
-Test zapisu korzysta z własnego pliku i obejmuje migrację, uszkodzenie pliku głównego oraz wczytanie kopii po przerwanym zapisie. Test sceny `tests/career_window.gd` można uruchomić w oknie z opcją `-- --capture-dir=/pełna/ścieżka`. [Wyniki testów](TEST_REPORT.md)
+Testy używają oddzielnych plików zapisu. Przebieg z galerią wymaga działającego okna graficznego. Godot Movie Maker zapisuje obraz i miks z działającej gry. [Wyniki testów](TEST_REPORT.md)
+
+```sh
+mkdir -p /tmp/hbt-gallery
+godot --path . --script tests/presentation_window.gd -- --capture-dir=/tmp/hbt-gallery
+godot --path . --write-movie /tmp/hbt-demo.avi --fixed-fps 30 --script tests/presentation_recording.gd
+```
 
 ## Modele i galeria
 
@@ -48,7 +59,14 @@ Wersja 0.3.1 ma osobną galerię z ujęciami przed i po modernizacji. Trzy kąty
 
 Teksturę gruntu i panele generuje `python3 tools/art/surfaces.py` z biblioteką Pillow. Ikony renderuje `blender -b -t 4 --python-exit-code 1 --python tools/art/hud_icons.py`. Czcionkę liczników odtwarza `python3 tools/art/display_font.py` z biblioteką fontTools.
 
-Modele nowych usług i personelu odtwarza ten sam generator Blendera z rodzinami `extensions` i `expansion_characters`. Portrety kart renderuje `blender -b -t 3 --python-exit-code 1 --python tools/art/portraits.py`, a dźwięki odtwarza `python3 tools/art/feedback_audio.py`.
+Modele usług i personelu odtwarza ten sam generator Blendera z rodzinami `extensions` i `expansion_characters`. Portrety kart renderuje `blender -b -t 3 --python-exit-code 1 --python tools/art/portraits.py`. Dźwięki obsługi i awansu odtwarza `python3 tools/art/feedback_audio.py`. Nowsze zasoby odtworzysz poleceniami poniżej. Synteza audio wymaga NumPy i FFmpeg. [Wykaz licencji](ASSET_LICENSES.md)
+
+```sh
+python3 tools/art/presentation_art.py
+python3 tools/art/presentation_audio.py
+blender -b -t 4 --python-exit-code 1 --python tools/art/presentation_icons.py
+blender -b --python-exit-code 1 --python tools/art/delivery.py
+```
 
 ## Android
 

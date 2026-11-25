@@ -1,5 +1,13 @@
 # Historia zmian
 
+## 0.5.0 · Interfejs i rytm Trasy 17
+
+- Dodano ekran startowy z logo i paskiem faktycznego ładowania. HUD zyskał pięć zakładek, znaczniki usług, animowane salda, krótkie komunikaty i układ uwzględniający bezpieczne marginesy.
+- Dodano 30-dniowy kalendarz i 50 osiągnięć z osobnymi ilustracjami. Zakładka sklepu obsługuje istniejące wymiany oraz użycie zdobytych kuponów. Karty menedżerów pokazują bieżący bonus, następny bonus i doświadczenie z obsługi w specjalizacji.
+- Dodano przybliżanie gestem, bezwładność przesuwania i filmową kamerę przy przebudowie. Bramy warsztatu, ruch belki myjni, wysiadanie i dostawy uzupełniono o animacje wynikające z wizyt klientów i sprzedaży.
+- Dodano osobną muzykę startu, dnia i nocy, siedem warstw otoczenia, cztery nowe sygnały interfejsu i niezależny miks. Ustawienia obejmują trzy tryby grafiki, FPS, oszczędzanie baterii i wibracje.
+- Schemat zapisu 5 przechowuje kalendarz, odznaki, kupony, doświadczenie kart i ustawienia. Próba migracji używa profilu zapisanego przez 0.4.0.
+
 ## 0.4.0 · Rozwój Trasy 17
 
 - Dodano wulkanizację, parking TIR i ładowarki EV z osobnymi stanowiskami, cenami, personelem oraz pięcioma etapami widocznymi na mapie.

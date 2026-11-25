@@ -8,6 +8,11 @@
 | Route 17 Counter | Oryginalne glify z `tools/art/display_font.py` | Zasób projektu |
 | Portrety menedżerów | Autorskie modele i własny render Blendera z `tools/art/portraits.py` | Zasób projektu |
 | Dźwięki obsługi, wypłaty, budowy i awansu | Autorska synteza w `tools/art/feedback_audio.py` | Zasób projektu |
+| Logo Trasy 17, powierzchnie paneli oraz 50 odznak | Oryginalne rysunki generowane przez `tools/art/presentation_art.py` | Zasób projektu |
+| Ikony kalendarza, kart, ustawień, nagród i pomocy | Oryginalne modele i rendery `tools/art/presentation_icons.py` | Zasób projektu |
+| Karton i wózek dostawy | Oryginalny model GLB z `tools/art/delivery.py` korzystający z palety projektu | Zasób projektu |
+| Muzyka menu, dnia i nocy, atmosfera usług, sygnały interfejsu | Oryginalna kompozycja i synteza `tools/art/presentation_audio.py` | Zasób projektu |
+| Zdjęcie na ekranie startowym i nagranie rozgrywki | Kadr Stacji Północ z własnej galerii 0.3.2 oraz nagranie z Godota 0.5.0 | Zasób projektu |
 | Open Sans Regular, Bold i ExtraBold | Pakiet fontów Open Sans dostarczony w Debianie, Steve Matteson | Apache License 2.0, zob. [informacja o prawach](assets/fonts/LICENSE-Open-Sans.txt) i [pełna licencja](assets/fonts/Apache-2.0.txt) |
 | Zrzuty ekranu | Render bieżącej gry w Godocie | Zasób projektu |
 

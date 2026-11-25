@@ -48,12 +48,12 @@ func first_shift() -> void:
 	await click_row(game.t("claim"))
 	await click_row(game.t("claim"))
 	expect(store.tutorial_step == 3 and store.claimed.has("first") and store.claimed.has("upgrade"), "the real goals pay for the attendant")
-	click(game.operations.back)
+	await close_sheet()
 	click(game.hud.pages.team)
 	await process_frame
 	await capture("05-zatrudnienie.png")
 	await click_row(game.t("recruit") % game.money(store.recruit_cost("fuel")))
-	click(game.operations.back)
+	await close_sheet()
 	expect(store.tutorial_step == 4 and store.crew.fuel.size() == 1, "hiring creates an employee for this save")
 	for tick in range(1400):
 		step(0.05)
@@ -75,7 +75,7 @@ func first_shift() -> void:
 	await process_frame
 	expect(store.tutorial_step == store.TUTORIAL_DONE and not game.tutorial.visible, "tutorial finishes after opening the business directory")
 	await capture("08-uslugi-trasy17.png")
-	click(game.operations.back)
+	await close_sheet()
 
 func late_complex() -> void:
 	var store: HbtEconomy = game.economy
@@ -103,6 +103,8 @@ func late_complex() -> void:
 		["restaurant", "traveler", Vector3(-19.17, 0.86, -6.44), Vector3(3.95, 5.7, 12.9), 15.7, "12-klient-restauracji.png"],
 	]:
 		await service_view(dispatch, spec)
+	await process_frame
+	await process_frame
 	click(game.hud.pages.goals)
 	await process_frame
 	await click_row(game.t("chapters"))
@@ -118,24 +120,24 @@ func late_complex() -> void:
 	await click_row(game.t("claim"))
 	await click_row(game.t("claim"))
 	expect(store.cards.has("ada"), "earned employee goal yields Ada")
-	click(game.operations.back)
-	click(game.hud.pages.team)
+	await close_sheet()
+	click(game.hud.pages.managers)
 	await process_frame
-	await click_row(game.t("team_cards"))
+	await click_row("Ada Nowak")
 	await click_row(game.t("assign"))
 	expect(store.equipped.has("ada") and game.crew.directors.has("ada"), "card activation reaches the main scene")
 	var training := store.manager_training("ada")
 	await click_row(game.t("manager_train") % training.cost)
 	expect(store.manager_rank("ada") == 2, "manager training charges disclosed earned diamonds")
 	await capture("15-menedzerowie.png")
-	click(game.operations.back)
+	await close_sheet()
 	click(game.hud.pages.finance)
 	await process_frame
 	var offer := store.offline_upgrade()
 	await click_row(game.t("offline_upgrade") % [offer.hours, game.money(offer.cost)])
 	expect(store.offline_limit() == 14_400, "Finance button expands offline to four hours")
 	await capture("16-limit-offline.png")
-	click(game.operations.back)
+	await close_sheet()
 	game.select_site("fuel")
 	click(game.hud.view)
 	root.size = Vector2i(1600, 1080)
@@ -165,8 +167,10 @@ func late_complex() -> void:
 	expect(store.amount("cash").compare(balance.plus(expected)) == 0 and store.offline_pending.empty(),
 		"offline claim pays exactly once")
 	root.size = Vector2i(900, 1200)
-	click(game.hud.language)
+	click(game.hud.settings)
 	await process_frame
+	await click_row("EN")
+	await close_sheet()
 	await process_frame
 	expect(store.language == "en" and controls_fit(), "English tablet layout fits")
 	await capture("19-tablet-en.png")

@@ -2,6 +2,10 @@
 
 Stacja Północ przy Trasie 17 to stylizowana makieta drogowa. Dachy o zaokrąglonych narożnikach, turkusowa emalia, ciepłe kruszywo i przygaszona roślinność tworzą wspólny język materiałów. Bursztyn wyróżnia stację, a koral, szałwia i chłodny błękit rozróżniają obiekty w tle. Kamera ortograficzna utrzymuje czytelność przy małym ekranie.
 
+## 0.5.0 · Interfejs Trasy 17
+
+Kremowe karty i turkusowe emaliowane przyciski nawiązują do oznakowania istniejącej stacji. Panele wykorzystują autorskie tekstury krawędzi, przyciski z renderowanymi ikonami oraz złote akcenty nagród. Pięć zakładek mieści się w dolnej strefie dotyku. Informacje o obsłudze i dostępności modernizacji pozostały przy świecie. Mniejszy panel pierwszego zatrudnienia pozostawia widok placu. Portrety menedżerów mają własne kadry i palety rzadkości. [Porównanie wersji](screenshots/0.5.0/porownanie-0.4.0.jpg)
+
 ## 0.3.2 · Od przydrożnego punktu do Przełęczy
 
 Przegląd `7ea8bf9` pokazał, że duża nowoczesna wiata pierwszego poziomu i oszklony zamknięty sklep wyglądały jak ukończony kompleks. Płaskie powierzchnie maski i szyb zlewały się z góry w jedną plamę. Jednakowe czapy koron i pusty warsztat nadawały otoczeniu rytm regularnej zabudowy. Na telefonie nacisk przenosił się z obsługi na szeroki panel statystyk.

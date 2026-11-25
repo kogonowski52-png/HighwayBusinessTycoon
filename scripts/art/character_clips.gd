@@ -2,7 +2,7 @@ extends RefCounted
 
 const DURATIONS := {
 	"idle": 2.84, "walk": 0.94, "run": 0.71, "service": 2.34, "fuel": 1.72,
-	"clean": 1.84, "repair": 1.48, "cash": 1.66, "carry": 1.05,
+	"clean": 1.84, "repair": 1.48, "cash": 1.66, "carry": 1.05, "exit_car": 0.51,
 }
 
 static var shared: AnimationLibrary
@@ -14,7 +14,7 @@ static func library(skeleton: Skeleton3D) -> AnimationLibrary:
 	for clip in DURATIONS:
 		var animation := Animation.new()
 		animation.length = DURATIONS[clip]
-		animation.loop_mode = Animation.LOOP_LINEAR
+		animation.loop_mode = Animation.LOOP_NONE if clip == "exit_car" else Animation.LOOP_LINEAR
 		var samples: Array[Dictionary] = []
 		for i in range(25):
 			samples.append(pose(clip, TAU * i / 24.0))
@@ -72,6 +72,18 @@ static func pose(clip: String, phase: float) -> Dictionary:
 			angles["elbow_r"] = Vector3(-16, 0, 0)
 		return angles
 	match clip:
+		"exit_car":
+			var lift := smoothstep(0.0, 4.8, phase)
+			var remaining := 1.0 - lift
+			angles["bounce"] = -0.27 * remaining
+			angles["balance"] = -0.11 * remaining
+			angles["spine"] = Vector3(30.0 * remaining, -18.0 * remaining, 14.0 * remaining)
+			angles["leg_l"] = Vector3(-41.0 * remaining, 9.0 * remaining, 0.0)
+			angles["knee_l"] = Vector3(64.0 * remaining, 0, 0)
+			angles["leg_r"] = Vector3(-17.0 * remaining, 0, 0)
+			angles["knee_r"] = Vector3(38.0 * remaining, 0, 0)
+			angles["arm_r"] = Vector3(-49.0 * remaining, 14.0 * remaining, 4.0)
+			angles["elbow_r"] = Vector3(-32.0 * remaining, 0, 0)
 		"idle":
 			angles["bounce"] = 0.012 + 0.012 * wave
 			angles["head"] = Vector3(-1.9 * wave, 4.7 * opposite, 1.9 * wave)

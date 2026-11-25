@@ -2,9 +2,14 @@ config_version=5
 
 [application]
 config/name="Highway Business Tycoon"
+config/version="0.5.0"
 config/icon="res://assets/icons/app.svg"
-run/main_scene="res://scenes/world/roadside.tscn"
+run/main_scene="res://scenes/ui/front_gate.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
+
+[autoload]
+
+RouteAudio="*res://scripts/audio/soundscape.gd"
 
 [display]
 window/size/viewport_width=1080

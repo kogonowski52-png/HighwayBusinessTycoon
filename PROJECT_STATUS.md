@@ -1,5 +1,12 @@
 # Stan projektu
 
+## 0.5.0 · Interfejs i rytm Trasy 17
+
+- Dostępne są ekran startowy, zwięzły HUD, panele obsługi, kolekcja 15 menedżerów, nagrody awansu, finanse i offline, pomoc, licencje, prywatność oraz sklep za środki z gry. Kalendarz ma 30 nagród, a osiągnięcia 50 odznak z zapisem. [Galeria](screenshots/0.5.0/README.md)
+- Kamera obsługuje dotyk i mysz oraz podąża za modernizacją. Animacje świata wynikają z wizyt i zakupów. Oryginalne utwory i efekty działają na trzech regulowanych kanałach.
+- Sprawdzono zapis utworzony przez wersję 0.4.0 oraz regresję jej 11 usług. Koszty, stawki i trasy zweryfikowano tym samym symulatorem balansu. [Raport testów](TEST_REPORT.md)
+- Instalacja, płynność po rozgrzaniu, wibracje i rzeczywiste wycięcia wymagają sprawdzenia na Androidzie. Diagnostyka ekranu i liczniki renderera pochodzą z okna Godota na Linuxie. [Raport wydajności](docs/performance-0.5.0.md)
+
 ## 0.4.0 · Rozwój Trasy 17
 
 - Pierwotna lokalizacja ma 11 działających usług i 26 stanowisk. Wulkanizacja, parking TIR i ładowarki EV mają własne modele, pracowników, cenniki, kolejki i wyposażenie widoczne przy rozbudowie. [Zrzuty z gry](screenshots/0.4.0/README.md)

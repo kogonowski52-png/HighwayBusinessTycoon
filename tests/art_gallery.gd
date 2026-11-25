@@ -105,7 +105,7 @@ func play_scene() -> void:
 	check(game.hud.lighting.text == "Dzień" and game.hud.view.text == "Mapa", "localized lighting and camera controls")
 	await capture("01-stacja-w-grze.png")
 	game.toggle_view()
-	check(game.overview and game.camera.size >= 46.0, "camera control expands the world view")
+	check(game.overview and game.camera_rig.zoom >= 46.0, "camera control expands the world view")
 	game.hud.visible = false
 	set_window(Vector2i(1440, 960))
 	await process_frame
@@ -300,8 +300,8 @@ func character_studies() -> void:
 		actor.pose_at(study[2], 0.27 + (index % 3) * 0.12)
 		actor.animation.pause()
 		var rig := actor.skeleton
-		check(rig.get_bone_count() >= 15 and actor.animation.get_animation_list().size() == 9,
-			"rig and nine clips for " + actor.role)
+		check(rig.get_bone_count() >= 15 and actor.animation.get_animation_list().size() == 10,
+			"rig and ten clips for " + actor.role)
 		if index == 0:
 			var bone := rig.find_bone("leg_l")
 			actor.pose_at("run", 0.11)

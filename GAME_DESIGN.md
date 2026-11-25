@@ -11,6 +11,8 @@ Gracz uruchamia kolejne usługi obsługi drogowej. Ruch widoczny na mapie wpływ
 - Cele i osiągnięcia mają znane nagrody. Trzy rotujące wydarzenia przyznają punkty za obsługę wybranych usług, premię za cel dnia i stałe wymiany na diamenty lub kartę Miry. Diamenty włączają dobrowolną premię przychodową na trzy minuty.
 - Poziom gracza rośnie od 1 do 20 za obsługę, rozbudowę i rozwój zespołu. Nagrody za osiągnięte poziomy można odebrać w Karierze. Rozdziały zawierają po dziesięć celów związanych z konkretną usługą. Kolejną serię otwiera odebranie dwóch celów z poprzedniej.
 - Karty zdobywa się w misjach, osiągnięciach i wymianie za punkty wydarzeń. Gracz może aktywować trzech z piętnastu menedżerów. Rozwój od rangi 1 do 5 kosztuje zarobione diamenty i wymaga poziomu gracza. W danej usłudze działa najsilniejszy pasujący efekt danego rodzaju. Ada odbiera wpływy w całym kompleksie. Wyniki specjalistów dotyczą ich usług. Olu i Jo potrafią obsłużyć pojedynczego klienta samodzielnie, gdy w ich obiekcie brakuje pracownika.
+- Kalendarz udostępnia jedną nagrodę na dobę UTC. Dzień bez logowania zachowuje kolejny etap cyklu. Po dniu 30 następne odebranie wraca do pierwszego pola. Powtórzona karta daje sześć diamentów, a kupon czeka w sklepie do aktywacji. Znacznik ostatniej nagrody korzysta z tego samego zapisywanego czasu co wpływy offline.
+- Osiągnięcia obejmują po pięć progów dla dziesięciu wskaźników. Każda odznaka ma aktualny postęp i jednorazową nagrodę diamentową. Doświadczenie karty rośnie po sprzedaży w specjalizacji przypisanego menedżera. Wymagania i cena awansu zachowują reguły kariery.
 
 ## Klienci, drogi i obsługa
 

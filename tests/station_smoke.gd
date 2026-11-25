@@ -47,7 +47,7 @@ func run() -> void:
 	await capture("08-etapy.png")
 	await click_row(game.hud.upgrade.text)
 	expect(economy.level("fuel") == 2 and economy.amount("cash").empty(), "upgrade sheet commits the same purchase")
-	click(game.operations.back)
+	await close_sheet()
 
 	click(game.hud.pages.goals)
 	await process_frame
@@ -56,12 +56,12 @@ func run() -> void:
 	await click_row("Odbierz")
 	expect(economy.claimed.has("first") and economy.claimed.has("upgrade") and economy.amount("diamond").decimal() == "2",
 		"claims pay disclosed rewards")
-	click(game.operations.back)
+	await close_sheet()
 	click(game.hud.pages.team)
 	await process_frame
 	await click_row(game.t("recruit") % game.money(economy.recruit_cost("fuel")))
 	expect(economy.crew.fuel.size() == 1 and game.crew.staff.fuel.size() == 1, "recruitment places a real employee at the station")
-	click(game.operations.back)
+	await close_sheet()
 	var worked := false
 	for t in range(700):
 		step(0.05)
@@ -80,14 +80,14 @@ func run() -> void:
 	await process_frame
 	await click_row("Odbierz")
 	expect(economy.cards.has("ada"), "crew mission grants a named manager card")
-	click(game.operations.back)
-	click(game.hud.pages.team)
+	await close_sheet()
+	click(game.hud.pages.managers)
 	await process_frame
-	await click_row(game.t("team_cards"))
+	await click_row("Ada Nowak")
 	await click_row("Aktywuj")
 	expect("ada" in economy.equipped and game.crew.directors.has("ada"), "manager activation appears in the scene")
 	await capture("03-zespol.png")
-	click(game.operations.back)
+	await close_sheet()
 
 	for turn in range(1100):
 		if economy.metric("reputation") >= 4:
@@ -99,7 +99,10 @@ func run() -> void:
 	expect(game.selected == "market" and not game.hud.upgrade.disabled, "market unlock reached through ordinary sales")
 	click(game.hud.upgrade)
 	expect(economy.level("market") == 1, "locked building opens from its detail card")
-	click(game.hud.quantities[10])
+	click(game.hud.upgrade_preview)
+	await process_frame
+	await click_row("+10")
+	await close_sheet()
 	expect(game.quantity == 10 and game.hud.upgrade.disabled, "batch price respects available wallet")
 
 	provision(expansion_targets())
@@ -125,8 +128,11 @@ func run() -> void:
 	expect(game.overview and game.lighting.current == game.lighting.Look.GOLDEN, "view and lighting controls remain usable")
 	await capture("05-kompleks.png")
 
-	click(game.hud.language)
-	click(game.hud.power)
+	click(game.hud.settings)
+	await process_frame
+	await click_row("EN")
+	await click_row(game.t("battery_off"))
+	await close_sheet()
 	expect(economy.language == "en" and economy.low_power and Engine.max_fps == 30, "English and energy mode work")
 	economy.checkpoint()
 	var wallet := economy.amount("cash")
@@ -187,7 +193,7 @@ func step(seconds: float) -> void:
 		game.tick_game(0.05)
 
 func click(button: Button) -> void:
-	if not is_instance_valid(button):
+	if not is_instance_valid(button) or not button.is_visible_in_tree():
 		return
 	var point := button.get_global_rect().get_center()
 	for pressed in [true, false]:
@@ -197,6 +203,13 @@ func click(button: Button) -> void:
 		event.position = point
 		event.global_position = point
 		root.push_input(event, true)
+
+func close_sheet() -> void:
+	click(game.operations.back)
+	for frame in range(22):
+		if not game.operations.visible:
+			break
+		await process_frame
 
 func click_row(label: String) -> void:
 	var button := find_button(game.operations.rows, label)
@@ -217,7 +230,7 @@ func find_button(parent: Node, label: String) -> Button:
 
 func controls_fit() -> bool:
 	var screen := root.get_visible_rect()
-	for button in [game.hud.serve, game.hud.upgrade, game.hud.language, game.hud.power, game.hud.lighting, game.hud.view]:
+	for button in [game.hud.serve, game.hud.upgrade, game.hud.settings, game.hud.rank, game.hud.lighting, game.hud.view] + game.hud.pages.values():
 		if not screen.encloses(button.get_global_rect()):
 			return false
 	return true

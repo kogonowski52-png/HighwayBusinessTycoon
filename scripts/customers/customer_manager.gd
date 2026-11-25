@@ -37,7 +37,7 @@ func attach_prop(key: String) -> void:
 	prop.bone_name = "hand_l"
 	skeleton.add_child(prop)
 	var utensil := MeshInstance3D.new()
-	utensil.mesh = Art.extract_mesh("characters", "hand_props", key)
+	utensil.mesh = Art.extract_mesh("landscape", "parcel_carton") if key == "Crate" else Art.extract_mesh("characters", "hand_props", key)
 	utensil.position = Vector3(0.005, -0.028, 0.087)
 	if key == "Tray":
 		utensil.rotation.x = PI * 0.48

@@ -187,6 +187,14 @@ func coin_pop(at: Vector3, payout: String) -> void:
 	bounce.chain().tween_callback(group.queue_free)
 
 func construction(at: Vector3) -> void:
+	var debris := vapor(at + Vector3(0, 0.15, 0), Color("#c8b18f"), 7 if reduced else 16, 1.06, Vector3(0, 0.28, 0))
+	debris.emission_box_extents = Vector3(1.65, 0.14, 1.12)
+	debris.initial_velocity_min = 0.65
+	debris.initial_velocity_max = 1.65
+	debris.one_shot = true
+	debris.explosiveness = 0.92
+	debris.finished.connect(debris.queue_free)
+	debris.restart()
 	var glow := Art.light_pool(self, at + Vector3(0, 0.036, 0), Vector2(1.50, 1.50),
 		Color("#ffe1a8"), 0.86)
 	var flash := glow.create_tween().set_parallel()

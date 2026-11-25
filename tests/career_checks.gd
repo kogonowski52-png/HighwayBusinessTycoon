@@ -135,5 +135,5 @@ func save_previous_release() -> void:
 		and store.claimed.has("crew") and store.player_level() > 1 and store.tutorial_step == store.TUTORIAL_DONE
 		and store.offline_limit() == 28_800 and store.offline_pending.decimal() == "1450",
 		"0.3.2 profile keeps balances, prior eight-hour cap, inventory, settings and uncollected payment")
-	expect(store.checkpoint() == OK and store.storage.read_candidate(path).schema == 4, "previous schema migrates atomically")
+	expect(store.checkpoint() == OK and store.storage.read_candidate(path).schema == 5, "previous schema migrates atomically")
 	clean_save(path)

@@ -88,6 +88,10 @@ func update_visitor(visit: HbtVisit, delta: float) -> void:
 	var next := visit.foot_position(visit.walked)
 	var shift := next - guest.position
 	guest.position = next
+	if visit.phase != HbtVisit.Phase.EXIT_WAIT and visit.walked < 0.91:
+		guest.rotation.y = visit.yaw + PI * 0.5
+		guest.pose_at("exit_car", visit.walked / 0.91 * 0.51)
+		return
 	if shift.length_squared() > 0.000005:
 		guest.rotation.y = lerp_angle(guest.rotation.y, atan2(shift.x, shift.z), minf(delta * 12.0, 1.0))
 		guest.play("walk")

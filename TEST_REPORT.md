@@ -1,5 +1,31 @@
 # Raport testów
 
+## 0.5.0 · Interfejs i rytm Trasy 17
+
+Godot 4.7.2 Stable na Linuxie, renderer Compatibility i Mesa llvmpipe. Próby używają oddzielnych lokalnych profili. [30 zrzutów](screenshots/0.5.0/README.md) · [Porównanie z 0.4.0](screenshots/0.5.0/porownanie-0.4.0.jpg) · [Wydajność](docs/performance-0.5.0.md)
+
+| Próba | Wynik |
+| --- | --- |
+| Kalendarz, osiągnięcia, doświadczenie kart, miks i zapis | 278/278 |
+| Przejście interfejsu bez okna | 49/49 |
+| Zimny start przez przycisk Graj w oddzielnych procesach | 6/6 |
+| Przejście interfejsu w oknie z wejściami gracza i zapisem 30 kadrów | 81/81 |
+| Pętla istniejącej stacji, w tym myjnia i odczyt zapisu | 27/27 |
+| Pętla kariery, rozdziały, wypłata i 11 usług | 44/44 |
+| Regresja modeli, sylwetek i animacji | 113/113 |
+| Ekonomia, odzyskiwanie zapisu i dochód offline | 69/69 |
+| Ruch i rezerwacje | 30/30 |
+| Kariera, pracownicy, menedżerowie i starsze zapisy | 192/192 |
+| Balans w 18 scenariuszach | 46/46 |
+| Migracja pliku zapisanego w 0.4.0 z `5161601` | Zapis schematu 5 zachował wszystkie 27 porównanych pól, w tym rozbudowę, awanse, akcje menedżera, aktywną premię, limit 4 h i oczekującą wypłatę. Dawne wyciszenie i brak wibracji zostały przeniesione do osobnych ustawień. |
+| Lokalny APK debug | Wersja 0.5.0, kod 7, arm64-v8a i x86_64, Android od API 24, cel API 36. Podpis v2/v3, integralność i uprawnienie `VIBRATE` zweryfikowane. |
+
+Sprawdzono wszystkie 30 dni kalendarza i 50 odbiorów odznak, pominięcie dni, cofnięcie czasu oraz ponowne otwarcie zapisu po każdej nagrodzie. Test okienkowy objął start, kliknięcia w panele, płynny powrót kamery po zmianie wiaty, zakup za walutę gry, suwak każdego kanału i blokadę gestu pod panelem. Animacja bramy wynikała z aktywnej rezerwacji, klient wysiadł przy sklepie, a zakończona sprzedaż uruchomiła dostawę z paczką. Symulacja balansu bez odbierania nowych nagród dała identyczny raport JSON jak 0.4.0. [Raport balansu](docs/balance-0.4.0.md)
+
+Film pokazuje wejście z menu, tankowanie, rozbudowę, zatrudnienie i odebranie nagrody. Zapis zawiera 484 klatki w rozdzielczości 486 × 864 przy 30 FPS oraz stereofoniczny miks z silnika. [Nagranie](screenshots/0.5.0/rozgrywka.mp4)
+
+Lokalny APK ma 74 349 357 bajtów i SHA-256 `de17431cbf726a20287e7cb470765b693b35137b30f7f7148aea88345df28780`. Podpis odpowiada lokalnej wersji 0.4.0. Manifest domyślnej kompilacji Android obejmuje wibracje i działanie offline. Fizyczna instalacja, głośność na głośniku telefonu, wibracje i FPS pozostają do sprawdzenia. Po pełnym zamknięciu aplikacji kalendarz offline ufa lokalnemu zegarowi i zachowuje najwyższy znacznik. Cofnięcie nie odnawia wykorzystanej nagrody.
+
 ## 0.4.0 · Rozwój Trasy 17
 
 Próby wykonano w Godocie 4.7.2 Stable na Linuxie. Okno gry korzystało z renderera Compatibility i Mesa llvmpipe. Modele i portrety wykonano w Blenderze 4.3.2. [Galeria 19 zrzutów](screenshots/0.4.0/README.md)
