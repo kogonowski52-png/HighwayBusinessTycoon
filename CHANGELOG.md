@@ -1,5 +1,13 @@
 # Historia zmian
 
+## 0.4.0 · Rozwój Trasy 17
+
+- Dodano wulkanizację, parking TIR i ładowarki EV z osobnymi stanowiskami, cenami, personelem oraz pięcioma etapami widocznymi na mapie.
+- Klienci chodzą do obiektów i wracają do auta przed wyjazdem. Nowy profil EV wybiera usługi zgodne z napędem, a lokalne modernizacje zwiększają atrakcyjność obiektu.
+- Dodano 20 poziomów gracza i 110 misji rozłożonych na 11 rozdziałów. Kolekcja obejmuje 15 menedżerów z portretami i pięcioma rangami.
+- Dodano aktywny samouczek, animowane awanse, autorskie dźwięki i opcjonalne wibracje. Menu finansów pozwala rozbudować limit offline z 2 do 12 godzin.
+- Schemat zapisu 4 zachowuje dotychczasowe obiekty, portfel, zespół, cele i oczekujące wypłaty. Powracające profile z limitem 8 h zachowują ten próg.
+
 ## 0.3.2 · Przebudowa Trasy 17
 
 - Dodano trzy pełne warianty stacji i wybrano Przełęcz. W pięciu etapach zmieniają się zadaszenia, dystrybutory, zaplecze i zużycie placu.

@@ -28,11 +28,13 @@ func _ready() -> void:
 		Color("#8e9d5e"), Color("#bea67e"), 0.20)
 	terrain_finish = plain.material_override
 	pavement()
+	extension_paving()
 	road_marking()
 	furniture()
 	forecourt_wear()
 	scenic_edge()
 	planting()
+	extension_landscaping()
 	for tint in stamps:
 		var shape := BoxMesh.new()
 		shape.size = Vector3.ONE
@@ -108,6 +110,30 @@ func road_marking() -> void:
 	for x in [-13.83, 13.88]:
 		for i in range(5):
 			stamp(Vector3(x, 0.014, 2.43 - i * 2.78), Vector3(0.1, 0.012, 1.1), GOLD)
+
+func extension_paving() -> void:
+	var asphalt := Color("#686e71")
+	var wear := Color("#8e9180")
+	ground(Vector3(-24.1, -0.012, 3.67), Vector3(25.5, 0.032, 2.05), asphalt, wear, 0.14, 0.85)
+	ground(Vector3(-26.55, -0.013, -3.75), Vector3(17.34, 0.034, 1.68), asphalt, wear, 0.12, 0.82)
+	ground(Vector3(-33.2, -0.016, -0.07), Vector3(14.55, 0.039, 6.47), Color("#96a39a"), wear, 0.13, 0.83)
+	ground(Vector3(-31.9, -0.020, -6.77), Vector3(8.86, 0.042, 5.47), Color("#98998a"), wear, 0.14, 0.84)
+	ground(Vector3(48.9, -0.019, -3.20), Vector3(5.0, 0.042, 17.7), asphalt, wear, 0.12, 0.76)
+	ground(Vector3(46.2, -0.020, -12.38), Vector3(8.56, 0.043, 4.3), Color("#aaa18a"), wear, 0.12, 0.80)
+	for x in [-27.36, -30.38, -33.48, -36.55]:
+		stamp(Vector3(x, 0.019, -0.04), Vector3(0.075, 0.012, 3.84), Color("#b0e3cb"))
+	for x in [-28.79, -31.93, -35.05]:
+		stamp(Vector3(x, 0.019, 1.98), Vector3(1.98, 0.012, 0.14), Color("#b0e3cb"))
+	for z in [-5.88, -9.15, -12.25]:
+		stamp(Vector3(37.55, 0.013, z), Vector3(8.55, 0.014, 0.074), GOLD)
+	for z in [-10.84, -7.45]:
+		stamp(Vector3(41.78, 0.013, z), Vector3(0.074, 0.013, 2.17), GOLD)
+	for x in [-35.46, -31.86, -28.27]:
+		stamp(Vector3(x, 0.023, -5.35), Vector3(0.081, 0.017, 1.39), CREAM)
+	Art.place(self, "landscape", "lamp", Vector3(-26.75, 0, 4.83))
+	Art.place(self, "landscape", "lamp", Vector3(48.21, 0, -12.0), PI)
+	Art.place(self, "landscape", "cactus", Vector3(-37.7, 0, -6.3), 0.41)
+	Art.place(self, "landscape", "hedge", Vector3(-40.65, 0, -1.5), 0.4)
 
 func furniture() -> void:
 	var lamp_positions: Array[Transform3D] = []
@@ -267,15 +293,49 @@ func planting() -> void:
 	for at in [Vector3(1.21, -0.03, 16.8), Vector3(-9.31, -0.03, 16.23),
 		Vector3(7.58, -0.02, -8.92), Vector3(6.87, -0.025, 15.96)]:
 		stones.append(transform_at(at, rng.randf_range(-PI, PI), 0.86))
-	batch(Art.extract_mesh("landscape", "meadow"), grass, breeze, false)
-	batch(Art.extract_mesh("landscape", "stone"), stones)
-	batch(Art.extract_mesh("landscape", "pine"), distant_pines)
+	batch(Art.extract_mesh("landscape", "meadow"), grass.filter(outside_extension), breeze, false)
+	batch(Art.extract_mesh("landscape", "stone"), stones.filter(outside_extension))
+	batch(Art.extract_mesh("landscape", "pine"), distant_pines.filter(outside_extension))
 	var blur := PlaneMesh.new()
 	blur.size = Vector2.ONE
 	var shadow := ShaderMaterial.new()
 	shadow.shader = CONTACT
 	shadow.set_shader_parameter("opacity", 0.37)
 	batch(blur, contact_transforms, shadow, false)
+
+func outside_extension(placement: Transform3D) -> bool:
+	var at := placement.origin
+	return not (at.x < -27.2 and at.z > -11.0 and at.z < 5.0)
+
+func extension_landscaping() -> void:
+	for profile in [
+		[Vector3(-34.60, -0.040, -15.55), Vector3(7.85, 1.24, 3.76), -0.22],
+		[Vector3(43.10, -0.042, -18.25), Vector3(8.94, 1.08, 3.71), 0.17],
+	]:
+		var mound := Art.place(self, "landscape", "bank", profile[0], profile[2])
+		mound.scale = profile[1]
+		(mound.find_child("Bank", true, false) as MeshInstance3D).material_override = terrain_finish
+	var groves: Array[Transform3D] = [
+		transform_at(Vector3(-36.45, 0.67, -14.07), -0.37, 0.91),
+		transform_at(Vector3(-32.15, 0.64, -14.84), 1.16, 0.76),
+		transform_at(Vector3(39.42, 0.59, -17.17), 0.64, 0.84),
+		transform_at(Vector3(47.86, 0.51, -17.42), 0.13, 0.79),
+	]
+	batch(Art.extract_mesh("landscape", "pine"), groves)
+	var gravel: Array[Transform3D] = [
+		transform_at(Vector3(-30.94, -0.025, -12.07), 0.54, 0.62),
+		transform_at(Vector3(-36.74, -0.019, -10.32), 1.32, 0.54),
+		transform_at(Vector3(39.80, -0.013, -14.74), 0.30, 0.70),
+		transform_at(Vector3(48.04, -0.027, -15.57), -0.75, 0.86),
+	]
+	batch(Art.extract_mesh("landscape", "stone"), gravel)
+	var edges: Array[Transform3D] = [
+		transform_at(Vector3(-29.50, 0.025, -11.25), -0.48, 0.86),
+		transform_at(Vector3(-39.89, 0.008, -3.17), 0.57, 0.84),
+		transform_at(Vector3(36.68, 0.013, -13.92), 0.82, 0.91),
+		transform_at(Vector3(43.21, 0.055, -14.96), 0.24, 1.00),
+	]
+	batch(Art.extract_mesh("landscape", "hedge"), edges)
 
 func ground(at: Vector3, size: Vector3, tint: Color, accent: Color, grain: float, field := 1.0,
 		tile := Vector2.ZERO, highway := false, wear := 0.0, verge := 0.0) -> MeshInstance3D:

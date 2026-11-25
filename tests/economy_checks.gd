@@ -137,10 +137,14 @@ func offline_and_ad() -> void:
 	store.high_water = WALL
 	expect(store.offline_quote(3600).empty(), "unstaffed site does not earn offline")
 	expect(store.hire("fuel"), "staffed test site")
-	var expected := store.offline_quote(28_800)
-	expect(store.capture_absence(WALL + 100_000).compare(expected) == 0 and store.offline_seconds == 28_800, "eight-hour cap")
+	var expected := store.offline_quote(7_200)
+	expect(store.capture_absence(WALL + 100_000).compare(expected) == 0 and store.offline_seconds == 7_200, "new profiles start at two hours")
+	expect(store.offline_away_seconds == 100_000, "offline elapsed and credited time are independent")
 	expect(store.capture_absence(WALL + 100_000).empty(), "same timestamp cannot earn twice")
 	expect(store.capture_absence(WALL + 99_980).empty(), "small rollback is harmless")
+	expect(store.capture_absence(WALL + 100_090).empty() and store.offline_pending.compare(expected) == 0,
+		"unclaimed batch retains its cap across launches")
+	expect(store.redeem_offline().compare(expected) == 0, "ordinary credit is received once")
 	expect(not store.capture_absence(WALL + 100_290).empty(), "earnings continue after a small correction")
 	var clock := store.high_water
 	expect(store.capture_absence(clock + 100_000, 300).compare(store.offline_quote(300)) == 0

@@ -4,6 +4,7 @@ const Art = preload("res://scripts/art/visual_library.gd")
 const Routes = preload("res://data/economy/routes.gd")
 const Strings = preload("res://localization/strings.gd")
 const Station = preload("res://scripts/buildings/building_manager.gd")
+const Kit = preload("res://scripts/buildings/model_kit.gd")
 const CREAM := Color("#fff0ce")
 
 const WASH_AT := Vector3(11.47, 0.0, -7.85)
@@ -12,6 +13,9 @@ const WORKSHOP_AT := Vector3(8.68, 0.0, -16.47)
 const MOTEL_AT := Vector3(-7.81, 0.0, -16.82)
 const PARKING_AT := Vector3(-16.54, 0.0, -0.85)
 const TRUCK_AT := Vector3(23.90, 0.0, -6.89)
+const TIRES_AT := Vector3(-31.85, 0.0, -8.15)
+const CHARGE_AT := Vector3(-38.35, 0.0, -1.10)
+const TRUCK_PARK_AT := Vector3(45.50, 0.0, -13.42)
 
 const THRESHOLDS := [1, 15, 35, 65, 90]
 const ROOF_MODULES := ["service_console", "service_clerestory", "service_solar", "service_mechanical", "service_lantern"]
@@ -30,6 +34,12 @@ const ROOFS := {
 		Vector3(1.86, 2.36, -1.56), Vector3(-2.39, 2.36, -1.12), Vector3(2.93, 2.36, -2.54)]],
 	"truck": [TRUCK_AT, [Vector3(-2.77, 5.42, 1.81), Vector3(-2.32, 5.42, -1.63),
 		Vector3(2.16, 5.42, -1.78), Vector3(2.45, 5.42, 1.78), Vector3(2.90, 5.42, 4.57)]],
+	"tires": [TIRES_AT, [Vector3(-2.61, 3.18, 0.69), Vector3(-1.75, 3.18, -0.67),
+		Vector3(0.17, 3.18, -0.66), Vector3(1.63, 3.18, 0.69), Vector3(2.60, 3.18, -1.36)]],
+	"charge": [CHARGE_AT, [Vector3(-0.94, 2.34, -0.76), Vector3(-0.80, 2.34, 0.24),
+		Vector3(0.42, 2.34, -0.50), Vector3(0.81, 2.34, 0.40), Vector3(1.32, 2.34, -0.64)]],
+	"truck_park": [TRUCK_PARK_AT, [Vector3(-0.92, 2.68, 0.72), Vector3(-0.76, 2.68, -0.68),
+		Vector3(0.44, 2.68, -0.51), Vector3(0.72, 2.68, 0.61), Vector3(0.94, 2.68, -0.58)]],
 }
 
 var markers: Dictionary = {}
@@ -38,6 +48,10 @@ var roof_batches: Array[MultiMesh] = []
 var roof_slots: Array[Dictionary] = []
 var extra_islands: Dictionary = {}
 var workshop_shutters: Node3D
+var new_bays: Dictionary = {"charge": [], "truck_park": [], "tires": []}
+var charge_shelters: Array[Node3D] = []
+var charge_screens: Array[Label3D] = []
+var charge_links: Array[Node3D] = []
 
 func _ready() -> void:
 	var wash := Art.place(self, "architecture", "wash", WASH_AT)
@@ -55,6 +69,7 @@ func _ready() -> void:
 		Art.contact(self, at + Vector3(0, 0.013, 0.10), 8.7, 7.0)
 	var heavy := Art.place(self, "architecture", "truck_canopy", TRUCK_AT)
 	Art.sign(heavy, Vector3(0, 5.15, 5.557), "NORTHPOINT FREIGHT", 0.41, CREAM)
+	build_extensions()
 	for id in ["fuel", "truck"]:
 		var islands: Array[Node3D] = []
 		var first := int(id == "fuel")
@@ -64,7 +79,8 @@ func _ready() -> void:
 			island.scale = Vector3(0.70, 0.75, 0.75)
 			islands.append(island)
 		extra_islands[id] = islands
-	for id in ["fuel", "market", "wash", "parking", "workshop", "restaurant", "motel", "truck"]:
+	for definition in HbtEconomy.CONFIG.services:
+		var id := definition.id
 		var at := Routes.position_of(id, 0) + Vector3(0.0, 2.23, 0.0)
 		var label := Art.sign(self, at, "", 0.30, CREAM)
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -81,6 +97,44 @@ func _ready() -> void:
 		add_child(group)
 		roof_batches.append(batch)
 		roof_slots.append({})
+
+func build_extensions() -> void:
+	var tires := Art.place(self, "architecture", "tire_shop", TIRES_AT)
+	Art.sign(tires, Vector3(-0.13, 2.64, 2.151), "REDLINE TYRES", 0.28, CREAM)
+	Art.contact(self, TIRES_AT + Vector3(0, 0.013, 0.22), 8.7, 6.8)
+	var lounge := Art.place(self, "architecture", "ev_lounge", CHARGE_AT)
+	Art.sign(lounge, Vector3(0, 1.94, 1.614), "NORTHPOINT EV", 0.165, CREAM)
+	Art.contact(self, CHARGE_AT + Vector3(0, 0.013, 0.22), 4.5, 4.1)
+	var layover := Art.place(self, "architecture", "freight_office", TRUCK_PARK_AT)
+	Art.sign(layover, Vector3(-0.17, 2.19, 1.754), "LAYOVER 17", 0.175, CREAM)
+	Art.contact(self, TRUCK_PARK_AT + Vector3(0, 0.013, 0.18), 4.0, 4.2)
+	for index in range(2):
+		var marker := Art.place(self, "architecture", "freight_sign", Routes.position_of("truck_park", index) + Vector3(-4.21, 0, -1.37))
+		Art.sign(marker, Vector3(0, 1.41, 0.132), "P %d" % (index + 1), 0.19, CREAM)
+		new_bays.truck_park.append(marker)
+		var tire_marker := Art.place(self, "architecture", "freight_sign", Routes.position_of("tires", index) + Vector3(1.45, 0, 1.82))
+		tire_marker.scale = Vector3.ONE * 0.78
+		Art.sign(tire_marker, Vector3(0, 1.41, 0.132), str(index + 1), 0.22, CREAM)
+		new_bays.tires.append(tire_marker)
+	for index in range(3):
+		var at := Routes.position_of("charge", index)
+		var socket := Art.place(self, "architecture", "ev_column", at + Vector3(1.16, 0, -1.67))
+		new_bays.charge.append(socket)
+		charge_screens.append(Art.sign(socket, Vector3(0, 1.232, 0.260), "EV", 0.077, CREAM))
+		charge_shelters.append(Art.place(self, "architecture", "ev_solar", at + Vector3(0, 0, -0.63)))
+		var link := Node3D.new()
+		link.position = at
+		add_child(link)
+		var points := [Vector3(0.90, 0.98, -1.57), Vector3(1.07, 0.64, -1.27),
+			Vector3(1.02, 0.30, -0.92), Vector3(0.90, 0.34, -0.49), Vector3(0.72, 0.60, -0.30)]
+		for segment in range(1, points.size()):
+			var span: Vector3 = points[segment] - points[segment - 1]
+			var piece := Kit.cylinder(link, (points[segment] + points[segment - 1]) * 0.5, 0.032, 0.032,
+				span.length() + 0.022, Color("#294747"), 8)
+			piece.quaternion = Quaternion(Vector3.UP, span.normalized())
+			piece.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		link.hide()
+		charge_links.append(link)
 
 func update_sites(economy: HbtEconomy) -> void:
 	workshop_shutters.visible = economy.level("workshop") == 0
@@ -103,6 +157,20 @@ func update_sites(economy: HbtEconomy) -> void:
 		var capacity := economy.capacity(id) - int(id == "fuel")
 		for index in range(group.size()):
 			group[index].visible = index < capacity
+	for id in new_bays:
+		for index in range(new_bays[id].size()):
+			new_bays[id][index].visible = index < economy.capacity(id)
+	for index in range(charge_shelters.size()):
+		charge_shelters[index].visible = index < economy.capacity("charge") and economy.level("charge") >= 35
+
+func update_chargers(dispatch: HbtDispatch) -> void:
+	for index in range(charge_screens.size()):
+		var visit := dispatch.visit_at("charge", index)
+		var charging := visit != null and visit.phase == HbtVisit.Phase.WORKING and visit.walked >= visit.foot_length
+		charge_links[index].visible = charging
+		var display := "%d%%" % roundi(visit.progress() * 100.0) if charging else "EV"
+		if charge_screens[index].text != display:
+			charge_screens[index].text = display
 
 func roof_anchor(id: String, stage: int) -> Vector3:
 	var roof: Array = ROOFS[id]

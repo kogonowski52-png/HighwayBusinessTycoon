@@ -83,6 +83,7 @@ func run() -> void:
 	click(game.operations.back)
 	click(game.hud.pages.team)
 	await process_frame
+	await click_row(game.t("team_cards"))
 	await click_row("Aktywuj")
 	expect("ada" in economy.equipped and game.crew.directors.has("ada"), "manager activation appears in the scene")
 	await capture("03-zespol.png")

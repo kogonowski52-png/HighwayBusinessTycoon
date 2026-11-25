@@ -9,6 +9,8 @@ Gracz uruchamia kolejne usługi obsługi drogowej. Ruch widoczny na mapie wpływ
 - Odblokowywanie wymaga reputacji, środków i poziomu wcześniejszej usługi. Po odblokowaniu każdy obiekt ma poziomy 1–100. Zakup +10 i +25 wymaga całej kwoty. Przy poziomie 100 liczba kupowanych poziomów jest odpowiednio ograniczona. MAX kupuje tylko poziomy mieszczące się w portfelu.
 - Stanowiska otwierają się na progach właściwych dla obiektu. Wydajność i wysokość stawki rosną wraz z poziomem. Na mapie pojawiają się wyposażenie, nowe oznaczenia i oświetlenie, a stacja zachowuje pięć pierwotnych modułów.
 - Cele i osiągnięcia mają znane nagrody. Trzy rotujące wydarzenia przyznają punkty za obsługę wybranych usług, premię za cel dnia i stałe wymiany na diamenty lub kartę Miry. Diamenty włączają dobrowolną premię przychodową na trzy minuty.
+- Poziom gracza rośnie od 1 do 20 za obsługę, rozbudowę i rozwój zespołu. Nagrody za osiągnięte poziomy można odebrać w Karierze. Rozdziały zawierają po dziesięć celów związanych z konkretną usługą. Kolejną serię otwiera odebranie dwóch celów z poprzedniej.
+- Karty zdobywa się w misjach, osiągnięciach i wymianie za punkty wydarzeń. Gracz może aktywować trzech z piętnastu menedżerów. Rozwój od rangi 1 do 5 kosztuje zarobione diamenty i wymaga poziomu gracza. W danej usłudze działa najsilniejszy pasujący efekt danego rodzaju. Ada odbiera wpływy w całym kompleksie. Wyniki specjalistów dotyczą ich usług. Olu i Jo potrafią obsłużyć pojedynczego klienta samodzielnie, gdy w ich obiekcie brakuje pracownika.
 
 ## Klienci, drogi i obsługa
 
@@ -16,18 +18,19 @@ Gracz uruchamia kolejne usługi obsługi drogowej. Ruch widoczny na mapie wpływ
 | --- | --- |
 | Mieszkaniec | Najczęściej tankuje i robi zakupy, ma ograniczony budżet i dość długi czas oczekiwania. |
 | Podróżny | Preferuje paliwo, posiłek lub postój, rezygnuje szybciej od lokalnego klienta. |
-| Kierowca ciężarówki | Używa osobnego wjazdu, pasa oczekiwania i stanowiska TIR. |
+| Kierowca ciężarówki | Używa osobnego wjazdu i kolejki. Wybiera tankowanie lub parking TIR. |
 | Turysta | Najchętniej parkuje, korzysta z restauracji i motelu. |
 | Rodzina | Częściej odwiedza sklep, restaurację i parking oraz dłużej czeka na obsługę. |
 | Biznesowy | Zostawia większy napiwek, preferuje szybką obsługę i ma krótszą cierpliwość. |
 | VIP | Pojawia się po zdobyciu reputacji, ma największy budżet i najkrótszą cierpliwość. |
+| Kierowca EV | Pojawia się przy działających ładowarkach. Wybiera ładowanie lub wizytę w ogólnodostępnej usłudze. |
 
-Przyjazdy wybierają otwarte usługi pasujące do typu pojazdu i budżetu. Wagi maleją przy zatłoczeniu. Pojazd może wybrać alternatywną usługę lub opuścić teren po przekroczeniu cierpliwości. Auta jadą przez narysowane na mapie wjazdy, kolejki i stanowiska. Pracownicy przydzieleni do obiektu podchodzą do zarezerwowanego zadania oraz wykonują animację odpowiednią dla usługi.
+Przyjazdy wybierają otwarte usługi pasujące do typu pojazdu i budżetu. Wagi rosną wraz z rozbudową i maleją przy zatłoczeniu. Pojazd może wybrać alternatywną usługę lub opuścić teren po przekroczeniu cierpliwości. Auta jadą przez narysowane na mapie wjazdy, kolejki i stanowiska. Pieszy idzie od auta do usługi i wraca przed wyjazdem. Pracownicy przydzieleni do obiektu podchodzą do zarezerwowanego zadania oraz wykonują animację odpowiednią dla usługi.
 
 Rezerwacja wszystkich sektorów manewru jest atomowa. Gdy pojazd osiągnie miejsce obsługi, zwalnia korytarz i pozostaje na swoim stanowisku. Hamowanie zależy od odstępu. Awaryjny mechanizm zwalnia rezerwację po trwałym zatrzymaniu bez przyznawania przychodu za niedokończoną usługę.
 
 ## Zarobki offline
 
-Szacowanie korzysta z obsady, stawek, trwałych premii i zachowawczego tempa przyjazdów. Czas jednorazowego naliczenia ograniczono do ośmiu godzin. Ostatni zapisany znacznik czasu blokuje powielanie okien po cofnięciu zegara. Wznowienie tego samego procesu dodatkowo porównuje czas urządzenia z monotonicznym. Środki można zawsze odebrać bezpłatnie. Opcjonalny Androidowy wariant reklamy podwaja część, na którą wydano ofertę, po potwierdzeniu odtwarzania przez dostawcę.
+Szacowanie korzysta z obsady, stawek, trwałych premii i zachowawczego tempa przyjazdów. Startowy limit jednej nieodebranej wypłaty to 2 godziny. Zakupy za gotówkę wydłużają go do 4, 6, 8, 10 i 12 godzin. Starsze profile z limitem ośmiu godzin zachowują próg 8 h. Okno pokazuje czas poza grą oraz czas objęty wypłatą. Ostatni zapisany znacznik czasu blokuje powielanie okien po cofnięciu zegara. Wznowienie tego samego procesu dodatkowo porównuje czas urządzenia z monotonicznym. Środki można zawsze odebrać bezpłatnie. Dotychczasowy opcjonalny moduł nagradzanej reklamy zachowuje warunkowy przycisk dla dostawcy.
 
-Parametry znajdują się w [data/economy](data/economy), a przebieg symulacji w [raporcie balansu](docs/balance-0.3.0.md).
+Parametry i przebieg symulacji. [Dane ekonomii](data/economy) · [Raport balansu 0.4.0](docs/balance-0.4.0.md)

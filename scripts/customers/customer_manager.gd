@@ -4,8 +4,9 @@ signal arrived
 
 const Art = preload("res://scripts/art/visual_library.gd")
 const Clips = preload("res://scripts/art/character_clips.gd")
-const ROLE_PROPS := {"driver": "Nozzle", "attendant": "Nozzle", "wash_worker": "Mop", "mechanic": "Spanner", "server": "Tray", "manager": "Clipboard", "ada": "Clipboard", "iga": "Clipboard",
-	"maks": "Clipboard", "mira": "Clipboard", "leon": "Clipboard"}
+const Managers = preload("res://data/economy/managers.gd")
+const ROLE_PROPS := {"driver": "Nozzle", "attendant": "Nozzle", "wash_worker": "Mop", "cleaner": "Mop",
+	"mechanic": "Spanner", "server": "Tray", "manager": "Clipboard", "olu": "Spanner"}
 
 @export var role := "driver"
 
@@ -26,8 +27,9 @@ func _ready() -> void:
 	animation.root_node = NodePath("..")
 	animation.add_animation_library("", Clips.library(skeleton))
 	Art.contact(self, Vector3(0, 0.020, 0), 0.99, 0.89)
-	if ROLE_PROPS.has(role):
-		attach_prop(ROLE_PROPS[role])
+	var tool: String = ROLE_PROPS.get(role, "Clipboard" if Managers.ROSTER.has(role) else "")
+	if not tool.is_empty():
+		attach_prop(tool)
 	play("idle")
 
 func attach_prop(key: String) -> void:

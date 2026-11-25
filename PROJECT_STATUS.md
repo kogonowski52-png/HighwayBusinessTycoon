@@ -1,5 +1,12 @@
 # Stan projektu
 
+## 0.4.0 · Rozwój Trasy 17
+
+- Pierwotna lokalizacja ma 11 działających usług i 26 stanowisk. Wulkanizacja, parking TIR i ładowarki EV mają własne modele, pracowników, cenniki, kolejki i wyposażenie widoczne przy rozbudowie. [Zrzuty z gry](screenshots/0.4.0/README.md)
+- Poziomy gracza, 110 nowych misji, 15 kart menedżerów i rozbudowa zarobków offline działają za waluty zdobywane w grze. Samouczek prowadzi przez rzeczywiste tankowanie, zakup i zatrudnienie. [Projekt gry](GAME_DESIGN.md)
+- Migracja zachowuje dotychczasowych pracowników, karty, ustawienia i niewypłacone wpływy. Symulator przechodzi sześć horyzontów na trzech ziarnach. [Raport testów](TEST_REPORT.md) · [Balans](docs/balance-0.4.0.md)
+- Test instalacji, dźwięku, wibracji i płynności na fizycznym Androidzie pozostaje otwarty. Charakterystyka zarobków offline opiera się na lokalnym zegarze i limicie naliczania.
+
 ## 0.3.2 · Przebudowa geometrii Trasy 17
 
 - Główna stacja ma pięć różniących się konstrukcji. Przełęcz została wybrana po porównaniu z Łukiem i Tarasem w oknie Godota. Otwarty sklep i czynny warsztat mają własne modele wyposażenia. [Galeria i porównanie](screenshots/0.3.2/README.md)

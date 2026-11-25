@@ -54,8 +54,10 @@ static func approach(id: String, index: int) -> Array[Vector3]:
 			if index > 0:
 				route.append(Vector3(31.42, 0, bay.z))
 			route.append_array([Vector3(28.40, 0, bay.z), bay])
-		"parking", "restaurant":
-			var turn := 2.90 if id == "parking" else -3.75
+		"truck_park":
+			route.assign([Vector3(31.42, 0, -3.55), Vector3(31.42, 0, bay.z), bay])
+		"parking", "restaurant", "tires", "charge":
+			var turn := 3.70 if id == "charge" else 2.90 if id == "parking" else -3.75
 			route.assign([PLAZA, Vector3(5.64, 0, 6.39), WEST_IN, Vector3(-12.08, 0, turn),
 				Vector3(bay.x, 0, turn), bay])
 		"workshop", "motel":
@@ -81,8 +83,12 @@ static func departure(id: String, index: int) -> Array[Vector3]:
 			route.assign([Vector3(18.50, 0, bay.z)])
 			route.append_array(TRUCK_END)
 			return route
-		"parking", "restaurant":
-			var turn := 2.90 if id == "parking" else -3.75
+		"truck_park":
+			route.assign([Vector3(48.9, 0, bay.z), Vector3(48.9, 0, 2.31), Vector3(46.5, 0, 5.27),
+				Vector3(44.95, 0, 7.58), Vector3(43.35, 0, 8.78), EXIT.back()])
+			return route
+		"parking", "restaurant", "tires", "charge":
+			var turn := 3.70 if id == "charge" else 2.90 if id == "parking" else -3.75
 			route.assign([Vector3(bay.x, 0, turn), Vector3(-12.08, 0, turn), WEST_OUT])
 		"workshop", "motel":
 			route.assign([Vector3(bay.x, 0, -11.8), Vector3(-10.34, 0, -11.8),
@@ -100,10 +106,12 @@ static func bypass(lane: String) -> Array[Vector3]:
 	return route
 
 static func sectors(id: String, outbound: bool) -> Array[String]:
-	if id == "truck":
+	if id in ["truck", "truck_park"]:
 		var truck: Array[String] = ["truck_yard"]
 		if outbound:
 			truck.append("highway")
+			if id == "truck_park":
+				truck.append_array(["entry_truck", "entry_car"])
 		return truck
 	var required: Array[String] = ["plaza"]
 	if outbound:
@@ -115,7 +123,7 @@ static func sectors(id: String, outbound: bool) -> Array[String]:
 	return required
 
 static func reverse_first(id: String) -> bool:
-	return id in ["market", "parking", "wash", "workshop", "restaurant", "motel"]
+	return id in ["market", "parking", "wash", "workshop", "restaurant", "motel", "tires", "charge"]
 
 static func position_of(id: String, index: int) -> Vector3:
 	match id:
@@ -127,11 +135,16 @@ static func position_of(id: String, index: int) -> Vector3:
 		"restaurant": return Vector3([-21.55, -24.42][index], 0.0, -5.82)
 		"motel": return Vector3([-9.68, -7.12, -4.53][index], 0, -8.11)
 		"truck": return Vector3(23.95, 0.0, [-3.55, -6.87, -10.19][index])
+		"tires": return Vector3([-30.12, -33.59][index], 0.12, -7.04)
+		"truck_park": return Vector3(37.55, 0.0, [-7.44, -10.83][index])
+		"charge": return Vector3(-28.80 - index * 3.13, 0.03, 0.05)
 	return Vector3.ZERO
 
 static func stopping_yaw(id: String) -> float:
 	if id == "motel":
 		return 0.0
+	if id == "truck_park":
+		return PI * 0.5
 	return -PI * 0.5 if id in ["fuel", "truck"] else PI
 
 static func worker_at(id: String, bay: int) -> Vector3:
@@ -143,4 +156,28 @@ static func worker_at(id: String, bay: int) -> Vector3:
 		"market": return Vector3(-3.95 - bay * 0.85, 0.28, -5.16)
 		"restaurant": return at + Vector3(1.05, 0.30, -1.31)
 		"motel": return at + Vector3(1.09, 0.30, -1.20)
+		"tires": return at + Vector3(-1.08, 0.0, -0.10)
+		"truck_park": return at + Vector3(1.58, 0.0, -1.49)
+		"charge": return at + Vector3(-1.08, 0.0, -0.50)
 	return at + Vector3(0.91, 0, 1.30)
+
+static func guest_path(id: String, bay: int) -> PackedVector3Array:
+	var at := position_of(id, bay)
+	var door := at + Vector3(0.82, 0.015, -0.29)
+	match id:
+		"market":
+			return PackedVector3Array([door, Vector3(door.x, 0.06, -1.26), Vector3(-6.19, 0.06, -1.26), Vector3(-6.07, 0.25, -2.19)])
+		"restaurant":
+			return PackedVector3Array([door, Vector3(door.x, 0.025, -7.62), Vector3(-18.53, 0.06, -7.62), Vector3(-17.22, 0.26, -6.59)])
+		"motel":
+			return PackedVector3Array([door, Vector3(door.x, 0.04, -10.03), Vector3(-9.80, 0.04, -10.03),
+				Vector3(-9.80, 0.08, -13.42), Vector3(-9.80, 0.34, -14.65)])
+		"parking":
+			return PackedVector3Array([door, Vector3(door.x, at.y, -2.38), Vector3(-16.69, at.y, -2.38)])
+		"tires":
+			return PackedVector3Array([door, Vector3(door.x, 0.15, -5.62), Vector3(-28.58, 0.15, -5.62), Vector3(-28.58, 0.15, -7.42)])
+		"truck_park":
+			return PackedVector3Array([at + Vector3(1.46, 0.02, 1.58), Vector3(44.31, 0.06, at.z + 1.58), Vector3(44.68, 0.14, -11.63)])
+		"charge":
+			return PackedVector3Array([door, at + Vector3(1.24, 0.045, -0.58), at + Vector3(1.04, 0.045, -1.65)])
+	return PackedVector3Array()

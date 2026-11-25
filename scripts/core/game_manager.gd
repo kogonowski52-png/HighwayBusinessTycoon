@@ -9,6 +9,8 @@ const Effects = preload("res://scripts/art/world_effects.gd")
 const Crew = preload("res://scripts/employees/world_crew.gd")
 const Ads = preload("res://scripts/monetization/offline_ads.gd")
 const Operations = preload("res://scripts/core/operations_panel.gd")
+const Tutorial = preload("res://scripts/core/tutorial.gd")
+const Feedback = preload("res://scripts/core/feedback.gd")
 const Station = preload("res://scenes/buildings/fuel_station.tscn")
 const Driver = preload("res://scenes/characters/driver.tscn")
 const Hud = preload("res://scenes/ui/station_hud.tscn")
@@ -30,6 +32,8 @@ var camera := Camera3D.new()
 var lighting := Lighting.new()
 var effects := Effects.new()
 var ads := Ads.new()
+var tutorial := Tutorial.new()
+var feedback := Feedback.new()
 
 var selected := "fuel"
 var quantity := 1
@@ -44,12 +48,16 @@ var message_time := 0.0
 var suspended_at := -1
 var mounted := false
 var fuel_art_level := 1
+var displayed_rank := 1
+var guided_step := 0
 
 func _ready() -> void:
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--save-path="):
 			economy.storage.path = argument.trim_prefix("--save-path=")
 	economy.restore(wall_override)
+	displayed_rank = economy.player_level()
+	guided_step = economy.tutorial_step
 	simulation_clock = float(economy.clock)
 	add_child(lighting)
 	setup_camera()
@@ -70,6 +78,9 @@ func _ready() -> void:
 	add_child(hud)
 	add_child(operations)
 	operations.setup(self, hud)
+	add_child(tutorial)
+	tutorial.setup(self, hud)
+	add_child(feedback)
 	economy.changed.connect(on_economy_changed)
 	traffic.dispatch.state_changed.connect(refresh)
 	traffic.dispatch.completed.connect(on_sale)
@@ -79,7 +90,7 @@ func _ready() -> void:
 	hud.power_requested.connect(toggle_power)
 	hud.lighting_requested.connect(cycle_lighting)
 	hud.view_requested.connect(toggle_view)
-	hud.page_requested.connect(operations.show_page)
+	hud.page_requested.connect(open_page)
 	hud.quantity_requested.connect(select_quantity)
 	hud.income_requested.connect(income_action)
 	ads.attach()
@@ -104,10 +115,13 @@ func frame_camera() -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
 	var aspect := viewport_size.x / maxf(1.0, viewport_size.y)
 	if overview:
-		aim_camera(Vector3(7.0, 0.0, -3.9), Vector3(16.0, 39.0, 32.5), maxf(72.0, aspect * 63.0))
+		aim_camera(Vector3(4.5, 0.0, -4.3), Vector3(16.0, 39.0, 32.5), maxf(94.0, aspect * 69.0))
 	else:
 		var subject: Vector3 = campus.focus(selected) + Vector3(-0.54, 0.62, -0.88)
-		aim_camera(subject, Vector3(15.3, 34.7, 31.5), maxf(22.6, aspect * 31.5))
+		if selected == "tires":
+			aim_camera(Campus.TIRES_AT + Vector3(0.4, 0.95, 1.1), Vector3(-5.8, 8.5, 8.0), maxf(17.2, aspect * 24.0))
+		else:
+			aim_camera(subject, Vector3(15.3, 34.7, 31.5), maxf(22.6, aspect * 31.5))
 
 func aim_camera(target: Vector3, offset: Vector3, width: float) -> void:
 	camera.position = target + offset
@@ -150,7 +164,7 @@ func tick_game(delta: float) -> void:
 func update_scene(delta: float) -> void:
 	var primary := traffic.dispatch.visit_at("fuel", 0)
 	var primary_ready := primary != null and primary.phase == Phase.READY
-	var primary_manual := primary != null and primary.phase == Phase.WORKING and primary.worker < 0
+	var primary_manual := primary != null and primary.phase == Phase.WORKING and primary.worker == -1
 	driver.represent_service(primary_ready and economy.crew.fuel.is_empty(), primary_manual, delta)
 	var filling := traffic.dispatch.first_at("fuel", Phase.WORKING)
 	if filling == null:
@@ -163,6 +177,7 @@ func update_scene(delta: float) -> void:
 	else:
 		effects.set_hose(false, Vector3.ZERO)
 	effects.set_activity(traffic.dispatch.first_at("wash", Phase.WORKING), traffic.dispatch.first_at("workshop", Phase.WORKING))
+	campus.update_chargers(traffic.dispatch)
 	var road_car: HbtVisit
 	for ticket: HbtVisit in traffic.dispatch.live.values():
 		if ticket.distance > 0.04 and ticket.location.z > -1.5 and ticket.location.z < 6.9 \
@@ -226,6 +241,22 @@ func select_quantity(count: int) -> void:
 func serve_customer() -> void:
 	traffic.dispatch.start_manual(selected)
 
+func open_page(name: String) -> void:
+	if economy.tutorial_step == 2 and name == "goals":
+		operations.goals_tab = "career"
+	if economy.tutorial_step == 3 and name == "team":
+		operations.team_tab = "team_staff"
+	if economy.tutorial_step == 5 and name == "sites":
+		economy.finish_tutorial()
+		economy.checkpoint()
+		feedback.play("reward", true)
+		show_message(t("guide_complete"))
+	operations.show_page(name)
+
+func skip_tutorial() -> void:
+	economy.finish_tutorial()
+	economy.checkpoint()
+
 func invest() -> void:
 	var installed: int = campus.roof_counts[selected]
 	var before_art := fuel_art_level
@@ -233,6 +264,8 @@ func invest() -> void:
 		if economy.unlock(selected):
 			campus.animate_install(selected, installed)
 			effects.construction(Routes.position_of(selected, 0))
+			feedback.play("build", true)
+			hud.announce(t("opened_notice") % site_name(selected), hud.UPGRADE_ART, not economy.low_power)
 			economy.checkpoint()
 		return
 	var count := economy.buy_levels(selected, quantity)
@@ -242,6 +275,7 @@ func invest() -> void:
 		station.animate_construction()
 	campus.animate_install(selected, installed)
 	effects.construction(Routes.position_of(selected, 0))
+	feedback.play("build", true)
 	show_message(t("bought_levels") % count)
 	economy.checkpoint()
 
@@ -255,18 +289,31 @@ func train_worker(index: int) -> void:
 
 func promote_worker(index: int) -> void:
 	if economy.promote(selected, index):
+		promotion_feedback(t("promotion_notice"), hud.STAFF)
 		economy.checkpoint()
 
 func assign_manager(id: String) -> void:
 	if economy.assign(id):
 		economy.checkpoint()
 
+func train_manager(id: String) -> void:
+	if economy.train_manager(id):
+		promotion_feedback(t("manager_notice") % [BOOK.MANAGERS[id].name, economy.manager_rank(id)], hud.STAFF)
+		economy.checkpoint()
+
 func claim_milestone(id: String) -> void:
 	if economy.claim_reward(id):
+		reward_feedback()
+		economy.checkpoint()
+
+func claim_player_reward() -> void:
+	if economy.claim_player_reward():
+		reward_feedback()
 		economy.checkpoint()
 
 func claim_daily() -> void:
 	if economy.claim_daily():
+		reward_feedback()
 		economy.checkpoint()
 
 func exchange_points(card: bool) -> void:
@@ -287,6 +334,16 @@ func toggle_power() -> void:
 	economy.touch()
 	economy.checkpoint()
 
+func toggle_feedback() -> void:
+	economy.feedback_enabled = not economy.feedback_enabled
+	economy.touch()
+	economy.checkpoint()
+
+func upgrade_offline() -> void:
+	if economy.buy_offline_limit():
+		feedback.play("build", true)
+		economy.checkpoint()
+
 func income_action() -> void:
 	if not economy.offline_pending.empty():
 		operations.show_page("offline")
@@ -300,6 +357,7 @@ func collect_income() -> void:
 		show_message(t("collect_action") % money(cash))
 		if not economy.low_power:
 			hud.animate_reward(origin, true)
+		feedback.play("reward", true)
 		economy.checkpoint()
 
 func claim_offline() -> void:
@@ -309,6 +367,7 @@ func claim_offline() -> void:
 	if not value.empty():
 		operations.hide_page()
 		show_message(t("collect_action") % money(value))
+		reward_feedback()
 		economy.checkpoint()
 
 func start_offline_ad() -> void:
@@ -321,6 +380,7 @@ func claim_rewarded(base: HbtAmount) -> void:
 	if not value.empty():
 		operations.hide_page()
 		show_message(t("collect_action") % money(value))
+		reward_feedback()
 		economy.checkpoint()
 
 func on_economy_changed() -> void:
@@ -332,6 +392,14 @@ func on_economy_changed() -> void:
 		landscape.set_forecourt_tier(art_level)
 	campus.update_sites(economy)
 	crew.roster(economy)
+	feedback.enabled = economy.feedback_enabled
+	if economy.tutorial_step != guided_step:
+		guided_step = economy.tutorial_step
+		if guided_step < 5:
+			select_site("fuel")
+	if economy.player_level() > displayed_rank:
+		displayed_rank = economy.player_level()
+		promotion_feedback(t("career_level") % displayed_rank, hud.REPUTATION)
 	Engine.max_fps = 30 if economy.low_power else 60
 	lighting.set_reduced(economy.low_power)
 	effects.reduced = economy.low_power
@@ -342,14 +410,27 @@ func on_economy_changed() -> void:
 	refresh()
 
 func on_sale(ticket: HbtVisit) -> void:
-	var in_register := ticket.worker >= 0 and economy.skill("collect") == 0
+	var in_register := ticket.worker != -1 and economy.skill("collect", ticket.service) == 0
 	if ticket.service == selected:
 		show_message(t("register_sale" if in_register else "sale") % money(ticket.invoice))
 	effects.coin_pop(ticket.location + Vector3(0, 1.24, 0), money(ticket.invoice))
 	if not economy.low_power:
 		hud.animate_reward(camera.unproject_position(ticket.location + Vector3.UP * 1.54), not in_register)
-	if ticket.worker < 0:
+	if ticket.service == selected:
+		feedback.play("sale", ticket.worker == -1)
+	if ticket.worker == -1:
 		economy.checkpoint()
+
+func reward_feedback() -> void:
+	feedback.play("reward", true)
+	if not economy.low_power:
+		hud.animate_reward(get_viewport().get_visible_rect().get_center(), true)
+
+func promotion_feedback(value: String, icon: Texture2D) -> void:
+	feedback.play("rank", true)
+	hud.announce(value, icon, not economy.low_power)
+	if not economy.low_power:
+		effects.confetti(Routes.position_of(selected, 0), Color("#f4bd6b"), 20)
 
 func show_message(value: String) -> void:
 	message = value
@@ -371,14 +452,7 @@ func money(value: HbtAmount, full := false) -> String:
 	return t("money") % (value.decimal() if full else value.compact(economy.language))
 
 func flow_text() -> String:
-	var flow := economy.income_per_minute()
-	var units := flow.divided(60)
-	if units.empty():
-		var digit := flow.divided(6).decimal()
-		if digit != "0":
-			var decimal := "," if economy.language == "pl" else "."
-			return t("per_second") % (t("money") % ("0" + decimal + digit))
-	return t("per_second") % money(units)
+	return t("per_minute") % money(economy.income_per_minute())
 
 @warning_ignore("integer_division")
 func clock_text(seconds: int) -> String:
@@ -393,7 +467,7 @@ func refresh() -> void:
 	hud.view.tooltip_text = t("view_tip")
 	hud.language.text = economy.language.to_upper()
 	hud.power.text = "%d FPS" % Engine.max_fps
-	hud.location.text = t("location")
+	hud.location.text = "%s · %s" % [t("location"), t("short_rank") % economy.player_level()]
 	hud.title.text = t("name")
 	hud.cash_caption.text = t("cash")
 	hud.update_cash(economy.amount("cash"), economy.language, t("money"), not economy.low_power)
@@ -406,9 +480,7 @@ func refresh() -> void:
 		hud.wallet_stats[key].text = economy.amount(key).compact(economy.language)
 	for name in hud.pages:
 		hud.pages[name].text = t(name)
-	var ready_goals := 0
-	for item in BOOK.MILESTONES:
-		ready_goals += int(not economy.claimed.has(item.id) and economy.metric(item.counter) >= item.goal)
+	var ready_goals := economy.ready_rewards()
 	if ready_goals > 0:
 		hud.pages.goals.text = t("goals_ready") % ready_goals
 	hud.station.text = site_name(selected)

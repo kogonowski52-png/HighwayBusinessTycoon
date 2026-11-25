@@ -1,6 +1,6 @@
 extends RefCounted
 
-const SCHEMA := 3
+const SCHEMA := 4
 const TEMP := ".tmp"
 const BACKUP := ".backup"
 const BACKUP_TEMP := ".backup.tmp"
@@ -10,6 +10,7 @@ var sequence := 0
 var read_only := false
 
 func restore() -> Dictionary:
+	read_only = false
 	var best := {}
 	for suffix in ["", TEMP, BACKUP, BACKUP_TEMP]:
 		var candidate := read_candidate(path + suffix)
@@ -19,7 +20,10 @@ func restore() -> Dictionary:
 		return {}
 	sequence = best.sequence
 	read_only = int(best.schema) > SCHEMA
-	return {} if read_only else best.data
+	if read_only:
+		return {}
+	best.data["_schema"] = best.schema
+	return best.data
 
 func read_candidate(filename: String) -> Dictionary:
 	# Saves never need arbitrary resources or objects reconstructed from untrusted files.

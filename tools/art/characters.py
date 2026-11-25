@@ -16,6 +16,8 @@ class Outfit:
     hat: str = ""
     apron: str = ""
     reflective: bool = False
+    hair_style: str = ""
+    accessory: str = ""
 
 
 ROLES = [
@@ -37,6 +39,21 @@ DIRECTORS = [
     Outfit("mira", "daa780", "563b36", "a88745", "f4d1a8", "626067", hat="a17a57"),
     Outfit("leon", "aa7359", "564945", "715b80", "e7ccaf", "445766"),
 ]
+
+NEW_DIRECTORS = [
+    Outfit("nina", "bd8664", "4d322c", "ad684a", "f1c771", "705756", hair_style="bob", accessory="earrings"),
+    Outfit("tom", "aa785b", "2e3535", "4b8484", "bce4d1", "42535d", hat="557c8a", accessory="glasses"),
+    Outfit("zofia", "dba587", "7d503f", "7d6497", "f5cfa7", "4e5272", hair_style="curl", accessory="earrings"),
+    Outfit("arun", "9b624a", "2f3330", "a47849", "eedb9b", "514554", hair_style="fade", accessory="beard"),
+    Outfit("lena", "bd7c60", "50362b", "96605d", "f5d6a7", "455f5d", hair_style="bun", accessory="earrings"),
+    Outfit("ben", "deb694", "8e6951", "61767b", "eda65e", "414b51", hat="c08350", accessory="beard"),
+    Outfit("olu", "86523d", "2b3030", "40756e", "bce3ad", "474c56", hair_style="fade", accessory="glasses"),
+    Outfit("alina", "d6a984", "523f4d", "6f626e", "edcc80", "505365", hair_style="bob", accessory="glasses"),
+    Outfit("vera", "cc9877", "a7927c", "586e9a", "efac77", "454c63", hair_style="bun", accessory="earrings"),
+    Outfit("jo", "ad7551", "442f3c", "a35c65", "edc481", "45435a", hair_style="wrap", accessory="glasses"),
+]
+
+CLEANER = Outfit("cleaner", "af7b56", "543b33", "618275", "efd78d", "4b6064", "989858", apron="486b64", reflective=True)
 
 SUPPORT = {
     "pelvis": ((0, .968, 0), None),
@@ -98,7 +115,7 @@ def actor(role):
         for side in [-1, 1]:
             model.pipe([(side * .122, 1.357, .182), (side * .115, 1.462, .033),
                         (side * .122, 1.388, -.103)], .021, role.apron, bone="spine", sides=7)
-    if role.key == "manager" or role in DIRECTORS:
+    if role.key == "manager" or role in DIRECTORS + NEW_DIRECTORS:
         for side in [-1, 1]:
             model.pipe([(side * .076, 1.461, .126), (side * .099, 1.368, .173),
                         (side * .056, 1.267, .177)], .027, lining, bone="spine", sides=8)
@@ -140,7 +157,7 @@ def actor(role):
                     (side * .127, 1.768, .146)], .011, hair, bone="head", sides=7)
     model.orb((-.006, 1.736, -.048), (.198, .129 if role.hat else .195, .149), hair,
               17, 11, bone="head", irregular=.045)
-    if not role.hat:
+    if not role.hat and role.hair_style not in ("fade", "wrap"):
         model.orb((0, 1.848, .034), (.179, .100, .130), hair, 16, 9, bone="head", irregular=.07)
         for x, y, width, angle in [(-.078, 1.828, .122, .52), (.068, 1.850, .092, -.34)]:
             model.orb((x, y, .075), (width, .090, .112), hair, 13, 8,
@@ -148,6 +165,23 @@ def actor(role):
     if role.key in ("customer", "cashier", "server", "ada", "iga"):
         model.orb((.123, 1.708, -.103), (.117, .149, .129), hair, 13, 9, bone="head", irregular=.12)
         model.orb((.144, 1.580, -.121), (.077, .083, .078), hair, 12, 8, bone="head")
+    if role.hair_style == "bob":
+        for side in [-1, 1]:
+            model.orb((side * .176, 1.683, -.032), (.085, .168, .125), hair, 14, 10, bone="head", yaw=side * .34)
+    if role.hair_style == "curl":
+        for i, (x, height) in enumerate([(-.147, 1.85), (-.081, 1.925), (.011, 1.953), (.098, 1.929), (.16, 1.86)]):
+            model.orb((x, height, .015 - .012 * i), (.103, .087, .115), hair, 13, 8, bone="head", irregular=.12)
+    if role.hair_style == "bun":
+        model.orb((-.03, 1.962, -.090), (.117, .103, .121), hair, 15, 9, bone="head", irregular=.08)
+        model.orb((-.028, 1.913, -.093), (.124, .031, .120), lining, 12, 7, bone="head")
+    if role.hair_style == "fade":
+        model.orb((0, 1.868, .029), (.174, .060, .132), hair, 15, 9, bone="head", irregular=.052)
+    if role.hair_style == "wrap":
+        model.orb((-.039, 1.854, -.008), (.220, .105, .187), lining, 17, 10, bone="head", yaw=.22)
+        model.orb((.116, 1.923, -.034), (.110, .095, .100), shirt, 14, 9, bone="head", irregular=.065)
+    if role.accessory == "earrings":
+        for side in [-1, 1]:
+            model.orb((side * .198, 1.646, .087), (.024, .023, .022), lining, 10, 7, "Metal", bone="head")
     if role.hat:
         model.orb((0, 1.851, -.011), (.222, .126, .187), role.hat, 17, 10, bone="head")
         if role.key == "wash_worker":
@@ -156,7 +190,7 @@ def actor(role):
         else:
             model.orb((0, 1.821, .162), (.176, .021, .112), role.hat, 15, 8, bone="head")
             model.box((0, 1.882, .177), (.089, .051, .018), lining, .010, "Paint", bone="head")
-    if role.key in ("manager", "ada", "maks", "leon"):
+    if role.key in ("manager", "ada", "maks", "leon") or role.accessory == "glasses":
         for side in [-1, 1]:
             x = side * .084
             rim = [(x + dx, 1.729 + dy, .204) for dx, dy in [(-.056, -.026), (.056, -.026),
@@ -165,7 +199,7 @@ def actor(role):
             model.pipe([(x + side * .057, 1.740, .199), (side * .201, 1.748, .056)],
                        .009, hair, sides=7, bone="head")
         model.box((0, 1.728, .195), (.059, .019, .026), hair, .005, "Metal", bone="head")
-    if role.key == "mechanic":
+    if role.key == "mechanic" or role.accessory == "beard":
         model.orb((0, 1.58, .089), (.134, .066, .101), hair, 13, 8, bone="head")
 
     for suffix, side in (("l", 1), ("r", -1)):
@@ -252,6 +286,14 @@ def generate(root):
 def generate_directors(root):
     folder = root / "assets/models/characters"
     for role in DIRECTORS:
+        clear_objects()
+        actor(role)
+        export(folder / f"{role.key}.glb")
+
+
+def generate_expansion(root):
+    folder = root / "assets/models/characters"
+    for role in [CLEANER, *NEW_DIRECTORS]:
         clear_objects()
         actor(role)
         export(folder / f"{role.key}.glb")

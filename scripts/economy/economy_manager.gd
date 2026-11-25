@@ -7,10 +7,14 @@ signal offline_prepared
 const CONFIG: HbtBalance = preload("res://data/economy/balance.tres")
 const LEGACY = preload("res://data/station.tres")
 const BOOK = preload("res://data/economy/progression.gd")
+const Managers = preload("res://data/economy/managers.gd")
+const Journey = preload("res://data/economy/journey.gd")
 const Staff = preload("res://scripts/employees/staff_rules.gd")
 const SaveManager = preload("res://scripts/core/save_manager.gd")
 const BPS := 10_000
 const CURRENCIES := ["cash", "diamond", "reputation", "event"]
+const MANAGER_WORKER := -2
+const TUTORIAL_DONE := 6
 
 var storage := SaveManager.new()
 var facilities: Dictionary = {}
@@ -20,8 +24,15 @@ var registers: Dictionary = {}
 var crew: Dictionary = {}
 var per_service: Dictionary = {}
 var cards: Dictionary = {}
+var manager_ranks: Dictionary = {}
 var equipped: Array[String] = []
 var claimed: Dictionary = {}
+var missions: Dictionary
+var chapters: Dictionary = {}
+var player_xp := 0
+var paid_player_level := 1
+var tutorial_step := 0
+var feedback_enabled := true
 var language := "pl"
 var low_power := false
 var customers := 0
@@ -29,6 +40,8 @@ var gross := HbtAmount.new()
 var spent := HbtAmount.new()
 var offline_pending := HbtAmount.new()
 var offline_seconds := 0
+var offline_away_seconds := 0
+var offline_tier := 0
 var high_water := 0
 var clock := 0
 var boost_until := 0
@@ -37,6 +50,7 @@ var event_services := 0
 var event_claimed := -1
 var save_error := OK
 var dirty := false
+var _reward_count := -1
 var _curve: Dictionary = {}
 var _sales: Array[Dictionary] = []
 
@@ -44,6 +58,10 @@ func _init() -> void:
 	for profile in CONFIG.services:
 		facilities[profile.id] = profile
 		_curve[profile.id] = build_curve(profile)
+		chapters[profile.id] = []
+	missions = Journey.items(facilities)
+	for item in missions.values():
+		chapters[item.site].append(item)
 	reset()
 
 func reset() -> void:
@@ -58,13 +76,20 @@ func reset() -> void:
 	language = "pl"
 	low_power = false
 	cards.clear()
+	manager_ranks.clear()
 	equipped.clear()
 	claimed.clear()
+	player_xp = 0
+	paid_player_level = 1
+	tutorial_step = 0
+	feedback_enabled = true
 	customers = 0
 	gross = HbtAmount.new()
 	spent = HbtAmount.new()
 	offline_pending = HbtAmount.new()
 	offline_seconds = 0
+	offline_away_seconds = 0
+	offline_tier = 0
 	boost_until = 0
 	event_day = -1
 	event_services = 0
@@ -72,6 +97,7 @@ func reset() -> void:
 	high_water = 0
 	clock = 0
 	_sales.clear()
+	_reward_count = -1
 	dirty = false
 	save_error = OK
 
@@ -119,9 +145,11 @@ func restore(wall := -1) -> void:
 		var record := safe_dict(sales.get(id))
 		per_service[id] = {"count": counter(record.get("count", 0)), "gross": HbtAmount.from(record.get("gross", "0"))}
 	var owned := safe_dict(data.get("cards"))
+	var ranks := safe_dict(data.get("manager_ranks"))
 	for id in BOOK.MANAGERS:
 		if owned.get(id) == true:
 			cards[id] = true
+			manager_ranks[id] = clampi(int(ranks.get(id, 1)), 1, Managers.MAX_RANK)
 	var active: Variant = data.get("equipped")
 	if active is Array:
 		for id in active:
@@ -131,16 +159,27 @@ func restore(wall := -1) -> void:
 	for item in BOOK.MILESTONES:
 		if rewards.get(item.id) == true:
 			claimed[item.id] = true
+	for id in missions:
+		if rewards.get(id) == true:
+			claimed[id] = true
 	language = "en" if data.get("language") == "en" else "pl"
 	low_power = data.get("low_power") == true
 	customers = counter(data.get("customers", 0))
+	player_xp = mini(Journey.LEVEL_XP.back(), counter(data.get("player_xp", previous_xp())))
+	paid_player_level = clampi(int(data.get("paid_player_level", 1)), 1, player_level())
+	tutorial_step = clampi(int(data.get("tutorial_step", 0 if data.is_empty() else TUTORIAL_DONE)), 0, TUTORIAL_DONE)
+	feedback_enabled = data.get("feedback_enabled", true) == true
 	event_day = int(data.get("event_day", -1))
 	event_services = counter(data.get("event_services", 0))
 	event_claimed = int(data.get("event_claimed", -1))
 	gross = HbtAmount.from(data.get("gross", "0"))
 	spent = HbtAmount.from(data.get("spent", "0"))
 	offline_pending = HbtAmount.from(data.get("offline_pending", "0"))
-	offline_seconds = clampi(int(data.get("offline_seconds", 0)), 0, CONFIG.offline_cap_seconds)
+	# Existing clock-based profiles retain the eight-hour benefit they already had.
+	var existing_tier := CONFIG.offline_hours.find(8) if int(data.get("_schema", 0)) in [2, 3] else 0
+	offline_tier = clampi(int(data.get("offline_tier", existing_tier)), 0, CONFIG.offline_hours.size() - 1)
+	offline_seconds = clampi(int(data.get("offline_seconds", 0)), 0, offline_limit())
+	offline_away_seconds = maxi(offline_seconds, counter(data.get("offline_away_seconds", 0)))
 	high_water = counter(data.get("high_water", 0))
 	clock = int(Time.get_unix_time_from_system()) if wall < 0 else wall
 	boost_until = clock + clampi(int(data.get("boost_until", 0)) - maxi(clock, high_water), 0, CONFIG.boost_seconds)
@@ -169,9 +208,12 @@ func snapshot() -> Dictionary:
 		sales[id] = {"count": int(per_service[id].count), "gross": per_service[id].gross.decimal()}
 	return {
 		"wallet": balances, "levels": levels, "registers": tills, "crew": crew, "per_service": sales,
-		"cards": cards, "equipped": equipped, "claimed": claimed, "language": language, "low_power": low_power,
+		"cards": cards, "manager_ranks": manager_ranks, "equipped": equipped, "claimed": claimed,
+		"player_xp": player_xp, "paid_player_level": paid_player_level, "tutorial_step": tutorial_step,
+		"language": language, "low_power": low_power, "feedback_enabled": feedback_enabled,
 		"customers": customers, "gross": gross.decimal(), "spent": spent.decimal(),
 		"offline_pending": offline_pending.decimal(), "offline_seconds": offline_seconds,
+		"offline_tier": offline_tier, "offline_away_seconds": offline_away_seconds,
 		"high_water": high_water, "boost_until": boost_until,
 		"event_day": event_day, "event_services": event_services, "event_claimed": event_claimed,
 	}
@@ -184,6 +226,8 @@ static func counter(value: Variant) -> int:
 
 func touch() -> void:
 	dirty = true
+	_reward_count = -1
+	advance_tutorial()
 	changed.emit()
 
 func amount(currency: String) -> HbtAmount:
@@ -219,7 +263,7 @@ func price(id: String, at_level := -1) -> HbtAmount:
 func cost_at(id: String, tier: int) -> HbtAmount:
 	if tier >= CONFIG.max_level or tier < 1:
 		return HbtAmount.new()
-	return _curve[id].cost[tier - 1].times(BPS - skill("discount")).divided(BPS)
+	return _curve[id].cost[tier - 1].times(BPS - skill("discount", id)).divided(BPS)
 
 func quote_upgrade(id: String, quantity: int) -> Dictionary:
 	var tier := level(id)
@@ -241,6 +285,7 @@ func buy_levels(id: String, quantity: int) -> int:
 	if not quote.affordable or not debit(quote.cost):
 		return 0
 	levels[id] += quote.count
+	add_xp(quote.count * 3)
 	touch()
 	return quote.count
 
@@ -254,6 +299,7 @@ func unlock(id: String) -> bool:
 	if not gate_open(id) or not debit(HbtAmount.from(facility.unlock_cost)):
 		return false
 	levels[id] = 1
+	add_xp(12)
 	touch()
 	return true
 
@@ -264,6 +310,7 @@ func hire(id: String) -> bool:
 	if crew[id].size() >= capacity(id) or not debit(recruit_cost(id)):
 		return false
 	crew[id].append({"xp": 0, "training": 0, "rank": 1})
+	add_xp(7)
 	touch()
 	return true
 
@@ -272,6 +319,7 @@ func train(id: String, index: int) -> bool:
 	if employee.training >= Staff.MAX_TRAINING or not debit(Staff.training_cost(facilities[id], employee)):
 		return false
 	employee.training += 1
+	add_xp(4)
 	touch()
 	return true
 
@@ -280,6 +328,7 @@ func promote(id: String, index: int) -> bool:
 	if not Staff.promotion_ready(employee) or not debit(Staff.promotion_cost(facilities[id], employee)):
 		return false
 	employee.rank += 1
+	add_xp(12)
 	touch()
 	return true
 
@@ -291,11 +340,13 @@ func duration(id: String, worker: int) -> float:
 		time = LEGACY.service_seconds[tier - 1]
 	if worker >= 0:
 		time *= float(BPS) / Staff.speed(crew[id][worker])
-	return maxf(0.65, time * float(BPS) / (BPS + skill("speed")))
+	elif worker == MANAGER_WORKER:
+		time *= float(BPS) / (BPS + skill("automation", id))
+	return maxf(0.65, time * float(BPS) / (BPS + skill("speed", id)))
 
 func payout(id: String, tip: int, worker: int, include_boost := true) -> HbtAmount:
 	var value := price(id).times(tip).divided(100)
-	value = value.times(BPS + skill("revenue")).divided(BPS)
+	value = value.times(BPS + skill("revenue", id) + collector_bonus(id)).divided(BPS)
 	if worker >= 0:
 		value = value.times(Staff.efficiency(crew[id][worker])).divided(BPS)
 	if include_boost and boost_until > clock:
@@ -306,6 +357,7 @@ func serve(id: String, value: HbtAmount, reputation: int, worker: int) -> void:
 	if worker >= 0:
 		crew[id][worker].xp = mini(1_000_000, crew[id][worker].xp + 1)
 	customers += 1
+	add_xp(2 + reputation)
 	per_service[id].count += 1
 	per_service[id].gross = per_service[id].gross.plus(value)
 	gross = gross.plus(value)
@@ -317,7 +369,7 @@ func serve(id: String, value: HbtAmount, reputation: int, worker: int) -> void:
 			event_services = 0
 		event_services += 1
 		credit("event", HbtAmount.from(1))
-	if worker < 0 or skill("collect") > 0:
+	if worker == -1 or skill("collect", id) > 0:
 		credit("cash", value)
 	else:
 		registers[id] = registers[id].plus(value)
@@ -336,6 +388,8 @@ func collect() -> HbtAmount:
 	for id in facilities:
 		registers[id] = HbtAmount.new()
 	credit("cash", total)
+	if tutorial_step == 4:
+		tutorial_step = 5
 	touch()
 	return total
 
@@ -347,11 +401,47 @@ func income_per_minute() -> HbtAmount:
 		total = total.plus(record.value)
 	return total
 
-func skill(key: String) -> int:
+func manager_for(key: String, site := "") -> String:
+	var best := ""
 	for id in equipped:
-		if BOOK.MANAGERS[id].skill == key:
-			return BOOK.MANAGERS[id].value
-	return 0
+		var card: Dictionary = BOOK.MANAGERS[id]
+		if card.skill == key and (card.site.is_empty() or card.site == site):
+			if best.is_empty() or manager_effect(id) > manager_effect(best) \
+				or (key == "collect" and manager_rank(id) > manager_rank(best)):
+				best = id
+	return best
+
+func skill(key: String, site := "") -> int:
+	var id := manager_for(key, site)
+	return 0 if id.is_empty() else manager_effect(id)
+
+func collector_bonus(site: String) -> int:
+	var id := manager_for("collect", site)
+	return 0 if id.is_empty() else (manager_rank(id) - 1) * 300
+
+func manager_rank(id: String) -> int:
+	return manager_ranks.get(id, 1) if cards.has(id) else 0
+
+func manager_effect(id: String) -> int:
+	return Managers.value(id, maxi(1, manager_rank(id)))
+
+func manager_training(id: String) -> Dictionary:
+	var rank := manager_rank(id)
+	if rank == 0 or rank >= Managers.MAX_RANK:
+		return {}
+	var price: int = Managers.RANK_PRICES[rank - 1] + int(BOOK.MANAGERS[id].rarity in ["epic", "legendary"])
+	var required: int = Managers.RANK_LEVELS[rank - 1]
+	return {"cost": price, "level": required,
+		"ready": player_level() >= required and can_afford(HbtAmount.from(price), "diamond")}
+
+func train_manager(id: String) -> bool:
+	var quote := manager_training(id)
+	if quote.is_empty() or not quote.ready or not debit(HbtAmount.from(quote.cost), "diamond"):
+		return false
+	manager_ranks[id] = manager_rank(id) + 1
+	add_xp(10)
+	touch()
+	return true
 
 func assign(id: String) -> bool:
 	if not cards.has(id):
@@ -362,15 +452,30 @@ func assign(id: String) -> bool:
 		equipped.append(id)
 	else:
 		return false
-	if skill("collect") > 0:
-		collect()
+	for site in facilities:
+		if skill("collect", site) > 0 and not registers[site].empty():
+			credit("cash", registers[site])
+			registers[site] = HbtAmount.new()
 	touch()
 	return true
 
-func metric(key: String) -> int:
+func metric(key: String, site := "") -> int:
 	match key:
 		"customers": return customers
 		"fuel_level": return level("fuel")
+		"site_level": return level(site)
+		"site_sales": return int(per_service[site].count)
+		"site_staff": return crew[site].size()
+		"site_training":
+			var training := 0
+			for employee in crew[site]:
+				training += int(employee.training)
+			return training
+		"manager_ranks":
+			var ranks := 0
+			for id in cards:
+				ranks += manager_rank(id) - 1
+			return ranks
 		"best_level": return levels.values().max()
 		"reputation": return mini(1_000_000_000, amount("reputation").decimal().left(10).to_int())
 		"locations":
@@ -387,21 +492,105 @@ func metric(key: String) -> int:
 			return count
 	return 0
 
-func claim_reward(id: String) -> bool:
-	for item in BOOK.MILESTONES:
-		if item.id != id:
-			continue
-		if claimed.has(id) or metric(item.counter) < item.goal:
-			return false
-		claimed[id] = true
-		for key in item.reward:
-			if key == "card":
-				cards[item.reward.card] = true
-			else:
-				credit(key, HbtAmount.from(item.reward[key]))
-		touch()
+func player_level() -> int:
+	return Journey.level_for(player_xp)
+
+func add_xp(value: int) -> void:
+	player_xp = mini(Journey.LEVEL_XP.back(), player_xp + value)
+
+func previous_xp() -> int:
+	var total := customers * 3
+	for id in facilities:
+		total += maxi(0, level(id) - 1) * 3 + int(id != "fuel" and level(id) > 0) * 12
+		for employee in crew[id]:
+			total += 7 + int(employee.training) * 4 + (int(employee.rank) - 1) * 12
+	return total
+
+func player_reward() -> Dictionary:
+	var cash := 0
+	var diamonds := 0
+	for rank in range(paid_player_level + 1, player_level() + 1):
+		cash += rank * 45
+		diamonds += 1 + floori(rank / 4.0)
+	return {"cash": cash, "diamond": diamonds}
+
+func claim_player_reward() -> bool:
+	if paid_player_level >= player_level():
+		return false
+	var reward := player_reward()
+	paid_player_level = player_level()
+	grant_reward(reward)
+	touch()
+	return true
+
+func mission_progress(item: Dictionary) -> int:
+	if item.counter == "site_revenue":
+		var cash: HbtAmount = per_service[item.site].gross
+		return int(item.goal) if cash.compare(HbtAmount.from(item.goal)) >= 0 else cash.decimal().to_int()
+	return mini(int(item.goal), metric(item.counter, item.get("site", "")))
+
+func mission_available(item: Dictionary) -> bool:
+	if player_level() < int(item.rank) or (level(item.site) == 0 and int(item.wave) > 0):
+		return false
+	if item.wave == 0:
 		return true
+	var completed := 0
+	for prerequisite in chapters[item.site]:
+		if prerequisite.wave == item.wave - 1 and claimed.has(prerequisite.id):
+			completed += 1
+	return completed >= 2
+
+func ready_rewards() -> int:
+	if _reward_count >= 0:
+		return _reward_count
+	_reward_count = int(player_level() > paid_player_level)
+	for item in BOOK.MILESTONES:
+		_reward_count += int(not claimed.has(item.id) and mission_progress(item) >= item.goal)
+	for item in missions.values():
+		_reward_count += int(not claimed.has(item.id) and mission_available(item) and mission_progress(item) >= item.goal)
+	return _reward_count
+
+func accept_reward(item: Dictionary) -> bool:
+	if claimed.has(item.id) or mission_progress(item) < item.goal:
+		return false
+	claimed[item.id] = true
+	grant_reward(item.reward)
+	touch()
+	return true
+
+func grant_reward(reward: Dictionary) -> void:
+	for key in reward:
+		if key == "card":
+			cards[reward.card] = true
+		else:
+			credit(key, HbtAmount.from(reward[key]))
+
+func claim_reward(id: String) -> bool:
+	if missions.has(id):
+		var item: Dictionary = missions[id]
+		return mission_available(item) and accept_reward(item)
+	for item in BOOK.MILESTONES:
+		if item.id == id:
+			return accept_reward(item)
 	return false
+
+func advance_tutorial() -> void:
+	while tutorial_step < 5:
+		var ready := false
+		match tutorial_step:
+			0: ready = customers > 0
+			1: ready = level("fuel") >= 2
+			2: ready = claimed.has("first") and claimed.has("upgrade")
+			3: ready = not crew.fuel.is_empty()
+			4: ready = skill("collect", "fuel") > 0
+		if not ready:
+			return
+		tutorial_step += 1
+
+func finish_tutorial() -> void:
+	if tutorial_step < TUTORIAL_DONE:
+		tutorial_step = TUTORIAL_DONE
+		touch()
 
 @warning_ignore("integer_division")
 func day_index() -> int:
@@ -448,17 +637,46 @@ func arrival_period() -> float:
 	var shortened := CONFIG.arrival_seconds / (1.0 + minf(reputation / 350.0, 0.64))
 	return maxf(CONFIG.minimum_arrival_seconds, shortened * float(BPS) / (BPS + skill("traffic")))
 
+func attraction(id: String) -> float:
+	return 1.0 + minf(level(id) * 0.006, 0.55) + maxf(0.0, capacity(id) - 1) * 0.10
+
+func offline_limit() -> int:
+	return CONFIG.offline_hours[offline_tier] * 3600
+
+func offline_upgrade() -> Dictionary:
+	if offline_tier >= CONFIG.offline_costs.size():
+		return {}
+	var price := HbtAmount.from(CONFIG.offline_costs[offline_tier])
+	var required: int = CONFIG.offline_levels[offline_tier]
+	return {"hours": CONFIG.offline_hours[offline_tier + 1], "cost": price, "level": required,
+		"ready": player_level() >= required and metric("staff") > 0 and can_afford(price)}
+
+func buy_offline_limit() -> bool:
+	var offer := offline_upgrade()
+	if offer.is_empty() or not offer.ready or not debit(offer.cost):
+		return false
+	offline_tier += 1
+	touch()
+	return true
+
 func offline_quote(seconds: int) -> HbtAmount:
 	var total := HbtAmount.new()
 	var staffed := metric("staff")
+	for id in facilities:
+		if level(id) > 0 and crew[id].is_empty() and skill("automation", id) > 0:
+			staffed += 1
 	if staffed == 0:
 		return total
 	for id in facilities:
-		for worker in range(crew[id].size()):
+		var workers: int = crew[id].size()
+		var automated := workers == 0 and level(id) > 0 and skill("automation", id) > 0
+		for slot in range(workers + int(automated)):
+			var worker := MANAGER_WORKER if automated else slot
 			# Conservative allocation based on staffing, cadence and distance to the bay.
 			var seconds_per_job := maxf(duration(id, worker) + 11.0 + staffed * 1.1, arrival_period() * staffed)
 			var jobs := floori(seconds * CONFIG.offline_efficiency / (100.0 * seconds_per_job))
-			total = total.plus(payout(id, 100, worker, false).times(jobs))
+			var income := payout(id, 100, worker, false).times(jobs).times(BPS + skill("offline", id)).divided(BPS)
+			total = total.plus(income)
 	return total
 
 func capture_absence(wall: int, monotonic_elapsed := -1) -> HbtAmount:
@@ -469,13 +687,16 @@ func capture_absence(wall: int, monotonic_elapsed := -1) -> HbtAmount:
 	elif monotonic_elapsed >= 0 and absi(delta - monotonic_elapsed) > CONFIG.clock_tolerance_seconds:
 		delta = monotonic_elapsed
 		trusted_wall = high_water + monotonic_elapsed
-	var elapsed := clampi(delta, 0, CONFIG.offline_cap_seconds)
+	var elapsed := clampi(delta, 0, maxi(0, offline_limit() - offline_seconds))
 	var grant := offline_quote(elapsed)
 	high_water = maxi(high_water, trusted_wall)
-	clock = trusted_wall
+	clock = high_water
 	if not grant.empty():
 		offline_pending = offline_pending.plus(grant)
-		offline_seconds = mini(CONFIG.offline_cap_seconds, offline_seconds + elapsed)
+		offline_seconds += elapsed
+	if not offline_pending.empty():
+		offline_away_seconds += maxi(0, delta)
+	if not grant.empty():
 		offline_prepared.emit()
 	dirty = true
 	return grant
@@ -489,6 +710,7 @@ func redeem_offline(bonus := false, endorsed_base: HbtAmount = null) -> HbtAmoun
 		value = value.plus(eligible)
 	offline_pending = HbtAmount.new()
 	offline_seconds = 0
+	offline_away_seconds = 0
 	credit("cash", value)
 	gross = gross.plus(value)
 	touch()

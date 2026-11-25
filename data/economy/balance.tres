@@ -1,4 +1,4 @@
-[gd_resource type="Resource" load_steps=11 format=3]
+[gd_resource type="Resource" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://scripts/economy/balance_profile.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/economy/service_definition.gd" id="2"]
@@ -171,7 +171,73 @@ vehicle_kind = "car"
 role = "manager"
 task = "service"
 
+[sub_resource type="Resource" id="tires"]
+script = ExtResource("2")
+id = "tires"
+name_pl = "Wulkanizacja"
+name_en = "Tire shop"
+base_price = 520
+first_upgrade = 1070
+upgrade_growth = 114
+price_growth = 113
+seconds = 6.3
+minimum_seconds = 2.75
+unlock_cost = 2720
+reputation_gate = 53
+prerequisite = "workshop"
+prerequisite_level = 3
+wage = 650
+capacity_levels = Array[int]([1, 21])
+vehicle_kind = "car"
+role = "mechanic"
+task = "repair"
+
+[sub_resource type="Resource" id="truck_park"]
+script = ExtResource("2")
+id = "truck_park"
+name_pl = "Parking TIR"
+name_en = "Truck parking"
+base_price = 740
+first_upgrade = 1450
+upgrade_growth = 114
+price_growth = 113
+seconds = 7.1
+minimum_seconds = 3.25
+unlock_cost = 4300
+reputation_gate = 60
+prerequisite = "truck"
+prerequisite_level = 3
+wage = 850
+capacity_levels = Array[int]([1, 24])
+vehicle_kind = "truck"
+role = "cleaner"
+task = "clean"
+
+[sub_resource type="Resource" id="charge"]
+script = ExtResource("2")
+id = "charge"
+name_pl = "Ładowarki EV"
+name_en = "EV charging"
+base_price = 1080
+first_upgrade = 2110
+upgrade_growth = 114
+price_growth = 113
+seconds = 8.4
+minimum_seconds = 3.15
+unlock_cost = 6900
+reputation_gate = 76
+prerequisite = "parking"
+prerequisite_level = 4
+wage = 1190
+capacity_levels = Array[int]([1, 25, 55])
+vehicle_kind = "electric"
+role = "attendant"
+task = "service"
+
 [resource]
 script = ExtResource("1")
 cost_growth_checkpoints = Array[Vector2i]([Vector2i(16, 3), Vector2i(38, 6), Vector2i(67, 12), Vector2i(83, 21), Vector2i(88, 33), Vector2i(94, 46)])
-services = Array[ExtResource("2")]([SubResource("fuel"), SubResource("market"), SubResource("parking"), SubResource("wash"), SubResource("truck"), SubResource("workshop"), SubResource("restaurant"), SubResource("motel")])
+offline_hours = Array[int]([2, 4, 6, 8, 10, 12])
+offline_costs = Array[int]([450, 2400, 9500, 65000, 300000])
+offline_levels = Array[int]([3, 5, 7, 10, 13])
+services = Array[ExtResource("2")]([SubResource("fuel"), SubResource("market"), SubResource("parking"), SubResource("wash"), SubResource("truck"), SubResource("workshop"), SubResource("restaurant"), SubResource("tires"), SubResource("truck_park"), SubResource("motel"), SubResource("charge")])

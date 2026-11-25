@@ -242,7 +242,7 @@ func service_studies(dispatch: HbtDispatch) -> void:
 			game.tick_game(0.05)
 			if shopper.phase == HbtVisit.Phase.READY:
 				break
-	check(shopper != null and game.crew.market_visitors.has(shopper.number), "a real market visit brings a shopper onto the footpath")
+	check(shopper != null and game.crew.visitors.has(shopper.number), "a real market visit brings a shopper onto the footpath")
 	game.aim_camera(Vector3(-6.21, 0.82, -1.78), Vector3(3.66, 5.18, 11.21), 13.2)
 	if not captures.is_empty():
 		await create_timer(0.8).timeout

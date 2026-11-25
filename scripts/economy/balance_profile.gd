@@ -4,7 +4,9 @@ extends Resource
 @export var opening_cash := 120
 @export var max_level := 100
 @export var cost_growth_checkpoints: Array[Vector2i]
-@export var offline_cap_seconds := 28_800
+@export var offline_hours: Array[int]
+@export var offline_costs: Array[int]
+@export var offline_levels: Array[int]
 @export var offline_efficiency := 58
 @export var clock_tolerance_seconds := 120
 @export var checkpoint_seconds := 10.0

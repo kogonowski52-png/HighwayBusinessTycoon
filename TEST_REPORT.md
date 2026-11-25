@@ -1,5 +1,29 @@
 # Raport testów
 
+## 0.4.0 · Rozwój Trasy 17
+
+Próby wykonano w Godocie 4.7.2 Stable na Linuxie. Okno gry korzystało z renderera Compatibility i Mesa llvmpipe. Modele i portrety wykonano w Blenderze 4.3.2. [Galeria 19 zrzutów](screenshots/0.4.0/README.md)
+
+| Zestaw | Wynik |
+| --- | --- |
+| Ekonomia, odczyt awaryjny i offline | 69/69 |
+| Ruch i rezerwacje 26 stanowisk | 30/30 |
+| Balans na trzech ziarnach i w sześciu horyzontach | 46/46 |
+| Kariera, 120 nagród, 15 kart, offline i migracja | 192/192 |
+| Samouczek i kompleks bez okna | 44/44 |
+| Samouczek i kompleks w oknie | 63/63, w tym 19 zapisanych zrzutów |
+| Pętla istniejącej stacji bez okna | 27/27 |
+| Pętla istniejącej stacji w oknie | 36/36 |
+| Regresja istniejących modeli i animacji bez okna | 113/113 |
+| Zapis utworzony przez 0.3.2 z `894e8de` | Zachowane waluty, poziomy, pracownik po awansie, karta Ady, misje, ustawienia, limit 8 h i oczekująca wypłata. Kolejny zapis ma schemat 4. |
+| Lokalny APK debug | 0.4.0, kod 6, arm64-v8a i x86_64, Android od API 24, cel API 36. Podpis v2/v3 i integralność zweryfikowane. |
+
+W teście ruchu trwającym 20 minut pojazdy wykonały 215 usług. Osiem odjechało bez obsługi. Wszystkie jedenaście usług miało klientów, wszystkie rezerwacje się zwolniły, a awaryjne odzyskiwanie ruchu uruchomiło się wyłącznie w osobnej próbie z celową przeszkodą. Próba w oknie przeszła przez prawdziwe kliknięcia samouczka, dodanie pracownika, wypłatę, odebranie misji rozdziału, awans menedżera, zakup czterogodzinnego limitu i ponowny odczyt stanu. Każda z trzech nowych usług obsłużyła rzeczywisty pojazd. Kabel EV i animacje obsługi odzwierciedlały stan wizyty.
+
+Na rozbudowanym kompleksie z HUD-em w kadrze 1600 × 1080 zarejestrowano 704 wywołania rysowania i 132 623 prymitywy. Uruchomienie instalatora, pomiar FPS, dźwięku i wibracji na fizycznym Androidzie pozostają do sprawdzenia. Wznawianie gry porównuje czas z zegarem monotonicznym tego samego procesu. Naliczanie po zamknięciu aplikacji korzysta z lokalnego znacznika czasu i limitu wypłaty.
+
+Lokalny APK ma 71 798 549 bajtów. SHA-256 pliku to `d2edcd1ab7314d4b49a25161afc591ce04c84d852704520a91bee5cd80cc22d8`. Certyfikat zgadza się z lokalną kompilacją 0.3.2. Manifest zawiera uprawnienie `VIBRATE`. Gra działa bez uprawnienia do internetu. Eksport pomija galerię i zestawy testów. [Raport balansu](docs/balance-0.4.0.md)
+
 ## 0.3.2 · Przebudowa Trasy 17
 
 Testy wykonano w Godocie 4.7.2 Stable na Linuxie, w rendererze Compatibility z Mesa llvmpipe. Modele wygenerowano w Blenderze 4.3.2. Galeria zawiera 22 kadry z uruchomionej gry i plansz modeli, trzy ujęcia wariantów w tej samej scenie oraz porównanie z ujęciami z commitu `7ea8bf9`. [Galeria 0.3.2](screenshots/0.3.2/README.md)

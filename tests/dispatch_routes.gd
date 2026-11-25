@@ -20,9 +20,10 @@ func drive(id: String, index: int) -> void:
 	store.levels[id] = 100
 	var network := HbtDispatch.new(store, 68492 + index)
 	network.spawning = false
+	var kind := "trucker" if id in ["truck", "truck_park"] else "electric" if id == "charge" else "local"
 	# Freeze lower bays with correctly placed occupied vehicles. The test must reach the actual later bay.
 	for slot in range(index):
-		var holder := network.make_visit(network.demand.customer(store, "trucker" if id == "truck" else "local"), id)
+		var holder := network.make_visit(network.demand.customer(store, kind), id)
 		holder.phase = Phase.WORKING
 		holder.invoice = HbtAmount.new()
 		holder.timer = 10000.0
@@ -30,7 +31,7 @@ func drive(id: String, index: int) -> void:
 		holder.location = Routes.position_of(id, slot)
 		holder.yaw = Routes.stopping_yaw(id)
 		network.bays[id][slot] = holder.number
-	var ticket := network.try_admit("trucker" if id == "truck" else "local", id)
+	var ticket := network.try_admit(kind, id)
 	var observed := {"queue": false}
 	network.state_changed.connect(func() -> void:
 		observed.queue = observed.queue or ticket.phase == Phase.QUEUED)
@@ -75,7 +76,7 @@ func stress_test() -> void:
 	print("Stress: %d served, %d bypassed/expired, %d recovered, peak queue %d, facilities %s" %
 		[store.customers, network.abandoned, network.recovered, network.peak_queue, serviced.keys()])
 	expect(correct and network.live.is_empty() and network.guards.is_empty(), "congested simulation drains all reservations")
-	expect(serviced.size() == 8 and network.peak_queue >= 3, "all service types handle concurrent demand")
+	expect(serviced.size() == store.facilities.size() and network.peak_queue >= 3, "all service types handle concurrent demand")
 	expect(store.customers > 85 and network.recovered <= 3, "throughput floor and infrequent recovery")
 
 func watchdog() -> void:

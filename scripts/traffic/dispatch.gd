@@ -54,7 +54,7 @@ func try_admit(forced := "", requested := "") -> HbtVisit:
 		capacity_rejected += 1
 		return null
 	var selected := demand.pick(economy, client, queued_by_service()) if requested.is_empty() else requested
-	if selected.is_empty() or economy.level(selected) == 0 or economy.facilities[selected].vehicle_kind != lane:
+	if selected.is_empty() or economy.level(selected) == 0 or not Demand.accepts(economy.facilities[selected], client):
 		return null
 	var visit := make_visit(client, selected)
 	visit.location = Routes.entrance(lane)
@@ -88,25 +88,29 @@ func tick(delta: float) -> void:
 			Phase.ENTERING, Phase.APPROACH, Phase.DEPART:
 				travel(ticket, delta)
 			Phase.READY:
+				ticket.walked = move_toward(ticket.walked, ticket.foot_length, delta * HbtVisit.WALK_SPEED)
 				if ticket.number != 1 or economy.customers > 0:
 					ticket.patience -= delta
 				if ticket.patience <= 0.0:
 					leave_unserved(ticket)
 			Phase.WORKING:
+				ticket.walked = move_toward(ticket.walked, ticket.foot_length, delta * HbtVisit.WALK_SPEED)
 				ticket.timer -= delta
 				if ticket.timer <= 0.0:
 					finish(ticket)
+			Phase.EXIT_WAIT:
+				ticket.walked = move_toward(ticket.walked, 0.0, delta * HbtVisit.WALK_SPEED)
 	for lane in lanes:
 		update_queue(lane, delta)
 	for ticket: HbtVisit in live.values():
-		if ticket.phase == Phase.EXIT_WAIT:
+		if ticket.phase == Phase.EXIT_WAIT and is_zero_approx(ticket.walked):
 			start_departure(ticket)
 	for lane in lanes:
 		dispatch_head(lane)
 	for ticket: HbtVisit in live.values():
 		if ticket.phase == Phase.READY:
 			var worker := free_worker(ticket.service)
-			if worker >= 0:
+			if worker != -1:
 				begin(ticket, worker)
 	peak_queue = maxi(peak_queue, lanes.car.size() + lanes.truck.size())
 	if spawning:
@@ -142,11 +146,13 @@ func free_worker(id: String) -> int:
 	var busy := {}
 	for index in bays[id]:
 		var ticket := visit_at(id, index)
-		if ticket != null and ticket.phase == Phase.WORKING and ticket.worker >= 0:
+		if ticket != null and ticket.phase == Phase.WORKING and ticket.worker != -1:
 			busy[ticket.worker] = true
 	for index in range(economy.crew[id].size()):
 		if not busy.has(index):
 			return index
+	if economy.crew[id].is_empty() and not busy.has(economy.MANAGER_WORKER) and economy.skill("automation", id) > 0:
+		return economy.MANAGER_WORKER
 	return -1
 
 func update_queue(lane: String, delta: float) -> void:
@@ -207,8 +213,12 @@ func begin(ticket: HbtVisit, worker: int) -> void:
 	ticket.phase = Phase.WORKING
 	ticket.worker = worker
 	ticket.duration = economy.duration(ticket.service, worker)
+	var preparation := (ticket.foot_length - ticket.walked) / HbtVisit.WALK_SPEED
 	if worker >= 0:
-		ticket.duration += Staff.preparation_seconds(economy.crew[ticket.service][worker])
+		preparation = maxf(preparation, Staff.preparation_seconds(economy.crew[ticket.service][worker]))
+	elif worker == economy.MANAGER_WORKER:
+		ticket.director = economy.manager_for("automation", ticket.service)
+	ticket.duration += preparation
 	ticket.timer = ticket.duration
 	ticket.invoice = economy.payout(ticket.service, ticket.client.tip, worker)
 	started.emit(ticket)
@@ -335,6 +345,7 @@ func arrive(ticket: HbtVisit) -> void:
 			ticket.phase = Phase.QUEUED
 		Phase.APPROACH:
 			ticket.yaw = Routes.stopping_yaw(ticket.service)
+			ticket.set_footpath(Routes.guest_path(ticket.service, ticket.bay))
 			ticket.phase = Phase.READY
 			ticket.patience = maxf(ticket.patience, 13.0)
 		Phase.DEPART:

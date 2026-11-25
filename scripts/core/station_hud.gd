@@ -72,6 +72,7 @@ var cash_pattern := ""
 var counting: Tween
 var overlay := Control.new()
 var active_rewards := 0
+var notice: PanelContainer
 
 func _ready() -> void:
 	var root := Control.new()
@@ -365,3 +366,32 @@ func animate_reward(origin: Vector2, direct: bool) -> void:
 	flight.tween_callback(func() -> void:
 		active_rewards -= 1
 		reward.queue_free())
+
+func announce(message: String, picture: Texture2D, animate: bool) -> void:
+	if is_instance_valid(notice):
+		notice.queue_free()
+	notice = PanelContainer.new()
+	overlay.add_child(notice)
+	var banner := notice
+	banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	banner.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	banner.offset_left = -305
+	banner.offset_right = 305
+	banner.offset_top = 225
+	banner.add_theme_stylebox_override("panel", sculpted(PETROL, 35, 14))
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override("separation", 13)
+	banner.add_child(row)
+	icon(row, picture, 70)
+	var label := caption(row, 30, CREAM, HEAVY)
+	label.text = message
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var reveal := banner.create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if animate:
+		banner.modulate.a = 0.0
+		reveal.tween_property(banner, "modulate:a", 1.0, 0.25)
+	reveal.tween_interval(2.10)
+	reveal.tween_property(banner, "modulate:a", 0.0, 0.30)
+	reveal.tween_callback(banner.queue_free)

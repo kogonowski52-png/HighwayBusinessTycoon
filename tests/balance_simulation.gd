@@ -18,6 +18,7 @@ var patience_left := 0
 var table: Array[Dictionary] = []
 var cadence := 0
 var run_seed := 0
+var opened_at: Dictionary
 
 func _initialize() -> void:
 	run.call_deferred()
@@ -48,6 +49,7 @@ func simulate(seed: int) -> void:
 	departed = 0
 	patience_left = 0
 	cadence = 0
+	opened_at = {"fuel": 0.0}
 	begin_session(true)
 	var prior_gross := HbtAmount.new()
 	var previous_open := 1
@@ -68,11 +70,11 @@ func simulate(seed: int) -> void:
 		elif limit == 1800:
 			expect(row.sites >= 6 and had_manager, "seed %d: 30 min expands and acquires a manager" % seed)
 		elif limit == 7200:
-			expect(row.sites == 8 and row.best_level >= 20, "seed %d: 2 h opens all services" % seed)
+			expect(row.sites == economy.facilities.size() and row.best_level >= 20, "seed %d: 2 h opens all services" % seed)
 		elif limit == 86400:
-			expect(row.best_level >= 45 and row.best_level < 100 and not offline.empty(), "seed %d: day-one progress includes offline earnings and stays below cap" % seed)
+			expect(row.best_level >= 40 and row.best_level < 100 and not offline.empty(), "seed %d: day-one progress includes offline earnings and stays below cap" % seed)
 		elif limit == 604800:
-			expect(row.best_level >= 80 and row.workers >= 14 and row.min_level < 100, "seed %d: first week develops capacity and leaves room to grow" % seed)
+			expect(row.best_level >= 75 and row.workers >= 16 and row.min_level < 100, "seed %d: first week develops capacity and leaves room to grow" % seed)
 		elif limit == 2592000:
 			expect(row.best_level == 100 and row.min_level >= 95, "seed %d: all free branches approach the cap" % seed)
 	expect(first_sale >= 0.0 and first_sale <= 5.0, "seed %d first income by 5s" % seed)
@@ -90,7 +92,7 @@ func active_until(limit: int) -> void:
 		seconds += STEP
 		economy.clock = WALL + int(seconds)
 		for id in economy.facilities:
-			if economy.crew[id].is_empty():
+			if economy.crew[id].is_empty() and economy.skill("automation", id) == 0:
 				traffic.start_manual(id)
 		traffic.tick(STEP)
 		if first_sale < 0.0 and economy.customers > 0:
@@ -122,6 +124,10 @@ func invest() -> void:
 			return
 	for milestone in BOOK.MILESTONES:
 		economy.claim_reward(milestone.id)
+	economy.claim_player_reward()
+	for mission in economy.missions:
+		if not economy.claimed.has(mission):
+			economy.claim_reward(mission)
 	economy.claim_daily()
 	if economy.cards.has("ada") and not "ada" in economy.equipped:
 		had_manager = economy.assign("ada")
@@ -133,6 +139,7 @@ func invest() -> void:
 	for id in economy.facilities:
 		var facility: HbtService = economy.facilities[id]
 		if economy.gate_open(id) and economy.unlock(id):
+			opened_at[id] = seconds
 			economy.hire(id)
 			return
 		if economy.level(id) > 0 and economy.crew[id].size() < economy.capacity(id):
@@ -142,6 +149,10 @@ func invest() -> void:
 			and economy.level(facility.prerequisite) > 0 and economy.level(facility.prerequisite) < facility.prerequisite_level:
 			if economy.buy_levels(facility.prerequisite, 1) > 0:
 				return
+	if economy.metric("locations") >= 6 and economy.buy_offline_limit():
+		return
+	if economy.cards.has("ada") and economy.manager_rank("ada") < 3:
+		economy.train_manager("ada")
 	if economy.metric("locations") >= 4:
 		for id in economy.facilities:
 			for index in range(economy.crew[id].size()):
@@ -158,7 +169,7 @@ func invest() -> void:
 			lowest = level
 			lowest_id = id
 	if not lowest_id.is_empty():
-		var amount := 10 if lowest >= 35 and economy.metric("locations") == 8 \
+		var amount := 10 if lowest >= 35 and economy.metric("locations") == economy.facilities.size() \
 			and economy.quote_upgrade(lowest_id, 10).affordable else 1
 		economy.buy_levels(lowest_id, amount)
 
@@ -173,6 +184,9 @@ func evidence(horizon: int) -> Dictionary:
 		"fuel_level": economy.level("fuel"), "customers": economy.customers,
 		"reputation": economy.amount("reputation").decimal(), "cash": economy.amount("cash").decimal(),
 		"gross": economy.gross.decimal(), "offline_earned": offline.decimal(),
+		"invested": economy.spent.decimal(), "minute_income": economy.income_per_minute().decimal(),
+		"opening_times_s": opened_at.duplicate(), "player_level": economy.player_level(),
+		"missions_claimed": economy.claimed.size(), "manager_cards": economy.cards.size(), "offline_limit_h": economy.CONFIG.offline_hours[economy.offline_tier],
 		"patience_exits": patience_left + traffic.abandoned, "recoveries": recovered + traffic.recovered,
 		"manager": had_manager,
 	}

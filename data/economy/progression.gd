@@ -1,12 +1,6 @@
 extends RefCounted
 
-const MANAGERS := {
-	"ada": {"name": "Ada Nowak", "skill": "collect", "value": 1},
-	"iga": {"name": "Iga Brooks", "skill": "revenue", "value": 1_800},
-	"maks": {"name": "Maks Chen", "skill": "speed", "value": 2_000},
-	"mira": {"name": "Mira Rossi", "skill": "traffic", "value": 2_500},
-	"leon": {"name": "Leon Silva", "skill": "discount", "value": 1_200},
-}
+const MANAGERS := preload("res://data/economy/managers.gd").ROSTER
 
 const MILESTONES := [
 	{"id": "first", "group": "mission", "counter": "customers", "goal": 1, "reward": {"cash": 40}},
