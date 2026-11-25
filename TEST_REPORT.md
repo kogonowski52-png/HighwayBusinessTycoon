@@ -1,5 +1,30 @@
 # Raport testów
 
+## 0.6.0 · Ekspansja Copper Mile
+
+Godot 4.7.2 Stable, Compatibility, Linux i Mesa llvmpipe. Import oraz wszystkie próby przeprowadzono z izolowanymi ścieżkami danych. Blender 4.3.2 wyeksportował 31 nowych modeli. [39 zrzutów z silnika](screenshots/0.6.0/README.md) · [Balans](docs/balance-0.6.0.md) · [Wydajność](docs/performance-0.6.0.md)
+
+| Próba | Wynik |
+| --- | --- |
+| Kampania, opłata za wjazd, offline, wydarzenia, kontrakty, kolekcje i prestiż | 64/64 |
+| Przejście ekspansji bez okna | 45/45 |
+| Przejście w oknie | 84/84, w tym 39 kadrów |
+| Balans Copper Mile, trzy ziarna i sześć horyzontów | 46/46 |
+| Balans Trasy 17 | 46/46, raport identyczny z 0.4.0 |
+| Ekonomia i awaryjne odzyskiwanie zapisu | 69/69 |
+| Ruch na Trasie 17 | 30/30 |
+| Gra na stacji, geometria i animacje | 27/27, 113/113 |
+| Kariera, zapis i gra w kompleksie | 192/192, 44/44 |
+| Kalendarz 0.5.0, odznaki, miks i przejście interfejsu | 278/278, 49/49 |
+| Migracja pliku utworzonego przez 0.5.0, commit `e121e14` | Zgodność 29 pól, w tym otwarta usługa, awans pracownika, menedżer, kalendarz, odznaki, oczekujące offline i preferencje. Kolejny zapis ma schemat 6. |
+| Podpisany APK 0.6.0 | Ten sam identyfikator i certyfikat co lokalny 0.5.0. Kod 6000 wobec 7. Zgodność podpisu v2/v3, Android od API 24, arm64-v8a i x86_64, manifest z `VIBRATE`. |
+
+W odrębnej próbie mieszanego ruchu Desert Highway ukończono 182 przejazdy przy szczycie pięciu pojazdów w kolejce i zerze awaryjnych przerwań. Każda z dziesięciu usług zrealizowała osobną próbę z dojazdem, pracownikiem, płatnością i zwolnieniem stanowiska. Gra w oknie sprawdziła zakup dostępu przez atlas, powrót z zachowaniem ustawień i wypłatą offline, sześć paneli wydarzeń, kontrakt, kolekcję i anulowanie prestiżu. Próba stanu potwierdziła wykonanie resetu wyłącznie przy potwierdzeniu i jednokrotne wydanie nagród. Próba błędnego zapisu wycofała zmianę mapy.
+
+Nagranie obejmuje 434 klatki 486 × 864 przy 30 FPS i ścieżkę stereo 48 kHz. Skrypt przechodzi z istniejącego profilu z kwalifikacją do Desert Highway, płaci za podróż, obsługuje klienta i kupuje poziom. [Nagranie](screenshots/0.6.0/podroz-copper-mile.mp4)
+
+APK ma 76 247 383 bajty. SHA-256 `e1f718328619fb42d92a52f043c494b9d1419fe6d2163e78548f6906ff509c13`. Weryfikator pary wersji potwierdził zgodność lokalnej kompilacji 0.5.0 i odrzucił parę z GitHub 0.5.0 ze względu na odmienny podpis. Próba instalacji na Androidzie pozostaje otwarta. [Procedura podpisywania i migracji](docs/ANDROID_SIGNING.md)
+
 ## 0.5.0 · Interfejs i rytm Trasy 17
 
 Godot 4.7.2 Stable na Linuxie, renderer Compatibility i Mesa llvmpipe. Próby używają oddzielnych lokalnych profili. [30 zrzutów](screenshots/0.5.0/README.md) · [Porównanie z 0.4.0](screenshots/0.5.0/porownanie-0.4.0.jpg) · [Wydajność](docs/performance-0.5.0.md)

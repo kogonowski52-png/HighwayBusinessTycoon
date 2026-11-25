@@ -9,6 +9,7 @@ const MANAGER_SPOTS := {
 	"leon": Vector3(-7.31, 0.30, -14.42), "vera": Vector3(-8.17, 0.30, -14.45),
 }
 
+var routes: Script = Routes
 var staff: Dictionary = {}
 var directors: Dictionary = {}
 var manual: Dictionary = {}
@@ -44,7 +45,7 @@ func update(economy: HbtEconomy, dispatch: HbtDispatch, delta: float) -> void:
 			assignments[visit.director] = visit
 		elif (visit.service != "fuel" or visit.bay != 0) and not manual.has(visit.number):
 			var role := profile.role if visit.director.is_empty() else visit.director
-			var actor := person(role, Routes.worker_at(visit.service, visit.bay))
+			var actor := person(role, routes.worker_at(visit.service, visit.bay))
 			orient(actor, visit)
 			actor.play(profile.task)
 			manual[visit.number] = actor
@@ -68,7 +69,7 @@ func update(economy: HbtEconomy, dispatch: HbtDispatch, delta: float) -> void:
 		walk_to_work(directors[id], job, manager_post(id), task, delta)
 
 func walk_to_work(actor: Actor, job: HbtVisit, post: Vector3, task: String, delta: float) -> void:
-	var target := post if job == null else Routes.worker_at(job.service, job.bay)
+	var target: Vector3 = post if job == null else routes.worker_at(job.service, job.bay)
 	var offset := target - actor.position
 	var distance := offset.length()
 	if distance > 0.045:
@@ -114,13 +115,15 @@ func identity(id: String, index: int) -> String:
 	return "%s:%d" % [id, index]
 
 func standby(id: String, index: int) -> Vector3:
-	return Routes.worker_at(id, index) + Vector3(0.63, 0, -0.76)
+	return routes.worker_at(id, index) + Vector3(0.63, 0, -0.76)
 
 func manager_post(id: String) -> Vector3:
-	if MANAGER_SPOTS.has(id):
+	if routes == Routes and MANAGER_SPOTS.has(id):
 		return MANAGER_SPOTS[id]
 	var site: String = Managers.ROSTER[id].site
-	return Routes.worker_at(site, 0) + Vector3(-0.74, 0.0, -0.50)
+	if routes != Routes and site not in routes.FRONTS:
+		site = "fuel"
+	return routes.worker_at(site, 0) + Vector3(-0.74, 0.0, -0.50)
 
 func orient(actor: Actor, job: HbtVisit) -> void:
 	var relative := job.location - actor.position

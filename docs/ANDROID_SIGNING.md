@@ -1,6 +1,6 @@
 # Podpisywanie testowych wydań Androida
 
-Pakiet zachowuje identyfikator `pl.krystiandevelopment.highwaytycoon`. Wydanie 0.6.0 ma kod 6000, a kolejne wydania używają wzoru `major × 1 000 000 + minor × 1 000 + patch`, przy składowych od 0 do 999. Weryfikator odrzuca APK z kodem niezgodnym z wersją, błędnym identyfikatorem lub innym certyfikatem.
+Pakiet zachowuje identyfikator `pl.krystiandevelopment.highwaytycoon`. Wydanie 0.6.0 ma kod 6000, a kolejne wydania używają wzoru `major × 1 000 000 + minor × 1 000 + patch`, przy składowych od 0 do 999. Weryfikator odrzuca APK z kodem niezgodnym z wersją, błędnym identyfikatorem lub innym certyfikatem. Publikacje są wykonywane kolejno, a workflow odrzuca wersję starszą od opublikowanej.
 
 | Kompilacja | Kod | SHA-256 certyfikatu |
 | --- | ---: | --- |
@@ -8,7 +8,7 @@ Pakiet zachowuje identyfikator `pl.krystiandevelopment.highwaytycoon`. Wydanie 0
 | GitHub 0.5.0 | 7 | `cd16aa3a3773054f82bea5551330e64be8f93af907f6a1dbc1a041a8ce8ea2bc` |
 | Lokalny 0.5.0 i stały podpis testowy od 0.6.0 | 7, 6000 i wyższe | `e43f4ee684e3e0341672d4b9fdc03561baea103a17141f11cd37ebacdae85d62` |
 
-Poprzedni workflow tworzył osobny klucz na każdym runnerze. Sprawdzono oba wydania i dwa dostępne magazyny. Klucze użyte przez GitHub 0.4.0 i 0.5.0 wygasły wraz z runnerami, a publiczne certyfikaty pozwalają jedynie weryfikować podpisy. Udało się odzyskać klucz lokalnego 0.5.0. Przeniesiono go do PKCS#12 chronionego losowym hasłem. Kontrola podpisu w repozytorium używa wyłącznie publicznego odcisku.
+Poprzedni workflow tworzył osobny klucz na każdym runnerze. Sprawdzono oba wydania i dwa dostępne magazyny. Kopie prywatnych kluczy zastosowanych w GitHub 0.4.0 i 0.5.0 nie są dostępne w tych magazynach ani w wydaniach. Udało się odzyskać klucz lokalnego 0.5.0. Przeniesiono go do PKCS#12 chronionego losowym hasłem i szyfrowaniem AES-256. Kontrola podpisu w repozytorium używa wyłącznie publicznego odcisku.
 
 ## Trwałe przechowanie i publikacja
 

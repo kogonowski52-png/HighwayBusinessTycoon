@@ -2,6 +2,8 @@
 
 Mobilny tycoon 3D rozwijany w Godocie. Stacja Północ przy Trasie 17 ma autorską oprawę 3D, jedenaście działających usług i cztery pory dnia.
 
+W 0.6.0 przycisk **Atlas** otwiera sieć lokalizacji. Copper Mile w Desert Highway to osobna scena z dziesięcioma biznesami, własnymi kasami, pracownikami i wpływami offline. Atlas prowadzi też do czasowych wydarzeń, kontraktów, kolekcji, pogody i prestiżu. [Ekspansja](docs/EXPANSION.md) · [Galeria 0.6.0](screenshots/0.6.0/README.md) · [Balans Copper Mile](docs/balance-0.6.0.md)
+
 ## Rozgrywka
 
 Rozpoczynasz ze 120 zł i klientem przy dystrybutorze. Samouczek prowadzi przez pierwszą sprzedaż, zakup poziomu, odbiór nagród, zatrudnienie i wpływy z kasy. Każdy krok dzieje się w normalnej rozgrywce.
@@ -31,6 +33,9 @@ godot --headless --path . --script tests/career_window.gd
 godot --headless --path . --script tests/presentation_checks.gd
 godot --headless --path . --script tests/presentation_window.gd
 godot --headless --path . --script tests/presentation_recording.gd -- --boot-check
+godot --headless --path . --script tests/expedition_checks.gd
+godot --headless --path . --script tests/expedition_window.gd
+godot --headless --path . --script tests/desert_balance.gd
 ```
 
 Testy używają oddzielnych plików zapisu. Przebieg z galerią wymaga działającego okna graficznego. Godot Movie Maker zapisuje obraz i miks z działającej gry. [Wyniki testów](TEST_REPORT.md)
@@ -39,6 +44,8 @@ Testy używają oddzielnych plików zapisu. Przebieg z galerią wymaga działaj�
 mkdir -p /tmp/hbt-gallery
 godot --path . --script tests/presentation_window.gd -- --capture-dir=/tmp/hbt-gallery
 godot --path . --write-movie /tmp/hbt-demo.avi --fixed-fps 30 --script tests/presentation_recording.gd
+godot --path . --script tests/expedition_window.gd -- --capture-dir=/tmp/hbt-gallery
+godot --path . --write-movie /tmp/copper-mile.avi --fixed-fps 30 --script tests/expedition_recording.gd
 ```
 
 ## Modele i galeria
@@ -66,11 +73,13 @@ python3 tools/art/presentation_art.py
 python3 tools/art/presentation_audio.py
 blender -b -t 4 --python-exit-code 1 --python tools/art/presentation_icons.py
 blender -b --python-exit-code 1 --python tools/art/delivery.py
+blender -b -t 3 --python-exit-code 1 --python tools/art/desert_diorama.py
+blender -b -t 2 --python-exit-code 1 --python tools/art/desert_roadkit.py
 ```
 
 ## Android
 
-Podpisany pakiet testowy 0.5.0 jest dostępny w GitHub Releases. [Pobierz APK Android](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/download/v0.5.0/HighwayBusinessTycoon-0.5.0-debug.apk)
+Wydania testowe od 0.6.0 używają odcisku jednego certyfikatu, a GitHub Actions pobiera klucz z chronionych sekretów repozytorium. Instrukcja obejmuje przygotowanie kopii poza Cloud i jednorazową migrację ze starszych instalacji GitHub. [Podpisywanie Androida](docs/ANDROID_SIGNING.md)
 
 Preset **Android** używa pakietu `pl.krystiandevelopment.highwaytycoon`, orientacji pionowej i architektur arm64 oraz x86_64. W Godocie zainstaluj szablony eksportu zgodne z wersją edytora i ustaw ścieżki Android SDK i JDK. Eksport uruchomisz z terminala.
 

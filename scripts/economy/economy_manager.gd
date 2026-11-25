@@ -14,6 +14,8 @@ const RecognitionState = preload("res://scripts/economy/recognition_state.gd")
 const Preferences = preload("res://scripts/core/player_preferences.gd")
 const Staff = preload("res://scripts/employees/staff_rules.gd")
 const SaveManager = preload("res://scripts/core/save_manager.gd")
+const DESERT: HbtDistrict = preload("res://data/world/desert.tres")
+const DesertBusiness = preload("res://data/world/desert_businesses.gd")
 const BPS := 10_000
 const CURRENCIES := ["cash", "diamond", "reputation", "event"]
 const MANAGER_WORKER := -2
@@ -58,21 +60,35 @@ var dirty := false
 var _reward_count := -1
 var _curve: Dictionary = {}
 var _sales: Array[Dictionary] = []
+var district := "north"
+var milestones: Array = BOOK.MILESTONES
+var campaign_data: Dictionary = {}
+var save_hook: Callable
+var prestige_rank := 0
+var conditions: Dictionary = {}
+var special_guest: Dictionary = {}
 
-func _init() -> void:
-	for profile in CONFIG.services:
+func _init(location := "north") -> void:
+	district = location
+	var definitions: Array[HbtService] = DesertBusiness.profiles() if district == "desert" else CONFIG.services
+	for profile in definitions:
 		facilities[profile.id] = profile
 		_curve[profile.id] = build_curve(profile)
 		chapters[profile.id] = []
-	missions = Journey.items(facilities)
+	if district == "desert":
+		missions = DesertBusiness.missions(facilities)
+		milestones = DesertBusiness.LANDMARKS
+	else:
+		missions = Journey.items(facilities)
 	for item in missions.values():
 		chapters[item.site].append(item)
 	reset()
 
 func reset() -> void:
 	wallet.clear()
+	var starting_cash := DESERT.opening_cash if district == "desert" else CONFIG.opening_cash
 	for currency in CURRENCIES:
-		wallet[currency] = HbtAmount.from(CONFIG.opening_cash if currency == "cash" else 0)
+		wallet[currency] = HbtAmount.from(starting_cash if currency == "cash" else 0)
 	for id in facilities:
 		levels[id] = 1 if id == "fuel" else 0
 		registers[id] = HbtAmount.new()
@@ -86,7 +102,7 @@ func reset() -> void:
 	claimed.clear()
 	player_xp = 0
 	paid_player_level = 1
-	tutorial_step = 0
+	tutorial_step = TUTORIAL_DONE if district != "north" else 0
 	feedback_enabled = true
 	preferences = Preferences.new()
 	recognition = RecognitionState.new()
@@ -104,6 +120,8 @@ func reset() -> void:
 	high_water = 0
 	clock = 0
 	_sales.clear()
+	campaign_data = {}
+	prestige_rank = 0
 	_reward_count = -1
 	dirty = false
 	save_error = OK
@@ -114,7 +132,7 @@ func build_curve(profile: HbtService) -> Dictionary:
 	var sale := HbtAmount.from(profile.base_price)
 	var upgrade := HbtAmount.from(profile.first_upgrade)
 	for level in range(1, CONFIG.max_level + 1):
-		if profile.id == "fuel":
+		if profile.id == "fuel" and district == "north":
 			if level <= LEGACY.sale_prices.size():
 				sale = HbtAmount.from(LEGACY.sale_prices[level - 1])
 			if level <= LEGACY.upgrade_costs.size():
@@ -132,8 +150,12 @@ func build_curve(profile: HbtService) -> Dictionary:
 	return {"price": prices, "cost": costs}
 
 func restore(wall := -1) -> void:
+	restore_profile(storage.restore(), wall)
+
+func restore_profile(data: Dictionary, wall: int, accrue := true) -> void:
 	reset()
-	var data := storage.restore()
+	campaign_data = safe_dict(data.get("world"))
+	prestige_rank = clampi(int(data.get("prestige_rank", 0)), 0, 20)
 	var balances := safe_dict(data.get("wallet"))
 	for currency in CURRENCIES:
 		if balances.has(currency):
@@ -163,7 +185,7 @@ func restore(wall := -1) -> void:
 			if cards.has(id) and id not in equipped and equipped.size() < CONFIG.max_active_managers:
 				equipped.append(id)
 	var rewards := safe_dict(data.get("claimed"))
-	for item in BOOK.MILESTONES:
+	for item in milestones:
 		if rewards.get(item.id) == true:
 			claimed[item.id] = true
 	for id in missions:
@@ -174,7 +196,7 @@ func restore(wall := -1) -> void:
 	customers = counter(data.get("customers", 0))
 	player_xp = mini(Journey.LEVEL_XP.back(), counter(data.get("player_xp", previous_xp())))
 	paid_player_level = clampi(int(data.get("paid_player_level", 1)), 1, player_level())
-	tutorial_step = clampi(int(data.get("tutorial_step", 0 if data.is_empty() else TUTORIAL_DONE)), 0, TUTORIAL_DONE)
+	tutorial_step = clampi(int(data.get("tutorial_step", tutorial_step if data.is_empty() else TUTORIAL_DONE)), 0, TUTORIAL_DONE)
 	feedback_enabled = data.get("feedback_enabled", true) == true
 	preferences.restore(safe_dict(data.get("preferences")), feedback_enabled)
 	recognition.restore(safe_dict(data.get("recognition")))
@@ -192,7 +214,8 @@ func restore(wall := -1) -> void:
 	high_water = counter(data.get("high_water", 0))
 	clock = int(Time.get_unix_time_from_system()) if wall < 0 else wall
 	boost_until = clock + clampi(int(data.get("boost_until", 0)) - maxi(clock, high_water), 0, CONFIG.boost_seconds)
-	capture_absence(clock)
+	if accrue:
+		capture_absence(clock)
 	if data.get("legacy") == true:
 		per_service["fuel"]["count"] = customers
 		wallet["reputation"] = HbtAmount.from(customers)
@@ -201,6 +224,8 @@ func restore(wall := -1) -> void:
 		save_error = ERR_UNAVAILABLE
 
 func checkpoint() -> Error:
+	if save_hook.is_valid():
+		return save_hook.call()
 	high_water = maxi(high_water, clock)
 	save_error = storage.store(snapshot())
 	dirty = save_error != OK
@@ -215,7 +240,7 @@ func snapshot() -> Dictionary:
 	for id in facilities:
 		tills[id] = registers[id].decimal()
 		sales[id] = {"count": int(per_service[id].count), "gross": per_service[id].gross.decimal()}
-	return {
+	var result := {
 		"wallet": balances, "levels": levels, "registers": tills, "crew": crew, "per_service": sales,
 		"cards": cards, "manager_ranks": manager_ranks, "equipped": equipped, "claimed": claimed,
 		"player_xp": player_xp, "paid_player_level": paid_player_level, "tutorial_step": tutorial_step,
@@ -227,6 +252,11 @@ func snapshot() -> Dictionary:
 		"high_water": high_water, "boost_until": boost_until,
 		"event_day": event_day, "event_services": event_services, "event_claimed": event_claimed,
 	}
+	if prestige_rank > 0:
+		result["prestige_rank"] = prestige_rank
+	if not campaign_data.is_empty():
+		result["world"] = campaign_data
+	return result
 
 static func safe_dict(value: Variant) -> Dictionary:
 	return value if value is Dictionary else {}
@@ -261,8 +291,11 @@ func level(id: String) -> int:
 	return levels.get(id, 0)
 
 func capacity(id: String) -> int:
+	var profile: HbtService = facilities.get(id)
+	if profile == null:
+		return 0
 	var size := 0
-	for threshold in facilities[id].capacity_levels:
+	for threshold in profile.capacity_levels:
 		size += int(level(id) >= threshold)
 	return size
 
@@ -361,6 +394,8 @@ func payout(id: String, tip: int, worker: int, include_boost := true) -> HbtAmou
 		value = value.times(Staff.efficiency(crew[id][worker])).divided(BPS)
 	if include_boost and boost_until > clock:
 		value = value.times(CONFIG.boost_multiplier).divided(BPS)
+	if prestige_rank > 0:
+		value = value.times(BPS + prestige_rank * 500).divided(BPS)
 	return value
 
 func serve(id: String, value: HbtAmount, reputation: int, worker: int) -> void:
@@ -555,7 +590,7 @@ func ready_rewards() -> int:
 	if _reward_count >= 0:
 		return _reward_count
 	_reward_count = int(player_level() > paid_player_level)
-	for item in BOOK.MILESTONES:
+	for item in milestones:
 		_reward_count += int(not claimed.has(item.id) and mission_progress(item) >= item.goal)
 	for item in missions.values():
 		_reward_count += int(not claimed.has(item.id) and mission_available(item) and mission_progress(item) >= item.goal)
@@ -580,7 +615,7 @@ func claim_reward(id: String) -> bool:
 	if missions.has(id):
 		var item: Dictionary = missions[id]
 		return mission_available(item) and accept_reward(item)
-	for item in BOOK.MILESTONES:
+	for item in milestones:
 		if item.id == id:
 			return accept_reward(item)
 	return false
@@ -669,6 +704,8 @@ func claim_achievement(id: String) -> bool:
 	return true
 
 func current_event() -> Dictionary:
+	if district == "desert":
+		return DesertBusiness.DAILIES[posmod(day_index(), DesertBusiness.DAILIES.size())]
 	return BOOK.EVENTS[posmod(day_index(), BOOK.EVENTS.size())]
 
 func daily_progress() -> int:
@@ -706,11 +743,13 @@ func buy_boost() -> bool:
 
 func arrival_period() -> float:
 	var reputation := float(metric("reputation"))
-	var shortened := CONFIG.arrival_seconds / (1.0 + minf(reputation / 350.0, 0.64))
-	return maxf(CONFIG.minimum_arrival_seconds, shortened * float(BPS) / (BPS + skill("traffic")))
+	var interval := DESERT.arrival_seconds if district == "desert" else CONFIG.arrival_seconds
+	var floor_seconds := DESERT.minimum_arrival_seconds if district == "desert" else CONFIG.minimum_arrival_seconds
+	var shortened := interval / (1.0 + minf(reputation / 350.0, 0.64))
+	return maxf(floor_seconds, shortened * float(BPS) / (BPS + skill("traffic")))
 
 func attraction(id: String) -> float:
-	return 1.0 + minf(level(id) * 0.006, 0.55) + maxf(0.0, capacity(id) - 1) * 0.10
+	return (1.0 + minf(level(id) * 0.006, 0.55) + maxf(0.0, capacity(id) - 1) * 0.10) * float(conditions.get(id, 1.0))
 
 func offline_limit() -> int:
 	return CONFIG.offline_hours[offline_tier] * 3600

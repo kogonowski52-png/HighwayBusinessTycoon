@@ -2,6 +2,8 @@
 
 Gracz uruchamia kolejne usługi obsługi drogowej. Ruch widoczny na mapie wpływa na sprzedaż. Wyposażenie, pracownicy i menedżerowie przyspieszają proces. Wszystkie nagrody potrzebne do postępu pochodzą z rozgrywki.
 
+W rozwoju sieci gracz kupuje dostęp do Copper Mile z zysków Stacji Północ. Dwie lokalizacje mają własne inwestycje, załogi, statystyki i zarobki w czasie postoju. Rozliczone wizyty zasilają tygodniowe wydarzenia, kontrakty i kolekcje, a komplet rozbudów lokalnych pozwala zdobyć prestiż. [Ekspansja i reguły kampanii](docs/EXPANSION.md)
+
 ## Pętla i rozwój
 
 - Pierwszy klient czeka przy dystrybutorze. Początkowe 120 zł i 35 zł za tankowanie pokrywają koszt pierwszego ulepszenia. Zadania za obsługę i ulepszenie zapewniają środki na pierwszego pracownika.

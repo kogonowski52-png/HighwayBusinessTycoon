@@ -1,6 +1,7 @@
 extends CanvasLayer
 
 const Building = preload("res://scripts/buildings/roadside_campus.gd")
+const Desert = preload("res://scripts/buildings/desert_campus.gd")
 const ELEVATION := {"fuel": 4.55, "market": 3.6, "parking": 2.9, "wash": 3.5, "truck": 5.7,
 	"workshop": 4.2, "restaurant": 3.6, "tires": 3.55, "truck_park": 3.12, "motel": 4.7, "charge": 2.12}
 
@@ -76,6 +77,8 @@ func _process(_delta: float) -> void:
 		buttons[id].visible = shown.has(id)
 
 func world_anchor(id: String) -> Vector3:
+	if controller.is_desert():
+		return controller.campus.focus(id) + Vector3(0, float(Desert.ROOFLINE[id]) + 0.26, -1.26)
 	if Building.ROOFS.has(id):
 		return Building.ROOFS[id][0] + Vector3.UP * float(ELEVATION[id])
 	return Vector3(1.13, float(ELEVATION[id]), 0.53)

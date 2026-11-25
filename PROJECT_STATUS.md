@@ -1,5 +1,13 @@
 # Stan projektu
 
+## 0.6.0 · Ekspansja Copper Mile
+
+- Atlas prowadzi do dwóch grywalnych lokalizacji. Desert Highway ma własny układ i scenerię 3D, dziesięć czynnych usług, niezależną gospodarkę i 160 nowych misji rozdziałowych. Razem ze Stacją Północ jest ich 270. [Zrzuty i nagranie](screenshots/0.6.0/README.md)
+- Działa sześć rotacyjnych wydarzeń, siedem rodzajów kontraktów, sześć kolekcji, prestiż z potwierdzeniem i pogoda. Kampania zapisuje oba biznesy atomowo. Odczyt autentycznego zapisu 0.5.0 przeszedł weryfikację. [Zasady gry](docs/EXPANSION.md) · [Testy](TEST_REPORT.md)
+- Przygotowano APK z kodem 6000 i stałym certyfikatem, zgodnym z lokalnym 0.5.0. Publikacja przez GitHub używa kopii w dwóch chronionych sekretach. [Podpisywanie i migracja APK](docs/ANDROID_SIGNING.md)
+- Green Valley, Alpine Pass, Ocean Coast oraz Metro City są oznaczone w atlasie jako w przygotowaniu. Centrum logistyczne, magazyn, salon i centrum handlowe są w planie. Interfejs przyszłej synchronizacji ma kontrakt danych. [Zakres ekspansji](docs/EXPANSION.md)
+- Wydajność oceniono w oknie Godota z rendererem Compatibility. Instalacja, płynność i pamięć na sprzęcie Android wymagają pomiaru. [Raport wydajności](docs/performance-0.6.0.md)
+
 ## 0.5.0 · Interfejs i rytm Trasy 17
 
 - Dostępne są ekran startowy, zwięzły HUD, panele obsługi, kolekcja 15 menedżerów, nagrody awansu, finanse i offline, pomoc, licencje, prywatność oraz sklep za środki z gry. Kalendarz ma 30 nagród, a osiągnięcia 50 odznak z zapisem. [Galeria](screenshots/0.5.0/README.md)

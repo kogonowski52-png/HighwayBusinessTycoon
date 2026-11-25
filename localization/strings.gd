@@ -319,8 +319,12 @@ const PRESENTATION := {
 }
 
 static func phrase(language: String, key: String) -> String:
+	if EXPEDITION.COPY.has(key):
+		return EXPEDITION.COPY[key][int(language == "en")]
 	if PRESENTATION.has(key):
 		return PRESENTATION[key][int(language == "en")]
 	if IDLE.has(key):
 		return IDLE[key][int(language == "en")]
 	return COPY[language][key]
+
+const EXPEDITION = preload("res://localization/expedition.gd")

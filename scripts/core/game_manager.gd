@@ -1,6 +1,12 @@
 extends Node3D
 
 const Routes = preload("res://data/economy/routes.gd")
+const DesertRoutes = preload("res://data/world/desert_routes.gd")
+const Atlas = preload("res://data/world/atlas.gd")
+const DesertLandscape = preload("res://scripts/buildings/desert_landscape.gd")
+const DesertCampus = preload("res://scripts/buildings/desert_campus.gd")
+const DesertStation = preload("res://scripts/buildings/desert_station.gd")
+const Weather = preload("res://scripts/art/expedition_weather.gd")
 const TrafficManager = preload("res://scripts/traffic/traffic_manager.gd")
 const Landscape = preload("res://scripts/buildings/roadside_landscape.gd")
 const Campus = preload("res://scripts/buildings/roadside_campus.gd")
@@ -19,20 +25,28 @@ const Driver = preload("res://scenes/characters/driver.tscn")
 const Hud = preload("res://scenes/ui/station_hud.tscn")
 const Strings = preload("res://localization/strings.gd")
 const BOOK = preload("res://data/economy/progression.gd")
-const LOOK_LABELS := ["day", "golden", "evening", "night"]
+const LOOK_LABELS := ["day", "golden", "evening", "night", "dawn"]
 const Phase = HbtVisit.Phase
 const SERVICE_SOUND := {"fuel": "pump", "truck": "pump", "wash": "wash",
-	"workshop": "workshop", "tires": "workshop", "restaurant": "diner"}
+	"workshop": "workshop", "tires": "workshop", "restaurant": "diner", "drive_through": "diner", "cafe": "diner"}
 
+@export var district_profile: HbtDistrict
 var economy := HbtEconomy.new()
+var campaign: HbtCampaign
+var routes: Script = Routes
+var traveling := false
+var arrived_from_trip := false
+var weather: Node3D
+var world_second := -1
+var shown_event := ""
 var traffic := TrafficManager.new()
-var station := Station.instantiate()
-var landscape := Landscape.new()
+var station: Node3D
+var landscape: Node3D
 var driver := Driver.instantiate()
 var hud := Hud.instantiate()
-var campus := Campus.new()
+var campus: Node3D
 var crew := Crew.new()
-var venue_activity := VenueActivity.new()
+var venue_activity: Node3D
 var operations := Operations.new()
 var camera := Camera3D.new()
 var lighting := Lighting.new()
@@ -67,12 +81,17 @@ var displayed_rank := 1
 var guided_step := 0
 
 func _ready() -> void:
-	for argument in OS.get_cmdline_user_args():
-		if argument.begins_with("--save-path="):
-			economy.storage.path = argument.trim_prefix("--save-path=")
-	economy.restore(wall_override)
+	if campaign == null:
+		for argument in OS.get_cmdline_user_args():
+			if argument.begins_with("--save-path="):
+				economy.storage.path = argument.trim_prefix("--save-path=")
+		campaign = HbtCampaign.new(economy)
+		campaign.restore(wall_override)
+	economy = campaign.current()
+	economy.save_hook = campaign.checkpoint
 	if entry_language in ["pl", "en"]:
 		economy.language = entry_language
+	setup_district()
 	shown_cards = economy.cards.duplicate()
 	known_diamonds = economy.amount("diamond")
 	calendar_day = economy.day_index()
@@ -83,19 +102,24 @@ func _ready() -> void:
 	setup_camera()
 	add_child(landscape)
 	add_child(campus)
-	add_child(venue_activity)
+	if venue_activity != null:
+		add_child(venue_activity)
+		venue_activity.parcels_delivered.connect(on_supply_delivery)
 	add_child(effects)
 	add_child(station)
-	fuel_art_level = mini(5, economy.level("fuel"))
-	station.set_market_open(economy.level("market") > 0)
-	station.setup(fuel_art_level)
-	landscape.set_forecourt_tier(fuel_art_level)
+	fuel_art_level = -1
+	weather = Weather.new()
+	add_child(weather)
+	weather.setup(lighting, is_desert())
+	weather.display_collection(campaign.ledger.chosen.get(campaign.active, {}))
 	add_child(traffic)
-	traffic.start(economy, int(Time.get_ticks_usec()) if seed_override < 0 else seed_override)
+	traffic.sighting.connect(on_sighting)
+	traffic.start(economy, int(Time.get_ticks_usec()) if seed_override < 0 else seed_override, routes)
+	crew.routes = routes
 	add_child(crew)
 	add_child(driver)
-	driver.position = Routes.worker_at("fuel", 0)
-	driver.rotation.y = -2.56
+	driver.position = routes.worker_at("fuel", 0)
+	driver.rotation.y = -1.2 if is_desert() else -2.56
 	add_child(hud)
 	add_child(operations)
 	operations.setup(self, hud)
@@ -127,10 +151,31 @@ func _ready() -> void:
 	frame_camera()
 	on_economy_changed()
 	mounted = true
+	update_expedition()
 	get_tree().auto_accept_quit = false
 	economy.checkpoint()
 	if not economy.offline_pending.empty():
 		operations.show_page("offline")
+	if arrived_from_trip and motion_enabled():
+		travel_veil(t("journey_arrived") % district_name(campaign.active), false)
+
+func setup_district() -> void:
+	if is_desert():
+		var profile := district_profile if district_profile != null else HbtEconomy.DESERT
+		routes = DesertRoutes
+		station = DesertStation.new()
+		landscape = DesertLandscape.new()
+		campus = DesertCampus.new()
+		lighting.district = profile.id
+		traffic.district = profile.id
+	else:
+		station = Station.instantiate()
+		landscape = Landscape.new()
+		campus = Campus.new()
+		venue_activity = VenueActivity.new()
+
+func is_desert() -> bool:
+	return economy.district == "desert"
 
 func setup_camera() -> void:
 	add_child(camera)
@@ -144,6 +189,11 @@ func motion_enabled() -> bool:
 func frame_camera() -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
 	var aspect := viewport_size.x / maxf(1.0, viewport_size.y)
+	if is_desert():
+		var center: Vector3 = Vector3(6, .0, -9.6) if overview else campus.focus(selected) + Vector3(-.31, .54, -.24)
+		camera_rig.frame(center, Vector3(19, 36, 29), maxf(90.0, aspect * 78.0) if overview else maxf(25.6, aspect * 33.0),
+			not mounted or not motion_enabled())
+		return
 	if overview:
 		camera_rig.frame(Vector3(4.5, 0.0, -4.3), Vector3(16.0, 39.0, 32.5), maxf(94.0, aspect * 69.0), not mounted or not motion_enabled())
 	else:
@@ -159,11 +209,15 @@ func aim_camera(target: Vector3, offset: Vector3, width: float) -> void:
 
 func set_look(preset: Lighting.Look) -> void:
 	lighting.set_look(preset)
-	traffic.set_night(preset >= Lighting.Look.EVENING)
-	route_audio.set_track("night" if preset >= Lighting.Look.EVENING else "day")
+	var artificial := preset in [Lighting.Look.EVENING, Lighting.Look.NIGHT]
+	traffic.set_night(artificial)
+	route_audio.set_track("night" if artificial else "day")
 	refresh()
 
 func cycle_lighting() -> void:
+	if economy.preferences.auto_day:
+		economy.preferences.auto_day = false
+		economy.checkpoint()
 	set_look((int(lighting.current) + 1) % LOOK_LABELS.size())
 
 func toggle_view() -> void:
@@ -172,12 +226,15 @@ func toggle_view() -> void:
 	refresh()
 
 func _physics_process(delta: float) -> void:
-	if suspended_at < 0:
+	if suspended_at < 0 and not traveling:
 		tick_game(delta)
 
 func tick_game(delta: float) -> void:
 	simulation_clock += delta
 	economy.clock = int(simulation_clock)
+	if world_second != economy.clock:
+		world_second = economy.clock
+		update_expedition()
 	traffic.physics_step(delta)
 	crew.update(economy, traffic.dispatch, delta)
 	update_scene(delta)
@@ -206,7 +263,7 @@ func update_scene(delta: float) -> void:
 	var primary_manual := primary != null and primary.phase == Phase.WORKING and primary.worker == -1
 	driver.represent_service(primary_ready and economy.crew.fuel.is_empty(), primary_manual, delta)
 	var filling := traffic.dispatch.first_at("fuel", Phase.WORKING)
-	if filling == null:
+	if filling == null and not is_desert():
 		filling = traffic.dispatch.first_at("truck", Phase.WORKING)
 	if filling != null:
 		var worker: Node3D = driver if filling == primary and primary_manual else crew.performer(filling)
@@ -217,8 +274,10 @@ func update_scene(delta: float) -> void:
 		effects.set_hose(false, Vector3.ZERO)
 	effects.set_activity(traffic.dispatch.first_at("wash", Phase.WORKING), traffic.dispatch.first_at("workshop", Phase.WORKING))
 	campus.update_chargers(traffic.dispatch)
-	venue_activity.service_activity(traffic.dispatch, delta)
-	venue_activity.move_delivery(delta)
+	if venue_activity != null:
+		venue_activity.service_activity(traffic.dispatch, delta)
+		venue_activity.move_delivery(delta)
+	weather.follow(camera_rig.focus)
 	var road_car: HbtVisit
 	for ticket: HbtVisit in traffic.dispatch.live.values():
 		if ticket.distance > 0.04 and ticket.location.z > -1.5 and ticket.location.z < 6.9 \
@@ -234,7 +293,7 @@ func update_scene(delta: float) -> void:
 
 func update_soundscape() -> void:
 	var focus := camera_rig.focus
-	var layers := {"wind": 0.26 if lighting.current >= Lighting.Look.EVENING else 0.35, "cars": 0.12}
+	var layers := {"wind": 0.26 if lighting.current in [Lighting.Look.EVENING, Lighting.Look.NIGHT] else 0.35, "cars": 0.12}
 	for visit: HbtVisit in traffic.dispatch.live.values():
 		var nearness := 1.0 - clampf(visit.location.distance_to(focus) / 22.0, 0.0, 1.0)
 		if visit.distance > 0.01:
@@ -243,7 +302,7 @@ func update_soundscape() -> void:
 		if visit.phase != Phase.WORKING:
 			continue
 		if SERVICE_SOUND.has(visit.service):
-			var cue: String = SERVICE_SOUND[visit.service]
+			var cue: String = "workshop" if visit.service == "truck" and is_desert() else SERVICE_SOUND[visit.service]
 			layers[cue] = maxf(layers.get(cue, 0.0), nearness * 0.70)
 	route_audio.update_field(layers, operations.modal_open())
 
@@ -280,8 +339,10 @@ func _notification(what: int) -> void:
 			get_tree().quit()
 
 func _exit_tree() -> void:
-	if mounted and economy.dirty:
+	if mounted and not traveling and economy.dirty:
 		economy.checkpoint()
+	if mounted:
+		economy.save_hook = Callable()
 
 func select_site(id: String) -> void:
 	selected = id
@@ -301,6 +362,8 @@ func serve_customer() -> void:
 	traffic.dispatch.start_manual(selected)
 
 func open_page(name: String) -> void:
+	if traveling:
+		return
 	camera_rig.release_gestures()
 	camera_rig.cancel_film(true)
 	if economy.tutorial_step == 2 and name == "goals":
@@ -325,6 +388,7 @@ func invest() -> void:
 	var bought := int(economy.unlock(id)) if opening else economy.buy_levels(id, quantity)
 	if bought <= 0:
 		return
+	campaign.ledger.increment(economy, {"building": bought})
 	var after_bays := economy.capacity(id)
 	var rebuilt: bool = fuel_art_level > before_art or campus.roof_counts[id] > installed or after_bays > previous_bays
 	if id == "fuel" and fuel_art_level > before_art:
@@ -332,7 +396,7 @@ func invest() -> void:
 	campus.animate_install(id, installed)
 	feedback.play("new_site" if opening else "build", true)
 	if rebuilt or opening:
-		var at := Routes.position_of(id, 0)
+		var at: Vector3 = routes.position_of(id, 0)
 		effects.construction(at)
 		if operations.modal_open() and operations.page == "upgrades":
 			operations.hide_page()
@@ -492,13 +556,17 @@ func claim_rewarded(base: HbtAmount) -> void:
 		economy.checkpoint()
 
 func on_economy_changed() -> void:
-	station.set_market_open(economy.level("market") > 0)
-	var art_level := mini(5, economy.level("fuel"))
+	campus.update_sites(economy)
+	var art_level: int = campus.roof_counts.fuel if is_desert() else mini(5, economy.level("fuel"))
+	if is_desert():
+		station.set_bays(economy.capacity("fuel"))
+	else:
+		station.set_market_open(economy.level("market") > 0)
 	if fuel_art_level != art_level:
 		fuel_art_level = art_level
-		station.setup(art_level)
+		if not is_desert():
+			station.setup(art_level)
 		landscape.set_forecourt_tier(art_level)
-	campus.update_sites(economy)
 	crew.roster(economy)
 	route_audio.apply(economy.preferences)
 	if mounted:
@@ -520,6 +588,7 @@ func on_economy_changed() -> void:
 	Engine.max_fps = economy.preferences.effective_fps(economy.low_power)
 	var quality: int = economy.preferences.effective_quality(economy.low_power)
 	lighting.set_quality(quality)
+	apply_weather()
 	effects.reduced = quality == 0
 	var render_scale: float = [0.74, 0.88, 1.0][quality]
 	if not is_equal_approx(get_viewport().scaling_3d_scale, render_scale):
@@ -533,7 +602,8 @@ func on_economy_changed() -> void:
 	refresh()
 
 func on_sale(ticket: HbtVisit) -> void:
-	if ticket.service == "market":
+	campaign.ledger.visit(economy, ticket)
+	if ticket.service == "market" and venue_activity != null:
 		venue_activity.on_shop_sale(economy.per_service.market.count, traffic.night)
 	var in_register := ticket.worker != -1 and economy.skill("collect", ticket.service) == 0
 	if ticket.service == selected:
@@ -555,7 +625,7 @@ func promotion_feedback(value: String, icon: Texture2D) -> void:
 	feedback.play("rank", true)
 	hud.announce(value, icon, not economy.low_power)
 	if not economy.low_power:
-		effects.confetti(Routes.position_of(selected, 0), Color("#f4bd6b"), 20)
+		effects.confetti(routes.position_of(selected, 0), Color("#f4bd6b"), 20)
 
 func show_message(value: String) -> void:
 	message = value
@@ -590,8 +660,9 @@ func refresh() -> void:
 	hud.lighting.tooltip_text = t("lighting_tip")
 	hud.view.text = t("station_view" if overview else "map")
 	hud.view.tooltip_text = t("view_tip")
-	hud.location.text = t("location")
-	hud.title.text = t("name")
+	hud.location.text = Atlas.DESTINATIONS[campaign.active].area if is_desert() else t("location")
+	hud.title.text = district_name(campaign.active)
+	hud.pages.atlas.text = t("atlas_button")
 	hud.cash_caption.text = t("cash_short")
 	hud.update_cash(economy.amount("cash"), economy.language, t("money"), motion_enabled())
 	for key in hud.wallet_stats:
@@ -609,14 +680,15 @@ func refresh() -> void:
 	hud.upgrade_preview.text = t("look_action")
 	if quantity != 1:
 		hud.upgrade_preview.text = "MAX" if quantity == 0 else "+%d" % quantity
-	hud.detail_icon.texture = hud.PUMP if selected in ["fuel", "truck"] else hud.NAV.sites
-	hud.serve.icon = hud.PUMP if selected in ["fuel", "truck"] else hud.NAV.sites
+	var pumps := selected == "fuel" or (selected == "truck" and not is_desert())
+	hud.detail_icon.texture = hud.PUMP if pumps else hud.NAV.sites
+	hud.serve.icon = hud.PUMP if pumps else hud.NAV.sites
 	var tier := economy.level(selected)
 	hud.level.text = t("level") % [tier, economy.CONFIG.max_level] if tier > 0 else t("site_closed").to_upper()
 	hud.rate.text = flow_text()
 	var checkout := traffic.dispatch.first_at(selected, Phase.READY)
 	var job := traffic.dispatch.first_at(selected, Phase.WORKING)
-	hud.serve.text = t("serve_fuel" if selected in ["fuel", "truck"] else "serve_work")
+	hud.serve.text = t("serve_fuel" if pumps else "serve_work")
 	hud.serve.disabled = checkout == null
 	if tier == 0:
 		var unlock_cost := HbtAmount.from(economy.facilities[selected].unlock_cost)
@@ -644,3 +716,145 @@ func refresh() -> void:
 	var till := economy.holding()
 	hud.income.visible = not till.empty() or not economy.offline_pending.empty()
 	hud.income.text = t("offline_banner") % money(economy.offline_pending) if not economy.offline_pending.empty() else t("collect_action") % money(till)
+
+func district_name(id: String) -> String:
+	return Atlas.location_name(id, economy.language)
+
+func update_expedition() -> void:
+	campaign.ledger.advance(economy.clock)
+	var event: Dictionary = campaign.ledger.season()
+	var token := str([event.index, event.live])
+	if token != shown_event:
+		shown_event = token
+		campaign.theme()
+		apply_weather()
+		if operations.page == "seasons":
+			operations.refresh()
+	if economy.preferences.auto_day:
+		var phase := posmod(floori(economy.clock / 90.0), 4)
+		var look: Lighting.Look = [Lighting.Look.DAWN, Lighting.Look.DAY, Lighting.Look.GOLDEN, Lighting.Look.NIGHT][phase]
+		if look != lighting.current:
+			set_look(look)
+	if operations.page == "contracts":
+		operations.refresh()
+	operations.expedition.update_clock()
+
+func apply_weather() -> void:
+	weather.apply(economy, campaign.ledger.season(), economy.preferences.effective_quality(economy.low_power),
+		economy.preferences.weather)
+
+func choose_weather(choice: String) -> void:
+	economy.preferences.weather = choice
+	apply_weather()
+	economy.checkpoint()
+	operations.refresh()
+
+func toggle_auto_day() -> void:
+	economy.preferences.auto_day = not economy.preferences.auto_day
+	economy.checkpoint()
+	update_expedition()
+	operations.refresh()
+
+func on_sighting(id: String) -> void:
+	if not campaign.ledger.seen_vehicles.has(id):
+		campaign.ledger.seen_vehicles[id] = true
+		economy.dirty = true
+
+func on_supply_delivery() -> void:
+	campaign.ledger.increment(economy, {"deliveries": 1})
+	economy.checkpoint()
+	if operations.page == "contracts":
+		operations.refresh()
+
+func start_contract(id: String) -> void:
+	if campaign.storage.read_only:
+		return
+	if campaign.ledger.accept(economy, id):
+		feedback.play("click")
+		economy.checkpoint()
+		operations.refresh()
+
+func claim_contract(id: String) -> void:
+	if not campaign.storage.read_only and campaign.ledger.claim_contract(economy, id):
+		reward_feedback("mission")
+		economy.checkpoint()
+
+func claim_season() -> void:
+	if not campaign.storage.read_only and campaign.ledger.claim_event(economy):
+		reward_feedback("reward")
+		economy.checkpoint()
+
+func equip_collection(group: String, id: String) -> void:
+	if not campaign.storage.read_only and campaign.ledger.select_cosmetic(economy, group, id):
+		weather.display_collection(campaign.ledger.chosen.get(campaign.active, {}))
+		economy.checkpoint()
+		operations.refresh()
+
+func redeem_collection(group: String) -> void:
+	if not campaign.storage.read_only and campaign.ledger.set_reward(economy, group):
+		reward_feedback()
+		economy.checkpoint()
+
+func travel_to(id: String) -> void:
+	if traveling or not campaign.available(id) or id == campaign.active:
+		return
+	var destination: PackedScene = load(Atlas.DESTINATIONS[id].scene)
+	if destination == null:
+		return
+	if campaign.travel(id) != OK:
+		refresh()
+		return
+	traveling = true
+	set_physics_process(false)
+	if motion_enabled():
+		await travel_veil(t("journey_depart") % district_name(id), true).finished
+	mount_destination.call_deferred(destination)
+
+func confirm_prestige() -> void:
+	if traveling or operations.page != "prestige_confirm" or not operations.modal_open():
+		return
+	var destination: PackedScene = load(Atlas.DESTINATIONS[campaign.active].scene)
+	if destination == null or campaign.prestige(true) != OK:
+		return
+	traveling = true
+	set_physics_process(false)
+	feedback.play("rank", true)
+	mount_destination.call_deferred(destination)
+
+func mount_destination(scene: PackedScene) -> void:
+	var next := scene.instantiate()
+	next.campaign = campaign
+	next.seed_override = seed_override
+	next.wall_override = wall_override
+	next.arrived_from_trip = true
+	var host := get_tree()
+	hide()
+	hud.hide()
+	operations.hide()
+	host.root.add_child(next)
+	host.current_scene = next
+	queue_free()
+
+func travel_veil(label: String, departing: bool) -> Tween:
+	var layer := CanvasLayer.new()
+	layer.layer = 20
+	add_child(layer)
+	var curtain := ColorRect.new()
+	curtain.color = Color("#142f38")
+	layer.add_child(curtain)
+	curtain.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var title := Label.new()
+	curtain.add_child(title)
+	title.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.add_theme_font_override("font", hud.HEAVY)
+	title.add_theme_font_size_override("font_size", 56)
+	title.add_theme_color_override("font_color", hud.CREAM)
+	title.text = label
+	curtain.modulate.a = 0.0 if departing else 1.0
+	var fade := create_tween().set_trans(Tween.TRANS_CUBIC)
+	fade.tween_property(curtain, "modulate:a", 1.0 if departing else 0.0, .37 if departing else .51)
+	if not departing:
+		fade.tween_callback(layer.queue_free)
+	return fade

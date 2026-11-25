@@ -2,6 +2,12 @@
 
 Stacja Północ przy Trasie 17 to stylizowana makieta drogowa. Dachy o zaokrąglonych narożnikach, turkusowa emalia, ciepłe kruszywo i przygaszona roślinność tworzą wspólny język materiałów. Bursztyn wyróżnia stację, a koral, szałwia i chłodny błękit rozróżniają obiekty w tle. Kamera ortograficzna utrzymuje czytelność przy małym ekranie.
 
+## 0.6.0 · Copper Mile
+
+Desert Highway ma oddzielne zjazdy i osobne ciągi obsługi aut i TIR. Rozpoznawalny profil stacji tworzą opływowa wiata, emalia w odcieniach turkusu i koralu, chrom, świetlny szyld i nostalgiczne dystrybutory. Motel ma zewnętrzne schody i balkon, kawiarnia taras z filiżanką na dachu, a serwis ciężarowy otwartą halę z rampami. Wyrzeźbione skalne grzbiety i saguaro łączą poszczególne plany obrazu. Oświetlenie nocne prowadzi do czynnych stanowisk. [Panorama i kadry biznesów](screenshots/0.6.0/README.md)
+
+Po pierwszym przeglądzie kadrów puste fragmenty placów podzielono na pasy, wyspy z roślinnością, niskie bariery i strefy oświetlenia. Pojazdy okolic Copper Mile dostały regionalne malowanie i dodatkowe elementy bagażowe. Ambient occlusion wypalono w kolorach siatki, a powtarzane skały i rośliny rysują się w grupach instancji.
+
 ## 0.5.0 · Interfejs Trasy 17
 
 Kremowe karty i turkusowe emaliowane przyciski nawiązują do oznakowania istniejącej stacji. Panele wykorzystują autorskie tekstury krawędzi, przyciski z renderowanymi ikonami oraz złote akcenty nagród. Pięć zakładek mieści się w dolnej strefie dotyku. Informacje o obsłudze i dostępności modernizacji pozostały przy świecie. Mniejszy panel pierwszego zatrudnienia pozostawia widok placu. Portrety menedżerów mają własne kadry i palety rzadkości. [Porównanie wersji](screenshots/0.5.0/porownanie-0.4.0.jpg)

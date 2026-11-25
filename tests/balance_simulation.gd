@@ -1,6 +1,5 @@
 extends "res://tests/run_checks.gd"
 
-const BOOK := preload("res://data/economy/progression.gd")
 const WALL := 1_789_000_000
 const HORIZONS := [300, 1800, 7200, 86400, 604800, 2592000]
 const STEP := 0.25
@@ -122,7 +121,7 @@ func invest() -> void:
 	if economy.level("fuel") == 1:
 		if economy.buy_levels("fuel", 1) == 0:
 			return
-	for milestone in BOOK.MILESTONES:
+	for milestone in economy.milestones:
 		economy.claim_reward(milestone.id)
 	economy.claim_player_reward()
 	for mission in economy.missions:

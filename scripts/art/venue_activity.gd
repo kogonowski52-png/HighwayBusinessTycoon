@@ -1,5 +1,7 @@
 extends Node3D
 
+signal parcels_delivered
+
 const Art = preload("res://scripts/art/visual_library.gd")
 const Kit = preload("res://scripts/buildings/model_kit.gd")
 const Campus = preload("res://scripts/buildings/roadside_campus.gd")
@@ -82,6 +84,7 @@ func move_delivery(delta: float) -> void:
 			if is_instance_valid(stack):
 				stack.queue_free()
 			stack = Art.place(self, "landscape", "parcel_carton", STOCK_AT + Vector3(0, 0.08, 0), .43)
+			parcels_delivered.emit()
 	else:
 		if is_instance_valid(courier):
 			courier.queue_free()

@@ -152,6 +152,10 @@ func _ready() -> void:
 	button_art(view, ROAD, 42)
 	lighting.pressed.connect(func() -> void: lighting_requested.emit())
 	view.pressed.connect(func() -> void: view_requested.emit())
+	var atlas := action(framing, 146, 70, false)
+	button_art(atlas, ROAD, 43)
+	atlas.pressed.connect(func() -> void: page_requested.emit("atlas"))
+	pages.atlas = atlas
 
 	dock = band(root, true, PETROL)
 	var tabs := HBoxContainer.new()

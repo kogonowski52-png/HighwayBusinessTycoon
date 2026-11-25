@@ -17,6 +17,7 @@ const QUEUE_SPEED := 5.1
 
 var economy: HbtEconomy
 var demand: Demand
+var routes: Script
 var live: Dictionary = {}
 var lanes := {"car": [], "truck": []}
 var bays: Dictionary = {}
@@ -31,7 +32,8 @@ var recovered := 0
 var capacity_rejected := 0
 var peak_queue := 0
 
-func _init(store: HbtEconomy, seed: int) -> void:
+func _init(store: HbtEconomy, seed: int, route_map: Script = Routes) -> void:
+	routes = route_map
 	economy = store
 	demand = Demand.new(seed)
 	for id in economy.facilities:
@@ -41,7 +43,8 @@ func seed_station() -> void:
 	var client := demand.customer(economy, "local")
 	client.budget = economy.price("fuel").times(2)
 	var visit := make_visit(client, "fuel")
-	visit.location = Routes.position_of("fuel", 0)
+	visit.location = routes.position_of("fuel", 0)
+	visit.yaw = routes.stopping_yaw("fuel")
 	visit.bay = 0
 	visit.phase = Phase.READY
 	bays.fuel[0] = visit.number
@@ -50,18 +53,18 @@ func seed_station() -> void:
 func try_admit(forced := "", requested := "") -> HbtVisit:
 	var client := demand.customer(economy, forced)
 	var lane: String = client.kind
-	if lanes[lane].size() >= Routes.lane_size(lane) or guards.has("entry_" + lane):
+	if lanes[lane].size() >= routes.lane_size(lane) or guards.has("entry_" + lane):
 		capacity_rejected += 1
 		return null
 	var selected := demand.pick(economy, client, queued_by_service()) if requested.is_empty() else requested
 	if selected.is_empty() or economy.level(selected) == 0 or not Demand.accepts(economy.facilities[selected], client):
 		return null
 	var visit := make_visit(client, selected)
-	visit.location = Routes.entrance(lane)
+	visit.location = routes.entrance(lane)
 	var position: int = lanes[lane].size()
 	lanes[lane].append(visit)
 	acquire(visit, ["entry_" + lane])
-	route(visit, Routes.entry(lane, position), Phase.ENTERING)
+	route(visit, routes.entry(lane, position), Phase.ENTERING)
 	added.emit(visit)
 	state_changed.emit()
 	return visit
@@ -127,7 +130,7 @@ func queued_by_service() -> Dictionary:
 	return count
 
 func visit_at(id: String, index: int) -> HbtVisit:
-	return live.get(bays[id].get(index, -1))
+	return live.get(bays.get(id, {}).get(index, -1))
 
 func first_at(id: String, phase: HbtVisit.Phase) -> HbtVisit:
 	for index in range(economy.capacity(id)):
@@ -163,7 +166,7 @@ func update_queue(lane: String, delta: float) -> void:
 		if ticket.phase != Phase.QUEUED:
 			break
 		ticket.patience -= delta
-		var target := Routes.queue_position(lane, i)
+		var target: Vector3 = routes.queue_position(lane, i)
 		if previous != null:
 			var gap := (float(ticket.client.length) + float(previous.client.length)) * 0.5 + 0.65
 			target.x = maxf(target.x, previous.location.x + gap)
@@ -174,7 +177,7 @@ func dispatch_head(lane: String) -> void:
 	if lanes[lane].is_empty():
 		return
 	var ticket: HbtVisit = lanes[lane].front()
-	if ticket.phase != Phase.QUEUED or ticket.location.distance_to(Routes.queue_position(lane, 0)) > 0.45:
+	if ticket.phase != Phase.QUEUED or ticket.location.distance_to(routes.queue_position(lane, 0)) > 0.45:
 		return
 	if ticket.patience <= 0.0:
 		var sectors: Array[String] = ["truck_yard" if lane == "truck" else "plaza", "highway"]
@@ -182,7 +185,7 @@ func dispatch_head(lane: String) -> void:
 			lanes[lane].pop_front()
 			ticket.bounced = true
 			abandoned += 1
-			route(ticket, Routes.bypass(lane), Phase.DEPART)
+			route(ticket, routes.bypass(lane), Phase.DEPART)
 			state_changed.emit()
 		return
 	var index := free_bay(ticket.service)
@@ -194,12 +197,12 @@ func dispatch_head(lane: String) -> void:
 		if not alternate.is_empty():
 			ticket.service = alternate
 			index = free_bay(alternate)
-	if index < 0 or not acquire(ticket, Routes.sectors(ticket.service, false)):
+	if index < 0 or not acquire(ticket, routes.sectors(ticket.service, false)):
 		return
 	lanes[lane].pop_front()
 	ticket.bay = index
 	bays[ticket.service][index] = ticket.number
-	route(ticket, Routes.approach(ticket.service, index), Phase.APPROACH)
+	route(ticket, routes.approach(ticket.service, index), Phase.APPROACH)
 	state_changed.emit()
 
 func start_manual(id: String) -> bool:
@@ -238,10 +241,10 @@ func leave_unserved(ticket: HbtVisit) -> void:
 	state_changed.emit()
 
 func start_departure(ticket: HbtVisit) -> void:
-	if not acquire(ticket, Routes.sectors(ticket.service, true)):
+	if not acquire(ticket, routes.sectors(ticket.service, true)):
 		return
-	route(ticket, Routes.departure(ticket.service, ticket.bay), Phase.DEPART)
-	ticket.reverse_first = Routes.reverse_first(ticket.service)
+	route(ticket, routes.departure(ticket.service, ticket.bay), Phase.DEPART)
+	ticket.reverse_first = routes.reverse_first(ticket.service)
 	state_changed.emit()
 
 func acquire(ticket: HbtVisit, sectors: Array[String]) -> bool:
@@ -344,8 +347,8 @@ func arrive(ticket: HbtVisit) -> void:
 			ticket.yaw = -PI * 0.5
 			ticket.phase = Phase.QUEUED
 		Phase.APPROACH:
-			ticket.yaw = Routes.stopping_yaw(ticket.service)
-			ticket.set_footpath(Routes.guest_path(ticket.service, ticket.bay))
+			ticket.yaw = routes.stopping_yaw(ticket.service)
+			ticket.set_footpath(routes.guest_path(ticket.service, ticket.bay))
 			ticket.phase = Phase.READY
 			ticket.patience = maxf(ticket.patience, 13.0)
 		Phase.DEPART:

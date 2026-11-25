@@ -1,5 +1,12 @@
 # Historia zmian
 
+## 0.6.0 · Ekspansja Copper Mile
+
+- Otwarto Desert Highway z własnym ruchem, zapisem, stawkami i dochodami offline. Atlas prezentuje sześć regionów i uruchamia podróż pomiędzy dwiema dostępnymi lokalizacjami.
+- Dodano 160 misji rozdziałowych, sześć wydarzeń, siedem rodzajów kontraktów i podglądy 3D kolekcji. Dodano wybór pogody, automatyczny cykl dnia i prestiż z osobnym potwierdzeniem.
+- Poprawiono trasy podczas próby mieszanego ruchu. Nowe odcinki oddzielają wyjazd ciężarówek od kolejki i zapewniają odstęp między lokalami przy tylnej drodze.
+- Schemat 6 przenosi wcześniejszy profil do wspólnej kampanii. APK testowe używa stałego podpisu lokalnej linii i rosnącego kodu wersji. Workflow wymaga zgodności publicznego odcisku i dwóch chronionych sekretów.
+
 ## 0.5.0 · Interfejs i rytm Trasy 17
 
 - Dodano ekran startowy z logo i paskiem faktycznego ładowania. HUD zyskał pięć zakładek, znaczniki usług, animowane salda, krótkie komunikaty i układ uwzględniający bezpieczne marginesy.

@@ -2,7 +2,7 @@ extends Node3D
 
 const Art = preload("res://scripts/art/visual_library.gd")
 
-enum Look { DAY, GOLDEN, EVENING, NIGHT }
+enum Look { DAY, GOLDEN, EVENING, NIGHT, DAWN }
 
 const LOOKS := [
 	{ "ambient": Color("#d6e6f7"), "ambient_energy": 0.54, "key": Color("#fff1db"), "energy": 0.69,
@@ -13,6 +13,8 @@ const LOOKS := [
 		"angles": Vector3(-35, -41, 0), "back": Color("#747895"), "sky": Color("#465f9a"), "practicals": 0.68 },
 	{ "ambient": Color("#8aaee9"), "ambient_energy": 0.24, "key": Color("#91b3ff"), "energy": 0.20,
 		"angles": Vector3(-54, 29, 0), "back": Color("#243951"), "sky": Color("#192e5c"), "practicals": 1.0 },
+	{ "ambient": Color("#eccfb9"), "ambient_energy": 0.53, "key": Color("#ffe4b9"), "energy": 0.69,
+		"angles": Vector3(-21, 36, 0), "back": Color("#e5bb9a"), "sky": Color("#a9c5da"), "practicals": 0.09 },
 ]
 
 var environment := Environment.new()
@@ -25,6 +27,7 @@ var has_practicals := true
 var reduced := false
 var quality := 2
 var current := Look.DAY
+var district := "north"
 
 func _ready() -> void:
 	var world := WorldEnvironment.new()
@@ -55,6 +58,14 @@ func _ready() -> void:
 	set_look(current)
 
 func setup_practicals() -> void:
+	if district == "desert":
+		for point in [Vector3(-1, 3.11, .32), Vector3(-12.8, 2.03, -4.31), Vector3(28.1, 4.31, -21.33),
+			Vector3(-13.4, 2.32, -21.54), Vector3(12.75, 2.74, -20.08), Vector3(32.0, 2.54, -4.88)]:
+			practical(point, 5.8, Color("#ffd396"))
+		for point in [Vector3(-1.0, .022, .80), Vector3(7.28, .021, 6.48), Vector3(19.1, .021, 6.63),
+			Vector3(-22.7, .022, 6.51), Vector3(-12.75, .021, -4.35), Vector3(28.12, .022, -21.12)]:
+			floor_glows.append(Art.light_pool(self, point, Vector2(7.0, 5.3), Color("#ffce83"), .72))
+		return
 	practical(Vector3(0.75, 2.89, 1.15), 6.7, Color("#ffdda2"))
 	practical(Vector3(-5.84, 1.90, -3.15), 5.4, Color("#ffcd9e"))
 	practical(Vector3(9.92, 2.78, 3.72), 4.6, Color("#ffd395"))
@@ -90,10 +101,15 @@ func set_look(look: Look) -> void:
 	sun.rotation_degrees = preset.angles
 	sun.light_color = preset.key
 	sun.light_energy = preset.energy
+	if district == "desert" and look in [Look.DAY, Look.GOLDEN]:
+		environment.background_color = Color("#d7a779")
+		environment.ambient_light_color = Color("#d9dcef")
+		sun.light_color = Color("#ffdfae")
+		sun.light_energy = .83 if look == Look.DAY else .92
 	var intensity: float = preset.practicals
 	RenderingServer.global_shader_parameter_set(&"hbt_practical_level", lerpf(0.16, 1.64, intensity))
 	RenderingServer.global_shader_parameter_set(&"hbt_ambient_motion", 0.0 if reduced else 1.0)
-	environment.glow_enabled = supports_glow and not reduced and look >= Look.EVENING
+	environment.glow_enabled = supports_glow and not reduced and look in [Look.EVENING, Look.NIGHT]
 	for index in range(practical_lights.size()):
 		var lamp := practical_lights[index]
 		lamp.visible = intensity > 0.0 and index < [3, 5, practical_lights.size()][quality]

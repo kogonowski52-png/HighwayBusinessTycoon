@@ -2,6 +2,10 @@ extends Node3D
 
 const Art = preload("res://scripts/art/visual_library.gd")
 const Catalog = preload("res://scripts/traffic/vehicle_catalog.gd")
+const Kit = preload("res://scripts/buildings/model_kit.gd")
+const COPPER_LIVERIES := {"range": ["c57955", "78a499"], "mesa": ["e2aa70", "748e9c"],
+	"vela": ["c64635", "5f7f84"], "kestrel": ["d9a255", "713d4c"], "atlas": ["9f5136", "d3ab7c"],
+	"cargo": ["60968c", "ac7765"]}
 
 static var brake_lit: StandardMaterial3D
 static var indicator_lit: StandardMaterial3D
@@ -25,7 +29,7 @@ var lit_at_night := false
 var eased_speed := 0.0
 var steering := 0.0
 
-func build(id: String, variant := 0) -> void:
+func build(id: String, variant := 0, local_trim := false) -> void:
 	if is_instance_valid(decoration):
 		remove_child(decoration)
 		decoration.queue_free()
@@ -40,8 +44,11 @@ func build(id: String, variant := 0) -> void:
 	eased_speed = 0.0
 	steering = 0.0
 	var chassis := car.find_child("Chassis", true, false) as MeshInstance3D
-	var swatch := Color.html(record.paint[posmod(variant, record.paint.size())])
+	var palette: Array = COPPER_LIVERIES.get(id, record.paint) if local_trim else record.paint
+	var swatch := Color.html(palette[posmod(variant, palette.size())])
 	apply_paint(chassis, swatch)
+	if local_trim:
+		add_copper_details(id, swatch)
 
 	brake_lamps = car.find_child("BrakeLamps", true, false) as MeshInstance3D
 	left_lamps = car.find_child("IndicatorLeft", true, false) as MeshInstance3D
@@ -140,3 +147,14 @@ func update_wheel_transforms() -> void:
 		var axes := wheel.basis.rotated(Vector3.UP, steering) if wheel.position.z == float(record.axles[-1]) else wheel.basis
 		var pose := Transform3D(axes.scaled_local(Vector3.ONE * radius), wheel.position)
 		wheel_instances.set_instance_transform(index, pose)
+
+func add_copper_details(id: String, paint: Color) -> void:
+	if not COPPER_LIVERIES.has(id):
+		return
+	if id in ["range", "mesa"]:
+		Art.place(chassis_art, "desert", "truck_kit", Vector3(-.28, .64, -1.28))
+	var side_width: float = record.width * .485
+	for side in [-1.0, 1.0]:
+		var at := Vector3(side * side_width, .695, .17)
+		Kit.box(chassis_art, at, Vector3(.031, .077, float(record.length) * .40), Color("#f1d18d"))
+		Kit.box(chassis_art, at - Vector3(0, .067, 0), Vector3(.034, .026, float(record.length) * .40), paint.darkened(.32))

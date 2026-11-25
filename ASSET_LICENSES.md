@@ -15,5 +15,7 @@
 | Zdjęcie na ekranie startowym i nagranie rozgrywki | Kadr Stacji Północ z własnej galerii 0.3.2 oraz nagranie z Godota 0.5.0 | Zasób projektu |
 | Open Sans Regular, Bold i ExtraBold | Pakiet fontów Open Sans dostarczony w Debianie, Steve Matteson | Apache License 2.0, zob. [informacja o prawach](assets/fonts/LICENSE-Open-Sans.txt) i [pełna licencja](assets/fonts/Apache-2.0.txt) |
 | Zrzuty ekranu | Render bieżącej gry w Godocie | Zasób projektu |
+| Copper Mile, wyposażenie pustyni, ozdoby wydarzeń i warianty prestiżu | Autorskie generatory `tools/art/desert_diorama.py` oraz `tools/art/desert_roadkit.py` i 31 eksportów GLB | Zasób projektu |
+| Trójwymiarowy atlas, szyldy i shader pustyni | Autorska geometria Godota, podglądy modeli projektu i `assets/materials/desert_ground.gdshader` | Zasób projektu |
 
 Dołączony kolaż Roadside Empire był materiałem do obserwacji stylistyki. Galeria i zasoby w repozytorium pochodzą z Highway Business Tycoon.

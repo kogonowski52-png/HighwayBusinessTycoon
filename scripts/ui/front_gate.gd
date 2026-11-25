@@ -2,6 +2,7 @@ extends Control
 
 const ROAD := "res://scenes/world/roadside.tscn"
 const WORLD_LOGIC := "res://scripts/core/game_manager.gd"
+const Atlas = preload("res://data/world/atlas.gd")
 const LOGO = preload("res://assets/ui/presentation/logo.png")
 const ART = preload("res://assets/ui/presentation/station-portrait.jpg")
 const Jade = preload("res://assets/ui/presentation/jade.png")
@@ -26,6 +27,7 @@ var wait_frames := 0
 var load_progress := 0.0
 var loading_world := false
 var world_logic: Script
+var road_file := ROAD
 @onready var route_audio: Node = get_node("/root/RouteAudio")
 var profile_path := ""
 
@@ -37,6 +39,11 @@ func _ready() -> void:
 		if arg.begins_with("--save-path="):
 			save.path = arg.trim_prefix("--save-path=")
 	var profile := save.restore()
+	var world: Variant = profile.get("world", {})
+	if world is Dictionary:
+		var last: Variant = world.get("active", "north")
+		if last is String and Atlas.DESTINATIONS.get(last, {}).has("scene"):
+			road_file = Atlas.DESTINATIONS[last].scene
 	resume_game = not profile.is_empty() or save.read_only
 	locale = "en" if profile.get("language") == "en" else "pl"
 	var prefs := Preferences.new()
@@ -196,23 +203,23 @@ func _process(delta: float) -> void:
 	if not loading_world:
 		# Compile shared GDScript dependencies on the main thread before streaming the scene.
 		world_logic = load(WORLD_LOGIC) as Script
-		if world_logic == null or not world_logic.can_instantiate() or ResourceLoader.load_threaded_request(ROAD) != OK:
+		if world_logic == null or not world_logic.can_instantiate() or ResourceLoader.load_threaded_request(road_file) != OK:
 			show_failure()
 			return
 		loading_world = true
 		return
 	var progress := []
-	var status := ResourceLoader.load_threaded_get_status(ROAD, progress)
+	var status := ResourceLoader.load_threaded_get_status(road_file, progress)
 	if status in [ResourceLoader.THREAD_LOAD_FAILED, ResourceLoader.THREAD_LOAD_INVALID_RESOURCE]:
 		if status == ResourceLoader.THREAD_LOAD_FAILED:
-			ResourceLoader.load_threaded_get(ROAD)
+			ResourceLoader.load_threaded_get(road_file)
 		show_failure()
 		return
 	var latest: float = progress[0] if not progress.is_empty() else 0.0
 	load_progress = move_toward(load_progress, latest, delta * 3.2)
 	load_bar.value = load_progress
 	if status == ResourceLoader.THREAD_LOAD_LOADED:
-		var scene := ResourceLoader.load_threaded_get(ROAD) as PackedScene
+		var scene := ResourceLoader.load_threaded_get(road_file) as PackedScene
 		if scene == null:
 			show_failure()
 			return

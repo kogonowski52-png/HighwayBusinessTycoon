@@ -10,6 +10,8 @@ const RARITY := {"common": Color("#dae9db"), "rare": Color("#d8e9f3"),
 	"epic": Color("#ebe0f3"), "legendary": Color("#f6e2b6")}
 const Extra = preload("res://scripts/ui/presentation_pages.gd")
 const Campus = preload("res://scripts/buildings/roadside_campus.gd")
+const DesertCampus = preload("res://scripts/buildings/desert_campus.gd")
+const Expedition = preload("res://scripts/ui/expedition_pages.gd")
 
 var controller: Node3D
 var theme_source: CanvasLayer
@@ -26,7 +28,9 @@ var goals_tab := "career"
 var chapter_index := 0
 var tutorial_targets: Dictionary = {}
 var manager_render_state := ""
+var expedition_render_state := ""
 var extra := Extra.new()
+var expedition := Expedition.new()
 var closing := false
 var animate_bars := false
 var upgrade_counts: Dictionary = {}
@@ -35,6 +39,7 @@ func setup(game: Node3D, hud: CanvasLayer) -> void:
 	controller = game
 	theme_source = hud
 	extra.bind_to(self)
+	expedition.bind(self)
 	layer = 5
 	shade = ColorRect.new()
 	shade.color = Color("#10252aab")
@@ -95,6 +100,7 @@ func show_page(name: String) -> void:
 	back.mouse_filter = Control.MOUSE_FILTER_STOP
 	if entering:
 		manager_render_state = ""
+		expedition_render_state = ""
 	apply_layout()
 	panel.scale = Vector2.ONE
 	panel.modulate.a = 1.0
@@ -167,6 +173,10 @@ func refresh() -> void:
 	if not modal_open():
 		return
 	var store: HbtEconomy = controller.economy
+	var state := expedition.signature(page)
+	if not state.is_empty() and expedition_render_state == state:
+		return
+	expedition_render_state = state
 	if page == "managers":
 		var card_state := str([store.language, store.cards.keys(), store.manager_ranks, store.equipped,
 			store.amount("diamond").decimal(), store.player_level()])
@@ -191,7 +201,9 @@ func refresh() -> void:
 		"finance": show_finance()
 		"offline": show_offline()
 		"upgrades": show_upgrades()
-		_: extra.show(page)
+		_:
+			if not expedition.show(page):
+				extra.show(page)
 	if previous_scroll > 0:
 		scroll.set_deferred("scroll_vertical", previous_scroll)
 
@@ -275,12 +287,12 @@ func show_upgrades() -> void:
 	var purchase: Button = button(card, controller.hud.upgrade.text, controller.invest, controller.hud.upgrade.disabled, true)
 	tutorial_targets["upgrade_buy"] = purchase
 	theme_source.button_art(purchase, theme_source.UPGRADE_ART, 56)
-	var thresholds: Array = [1, 2, 3, 4, 5] if site == "fuel" else Campus.THRESHOLDS
+	var thresholds: Array = DesertCampus.THRESHOLDS if controller.is_desert() else [1, 2, 3, 4, 5] if site == "fuel" else Campus.THRESHOLDS
 	for index in range(thresholds.size()):
 		var stage_number: int = thresholds[index]
 		var achieved := tier >= stage_number
 		var icon_set: Array = theme_source.STAGE_ART
-		var picture: Texture2D = icon_set[index] if site == "fuel" else theme_source.NAV.sites
+		var picture: Texture2D = icon_set[index] if site == "fuel" and not controller.is_desert() else theme_source.NAV.sites
 		var tile := PanelContainer.new()
 		tile.add_theme_stylebox_override("panel", theme_source.style(Color("#e8efd9") if achieved else Color("#f6ecda"), theme_source.RIM, 19, 12))
 		rows.add_child(tile)
@@ -292,7 +304,8 @@ func show_upgrades() -> void:
 		slot.add_child(copy)
 		copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		copy.alignment = BoxContainer.ALIGNMENT_CENTER
-		var name_key: String = ("fuel_stage_" if site == "fuel" else "roof_stage_") + str(index + 1)
+		var prefix := "desert_stage_" if controller.is_desert() else ("fuel_stage_" if site == "fuel" else "roof_stage_")
+		var name_key := prefix + str(index + 1)
 		var name: Label = theme_source.caption(copy, 29, theme_source.INK, theme_source.HEAVY)
 		name.text = controller.t(name_key)
 		name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -329,16 +342,12 @@ func show_team() -> void:
 		train.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		promote.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 func card_source(store: HbtEconomy, id: String) -> Dictionary:
-	for item in Book.MILESTONES:
+	for item in store.milestones:
 		if item.reward.get("card") == id:
 			return {"tab": "career", "chapter": 0, "label": controller.t("objective_" + item.id)}
 	for item in store.missions.values():
 		if item.reward.get("card") == id:
-			var index := 0
-			for chapter in Journey.CHAPTERS:
-				if chapter[0] == item.site:
-					return {"tab": "chapters", "chapter": index, "label": controller.site_name(item.site)}
-				index += 1
+			return {"tab": "chapters", "chapter": store.chapters.keys().find(item.site), "label": controller.site_name(item.site)}
 	return {"tab": "events_tab", "chapter": 0, "label": controller.t("events_tab")}
 
 func open_card_source(source: Dictionary) -> void:
@@ -356,7 +365,7 @@ func show_goals() -> void:
 		"events_tab": show_event(store)
 		"career":
 			show_player_rank(store)
-			for item in Book.MILESTONES:
+			for item in store.milestones:
 				show_mission(store, item, controller.t("objective_" + item.id), true)
 
 func show_player_rank(store: HbtEconomy) -> void:
@@ -378,13 +387,14 @@ func show_player_rank(store: HbtEconomy) -> void:
 		theme_source.button_art(action, theme_source.REPUTATION, 61)
 
 func show_chapter(store: HbtEconomy) -> void:
-	var data: Array = Journey.CHAPTERS[chapter_index]
-	var site: String = data[0]
+	var order := store.chapters.keys()
+	var site: String = order[chapter_index]
 	var missions: Array = store.chapters[site]
+	var rank: int = missions.front().rank
 	var done := 0
 	for item in missions:
 		done += int(store.claimed.has(item.id))
-	var title := box(controller.site_name(site), controller.t("chapter_progress") % [chapter_index + 1, Journey.CHAPTERS.size(), done, missions.size()])
+	var title := box(controller.site_name(site), controller.t("chapter_progress") % [chapter_index + 1, order.size(), done, missions.size()])
 	mission_bar(title, done, missions.size())
 	var movement := HBoxContainer.new()
 	title.add_child(movement)
@@ -392,9 +402,9 @@ func show_chapter(store: HbtEconomy) -> void:
 	button(movement, "‹", open_chapter.bind(chapter_index - 1), chapter_index == 0).custom_minimum_size.x = 88
 	var place := button(movement, controller.t("site_details"), go_to_site.bind(site), false, true)
 	place.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button(movement, "›", open_chapter.bind(chapter_index + 1), chapter_index == Journey.CHAPTERS.size() - 1).custom_minimum_size.x = 88
-	if store.player_level() < int(data[1]):
-		box(controller.t("chapter_locked") % data[1])
+	button(movement, "›", open_chapter.bind(chapter_index + 1), chapter_index == order.size() - 1).custom_minimum_size.x = 88
+	if store.player_level() < rank:
+		box(controller.t("chapter_locked") % rank)
 		return
 	for item in missions:
 		var available := store.mission_available(item)
@@ -416,7 +426,7 @@ func show_chapter(store: HbtEconomy) -> void:
 		box(controller.t("mission_next_wave"))
 
 func open_chapter(index: int) -> void:
-	chapter_index = clampi(index, 0, Journey.CHAPTERS.size() - 1)
+	chapter_index = clampi(index, 0, controller.economy.chapters.size() - 1)
 	scroll.scroll_vertical = 0
 	refresh()
 
@@ -448,6 +458,7 @@ func show_mission(store: HbtEconomy, item: Dictionary, title: String, original: 
 		tutorial_targets[item.id] = action
 
 func show_event(store: HbtEconomy) -> void:
+	button(rows, controller.t("seasons_header"), show_page.bind("seasons"), false, true)
 	var event := store.current_event()
 	var places: PackedStringArray = []
 	for id in event.services:

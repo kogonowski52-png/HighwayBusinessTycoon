@@ -8,7 +8,8 @@ build_tools=${ANDROID_BUILD_TOOLS_DIR:?Set ANDROID_BUILD_TOOLS_DIR}
 certificate_file="$(dirname "${BASH_SOURCE[0]}")/test-certificate.sha256"
 read -r expected_certificate < "$certificate_file"
 
-if [[ ! "$version" =~ ^([0-9]{1,3})\.([0-9]{1,3})\.([0-9]{1,3})$ ]]; then
+version_part='(0|[1-9][0-9]{0,2})'
+if [[ ! "$version" =~ ^$version_part\.$version_part\.$version_part$ ]]; then
   echo "Version must be MAJOR.MINOR.PATCH with components below 1000." >&2
   exit 1
 fi

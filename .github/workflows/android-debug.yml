@@ -10,7 +10,7 @@ on:
         required: true
         type: string
 
-concurrency: android-debug-${{ inputs.tag || github.ref_name }}
+concurrency: android-debug-publication
 
 jobs:
   publish-apk:
@@ -122,6 +122,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          released_tags=$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --limit 100 --json tagName --jq '.[].tagName')
+          latest=$(printf '%s\n%s\n' "$RELEASE_TAG" "$released_tags" | sed -n '/^v[0-9]\+\.[0-9]\+\.[0-9]\+$/p' | sort -V | tail -1)
+          if [[ "$latest" != "$RELEASE_TAG" ]]; then
+            echo '::error::A newer test release already exists.'
+            exit 1
+          fi
           checksum=$(sha256sum "$APK" | cut -d ' ' -f 1)
           notes="Testowy APK Android dla arm64-v8a i x86_64. Gra działa offline. SHA-256: $checksum"
           publish_release() {
