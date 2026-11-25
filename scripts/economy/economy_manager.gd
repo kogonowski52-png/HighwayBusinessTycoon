@@ -48,12 +48,14 @@ var customers := 0
 var gross := HbtAmount.new()
 var spent := HbtAmount.new()
 var offline_pending := HbtAmount.new()
+var offline_boosted := HbtAmount.new()
 var offline_seconds := 0
 var offline_away_seconds := 0
 var offline_tier := 0
 var high_water := 0
 var clock := 0
 var boost_until := 0
+var global_boost: HbtBoost
 var event_day := -1
 var event_services := 0
 var event_claimed := -1
@@ -121,6 +123,7 @@ func reset() -> void:
 	gross = HbtAmount.new()
 	spent = HbtAmount.new()
 	offline_pending = HbtAmount.new()
+	offline_boosted = HbtAmount.new()
 	offline_seconds = 0
 	offline_away_seconds = 0
 	offline_tier = 0
@@ -218,6 +221,9 @@ func restore_profile(data: Dictionary, wall: int, accrue := true) -> void:
 	gross = HbtAmount.from(data.get("gross", "0"))
 	spent = HbtAmount.from(data.get("spent", "0"))
 	offline_pending = HbtAmount.from(data.get("offline_pending", "0"))
+	offline_boosted = HbtAmount.from(data.get("offline_boosted", "0"))
+	if offline_boosted.compare(offline_pending) > 0:
+		offline_boosted = offline_pending
 	# Existing clock-based profiles retain the eight-hour benefit they already had.
 	var existing_tier := CONFIG.offline_hours.find(8) if int(data.get("_schema", 0)) in [2, 3] else 0
 	offline_tier = clampi(int(data.get("offline_tier", existing_tier)), 0, CONFIG.offline_hours.size() - 1)
@@ -264,6 +270,8 @@ func snapshot() -> Dictionary:
 		"high_water": high_water, "boost_until": boost_until,
 		"event_day": event_day, "event_services": event_services, "event_claimed": event_claimed,
 	}
+	if not offline_boosted.empty():
+		result["offline_boosted"] = offline_boosted.decimal()
 	if not commerce.state.is_empty():
 		result["commerce"] = commerce.state
 	if prestige_rank > 0:
@@ -401,16 +409,17 @@ func duration(id: String, worker: int) -> float:
 		time *= float(BPS) / (BPS + skill("automation", id))
 	return maxf(0.65, time * float(BPS) / (BPS + skill("speed", id)))
 
-func payout(id: String, tip: int, worker: int, include_boost := true) -> HbtAmount:
+func payout(id: String, tip: int, worker: int, include_boost := true, include_global := true) -> HbtAmount:
 	var value := price(id).times(tip).divided(100)
 	value = value.times(BPS + skill("revenue", id) + collector_bonus(id)).divided(BPS)
 	if worker >= 0:
 		value = value.times(Staff.efficiency(crew[id][worker])).divided(BPS)
-	if include_boost and boost_until > clock:
+	var double_active := include_boost and include_global and global_boost != null and global_boost.earning(clock)
+	if include_boost and not double_active and boost_until > clock:
 		value = value.times(CONFIG.boost_multiplier).divided(BPS)
 	if prestige_rank > 0:
 		value = value.times(BPS + prestige_rank * 500).divided(BPS)
-	return value
+	return value.times(HbtBoost.Policy.INCOME_MULTIPLIER) if double_active else value
 
 func serve(id: String, value: HbtAmount, reputation: int, worker: int) -> void:
 	if worker >= 0:
@@ -813,6 +822,15 @@ func offline_quote(seconds: int) -> HbtAmount:
 			total = total.plus(income)
 	return total
 
+func offline_window(start: int, elapsed: int) -> HbtAmount:
+	var total := offline_quote(elapsed)
+	if global_boost == null or elapsed <= 0:
+		return total
+	for segment in global_boost.segments(start, start + elapsed):
+		var boosted := offline_quote(segment[1] - start).minus(offline_quote(segment[0] - start))
+		total = total.plus(boosted.times(HbtBoost.Policy.INCOME_MULTIPLIER - 1))
+	return total
+
 func capture_absence(wall: int, monotonic_elapsed := -1) -> HbtAmount:
 	var trusted_wall := wall
 	var delta := wall - high_water
@@ -822,7 +840,10 @@ func capture_absence(wall: int, monotonic_elapsed := -1) -> HbtAmount:
 		delta = monotonic_elapsed
 		trusted_wall = high_water + monotonic_elapsed
 	var elapsed := clampi(delta, 0, maxi(0, offline_limit() - offline_seconds))
-	var grant := offline_quote(elapsed)
+	var base := offline_quote(elapsed)
+	var grant := offline_window(high_water, elapsed)
+	offline_boosted = offline_boosted.plus(grant.minus(base).times(HbtBoost.Policy.INCOME_MULTIPLIER)
+		.divided(HbtBoost.Policy.INCOME_MULTIPLIER - 1))
 	high_water = maxi(high_water, trusted_wall)
 	clock = high_water
 	if not grant.empty():
@@ -835,14 +856,19 @@ func capture_absence(wall: int, monotonic_elapsed := -1) -> HbtAmount:
 	dirty = true
 	return grant
 
+func offline_eligible() -> HbtAmount:
+	return offline_pending.minus(offline_boosted)
+
 func redeem_offline(bonus := false, endorsed_base: HbtAmount = null) -> HbtAmount:
 	if offline_pending.empty():
 		return HbtAmount.new()
 	var value := offline_pending
 	if bonus and endorsed_base != null:
-		var eligible := endorsed_base if endorsed_base.compare(offline_pending) <= 0 else offline_pending
+		var unboosted := offline_eligible()
+		var eligible := endorsed_base if endorsed_base.compare(unboosted) <= 0 else unboosted
 		value = value.plus(eligible)
 	offline_pending = HbtAmount.new()
+	offline_boosted = HbtAmount.new()
 	offline_seconds = 0
 	offline_away_seconds = 0
 	credit("cash", value)

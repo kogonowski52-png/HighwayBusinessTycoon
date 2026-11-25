@@ -2,7 +2,7 @@ config_version=5
 
 [application]
 config/name="Highway Business Tycoon"
-config/version="0.6.1"
+config/version="0.7.0"
 config/icon="res://assets/icons/app.svg"
 run/main_scene="res://scenes/ui/front_gate.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
@@ -40,3 +40,7 @@ hbt_ambient_motion={
 "type": "float",
 "value": 1.0
 }
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/highway_rewarded/plugin.cfg")

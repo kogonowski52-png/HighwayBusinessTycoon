@@ -76,6 +76,17 @@ jobs:
           unzip -q "$editor.zip"
           mv "$editor" godot
           unzip -qj "$templates" 'templates/android_debug.apk' -d "$templates_dir"
+          if [[ -f "$GITHUB_WORKSPACE/tools/android/build-monetization.sh" ]]; then
+            unzip -qj "$templates" 'templates/android_source.zip' -d "$templates_dir"
+            gradle_zip="$RUNNER_TEMP/gradle-8.13-bin.zip"
+            curl --fail --silent --show-error --location --retry 3 \
+              https://downloads.gradle.org/distributions/gradle-8.13-bin.zip -o "$gradle_zip"
+            printf '%s  %s\n' 20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78 "$gradle_zip" | sha256sum -c -
+            unzip -q "$gradle_zip" -d "$RUNNER_TEMP"
+            printf '%s\n' "$RUNNER_TEMP/gradle-8.13/bin" >> "$GITHUB_PATH"
+            printf 'HBT_ANDROID_TEMPLATE=%s\n' "$templates_dir/android_source.zip" >> "$GITHUB_ENV"
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.1.0"
+          fi
           touch _sc_
 
           if [[ ! -x "$ANDROID_HOME/build-tools/$ANDROID_BUILD_TOOLS/apksigner" ]]; then
@@ -98,10 +109,16 @@ jobs:
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: ${{ secrets.ANDROID_TEST_KEYSTORE_PASSWORD }}
         run: |
           export GODOT_ANDROID_KEYSTORE_DEBUG_PATH="$RUNNER_TEMP/hbt-signing/test.p12"
-          godot --headless --editor --import --path . --quit
-          godot --headless --path . --export-debug Android "$APK"
           export ANDROID_BUILD_TOOLS_DIR="$ANDROID_HOME/build-tools/$ANDROID_BUILD_TOOLS"
-          tools/android/verify-test-apk.sh "$APK" "${RELEASE_TAG#v}"
+          if [[ -f tools/android/build-monetization.sh ]]; then
+            export JAVA_HOME="$JAVA_HOME_21_X64"
+            tools/android/build-monetization.sh test "$PWD/$APK"
+            HBT_RELEASE_VERSION="${RELEASE_TAG#v}" tools/android/verify-monetization-apk.sh "$APK"
+          else
+            godot --headless --editor --import --path . --quit
+            godot --headless --path . --export-debug Android "$APK"
+            tools/android/verify-test-apk.sh "$APK" "${RELEASE_TAG#v}"
+          fi
 
       - name: Remove the runner key copy
         if: always()

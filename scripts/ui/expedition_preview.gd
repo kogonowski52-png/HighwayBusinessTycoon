@@ -137,6 +137,10 @@ static func detail(parent: Control, group: String, item: String) -> void:
 				Art.place(presentation, "regions", "metro_tower_2", Vector3(3.9, 0, -3.1)).scale = Vector3.ONE * .53
 		width = 14.2
 		focus_y = 1.43
+	elif item == "gold_gate":
+		subject = Art.place(presentation, "premium", "gold_gate")
+		width = 4.8
+		focus_y = .79
 	elif group in ["cars", "trucks", "routes"]:
 		subject = CAR.instantiate()
 		presentation.add_child(subject)

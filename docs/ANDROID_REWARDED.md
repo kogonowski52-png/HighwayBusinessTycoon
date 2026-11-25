@@ -1,5 +1,7 @@
 # Opcjonalna reklama nagradzana na Androidzie
 
+Ten opis dotyczy pierwszego opcjonalnego mostu. Wersja 0.7.0 korzysta z obecnej instrukcji. [AdMob i BOOST](MONETIZATION.md)
+
 Podstawowy preset Android zawiera pełną grę offline. Wariant reklamowy dodaje wyłącznie opcję podwojenia wypracowanych zarobków offline. Uruchamia SDK po dotknięciu przycisku przygotowania reklamy. Google User Messaging Platform obsługuje zgodę i opcje prywatności. Zwykła wypłata pozostaje dostępna przy braku reklamy, odrzuceniu zgody i zamknięciu materiału przed nagrodą.
 
 ## Kompilacja wtyczki

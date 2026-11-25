@@ -156,6 +156,8 @@ func show_district() -> void:
 	panel.button(panel.rows, text("atlas_return"), panel.show_page.bind("atlas"))
 
 func show_seasons() -> void:
+	if game.ads.available() and game.ads.playable("event"):
+		panel.button(panel.rows, text("offer_event"), panel.premium.select_offer.bind("event", {}))
 	var campaign: HbtCampaign = game.campaign
 	var current: Dictionary = campaign.ledger.season()
 	var played: bool = current.live
@@ -252,7 +254,8 @@ func remaining(seconds: int) -> String:
 func show_collections() -> void:
 	var ledger: RefCounted = game.campaign.ledger
 	var site: HbtEconomy = game.economy
-	var entries: Array = ledger.items(collection, site.district)
+	var entries: Array = collection_entries()
+	var reward_total: int = ledger.items(collection, site.district).size()
 	if collection_item not in entries:
 		collection_item = entries.front()
 	var owned: int = ledger.collected(site, collection)
@@ -263,8 +266,8 @@ func show_collections() -> void:
 		for key in row:
 			var tab: Button = panel.button(choices, text("set_" + key), choose_set.bind(key), false, key == collection)
 			tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var acquired: VBoxContainer = panel.box(text("collection_total") % [owned, entries.size()])
-	panel.mission_bar(acquired, owned, entries.size())
+	var acquired: VBoxContainer = panel.box(text("collection_total") % [owned, reward_total])
+	panel.mission_bar(acquired, owned, reward_total)
 	var batch := HBoxContainer.new()
 	panel.rows.add_child(batch)
 	panel.button(batch, "‹", browse.bind(-1), position <= 0)
@@ -285,7 +288,7 @@ func show_collections() -> void:
 		panel.button(panel.rows, text("collection_remove" if selected else "collection_equip"),
 			game.equip_collection.bind(collection, collection_item), false, true)
 	if not ledger.prizes.has(ledger.prize_key(site, collection)):
-		panel.button(panel.rows, text("collection_claim"), game.redeem_collection.bind(collection), owned != entries.size(), true)
+		panel.button(panel.rows, text("collection_claim"), game.redeem_collection.bind(collection), owned != reward_total, true)
 	panel.button(panel.rows, text("atlas_return"), panel.show_page.bind("atlas"))
 
 func choose_set(key: String) -> void:
@@ -294,8 +297,14 @@ func choose_set(key: String) -> void:
 	collection_item = ""
 	panel.refresh()
 
+func collection_entries() -> Array:
+	var entries: Array = game.campaign.ledger.items(collection, game.economy.district).duplicate()
+	if collection == "decor" and game.campaign.ledger.cosmetics.has("gold_gate"):
+		entries.append("gold_gate")
+	return entries
+
 func browse(step: int) -> void:
-	var list: Array = game.campaign.ledger.items(collection, game.economy.district)
+	var list: Array = collection_entries()
 	position = clampi(position + step, 0, list.size() - 1)
 	collection_item = list[position]
 	panel.refresh()

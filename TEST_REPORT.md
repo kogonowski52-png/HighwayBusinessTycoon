@@ -1,5 +1,25 @@
 # Raport testów
 
+## 0.7.0 · BOOST, sklep i przepustka
+
+Godot 4.7.2 uruchomiono na Linuksie z odizolowanymi zapisami i rendererem Compatibility (Mesa llvmpipe). Do kompilacji kodu natywnego użyto Android SDK 36 i JDK 21. [Galeria 30 ujęć i film](screenshots/0.7.0/README.md) · [Balans](docs/balance-0.7.0.md) · [Stan etapu](docs/STAGE6_STATUS.md)
+
+| Próba | Wynik |
+| --- | --- |
+| Uprawnienia reklamowe, 5 minut i limit 30 minut, wielokrotne zdarzenie, restart, zmiana czasu, przełączanie map, dochód na żywo i offline, zakupy i zapis | 67/67 |
+| Rozgrywka w oknie, panel BOOST, sklep, kalendarz, przepustka, pojazdy bonusowe i wariant offline | 49/49, w tym 30 zrzutów |
+| Weryfikator zakupów WSGI i SQLite z kontrolowanymi odpowiedziami Play, stany oczekujące, ponowienia, spójność konta i zwroty | 9/9 |
+| Cztery scenariusze ekonomii w horyzontach 1 h, 1 dzień, 7 i 30 dni | 21/21 |
+| Autentyczny profil z tagu `v0.6.1` | 5/5 przy przygotowaniu, 6/6 po migracji do schematu 8 i ponownym uruchomieniu |
+| Ekonomia i zapis, ruch, stacja, grafika i animacje | 69/69, 30/30, 27/27, 113/113 |
+| Obsługa kariery i prezentacja gry, w tym rzeczywiste przejścia w oknie | 202/202, 44/44, 278/278, 49/49 oraz zimny start zaliczony |
+| Regiony, ekspansja i trzy dotychczasowe przebiegi balansu | 93/93, 64/64, 45/45 oraz po 45/45 dla Stacji Północ, Desert Highway i kampanii |
+| Film w Movie Maker | 385 klatek, 486 × 864, 30 FPS, H.264 i AAC. Naliczono 70 zł przy bazowej stawce 35 zł. |
+
+Testy okien i nagranie podają kontrolowane, jawnie oznaczone zdarzenia na granicy adaptera SDK. Sprawdzają m.in. anulowanie bez wypłaty, podwójną dostawę potwierdzenia oraz rozliczenie offline proporcjonalnie do aktywnego BOOST. Próbę offline wykonano bez mostu reklamowego. Model bez płatności i reklam otworzył wszystkie sześć lokalizacji i 41 usług do siódmego dnia symulacji.
+
+Podpisany APK przeszedł kontrolę archiwum, klas natywnego mostu, manifestu i podpisu v2/v3. Ma `applicationId` `pl.krystiandevelopment.highwaytycoon`, kod `7000`, obsługuje `arm64-v8a` i `x86_64` oraz ma ten sam certyfikat co lokalne `0.6.1` (kod `6001`). Emisja reklamy, formularz UMP, zakup z testowym kontem Play i aktualizacja na fizycznym Androidzie pozostają do sprawdzenia. W środowisku nie było osiągalnego urządzenia ani emulatora z akceleracją. AAB wymaga konfiguracji właściciela. [Podpis](docs/ANDROID_SIGNING.md) · [Google Play Billing i bezpieczeństwo](docs/PLAY_BILLING.md) · [Data Safety](docs/DATA_SAFETY.md)
+
 ## 0.6.1 · Sześć lokalizacji
 
 Godot 4.7.2 Stable zaimportował projekt i uruchomił próby na Linuksie. Do testów użyto izolowanych profili. Renderowanie okien działało w Compatibility na Mesa llvmpipe. [Galeria 51 kadrów i film](screenshots/0.6.1/README.md) · [Balans kampanii](docs/balance-0.6.1.md) · [Wydajność](docs/performance-0.6.1.md)

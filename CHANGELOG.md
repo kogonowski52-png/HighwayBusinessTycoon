@@ -1,5 +1,12 @@
 # Historia zmian
 
+## 0.7.0 · BOOST i monetyzacja testowa
+
+- Dodano wspólny BOOST z 300 sekundami za ukończony materiał i limitem 1800 sekund. Wypłaty online sprawdzają czas rozliczenia. Odliczenia offline rozpoznają aktywne przedziały bez drugiego mnożnika.
+- Natywna integracja Androida obejmuje AdMob, UMP, Credential Manager i Play Billing. Jedenaście nagród, cztery rodzaje zdarzeń na mapie i przerywniki mają osobne zasady kwalifikacji.
+- Sklep premium, dwa tory sezonu, nagrody, dokładnie wyceniane produkty jednorazowe oraz weryfikator Play zachowują bazową grę offline.
+- Schemat zapisu 8 przechowuje historię BOOST, limity reklam, uprawnienia, paragony i postęp przepustek. Wersja APK ma kod 7000 i stały podpis testowy.
+
 ## 0.6.1 · Sześć działających regionów
 
 - Otwarto Green Valley, Alpine Pass, Ocean Coast i Metro City. Każda lokalizacja ma własny układ, architekturę, flotę i profil finansowy.

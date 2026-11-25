@@ -25,6 +25,8 @@ var distance := 0.0
 var signed_distance := 0.0
 var steer := 0
 var invoice: HbtAmount
+var base_invoice: HbtAmount
+var ad_guest := false
 var trade := ""
 var stock_delta := 0
 var sold_model := ""

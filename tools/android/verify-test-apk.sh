@@ -31,7 +31,11 @@ unzip -tq "$apk"
 badging=$("$build_tools/aapt" dump badging "$apk")
 [[ "$badging" == *"name='$package_id' versionCode='$expected_code' versionName='$version'"* ]]
 [[ "$badging" == *"native-code: 'arm64-v8a' 'x86_64'"* ]]
-[[ "$badging" != *android.permission.INTERNET* ]]
+case "${HBT_APK_NETWORK_MODE:-offline}" in
+  offline) [[ "$badging" != *android.permission.INTERNET* ]] ;;
+  native) [[ "$badging" == *android.permission.INTERNET* ]] ;;
+  *) echo "Unknown APK networking mode" >&2; exit 2 ;;
+esac
 if [[ -n "$previous" ]]; then
   previous_signature=$("$build_tools/apksigner" verify --print-certs "$previous")
   previous_certificate=$(awk '/certificate SHA-256 digest:/ {print $NF}' <<< "$previous_signature")

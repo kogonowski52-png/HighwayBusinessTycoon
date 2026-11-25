@@ -1,5 +1,7 @@
 # Highway Business Tycoon
 
+**0.7.0** wprowadza globalny BOOST ×2, natywną integrację testową Androida, sklep premium i przepustki sezonowe. Grywalna kampania pozostaje dostępna bez sieci. [Stan etapu 6](docs/STAGE6_STATUS.md) · [APK i konfiguracja](docs/MONETIZATION.md) · [Galeria](screenshots/0.7.0/README.md)
+
 **0.6.1** domyka ekspansję etapu 5. Sześć lokalizacji połączonych jest atlasem. Metro City obsługuje logistykę, magazyn, salon i centrum handlowe. Działanie gry oraz stan wydania są udokumentowane w repozytorium. [Galeria](screenshots/0.6.1/README.md) · [Audyt etapu 5](docs/STAGE5_STATUS.md) · [Podpisywanie APK](docs/ANDROID_SIGNING.md)
 
 Mobilny tycoon 3D rozwijany w Godocie. Stacja Północ przy Trasie 17 ma autorską oprawę 3D, jedenaście działających usług i cztery pory dnia.
@@ -40,6 +42,8 @@ godot --headless --path . --script tests/expedition_window.gd
 godot --headless --path . --script tests/desert_balance.gd
 godot --headless --path . --script tests/regional_checks.gd
 godot --headless --path . --script tests/campaign_balance.gd
+godot --headless --path . --script tests/monetization_checks.gd
+godot --headless --path . --script tests/monetization_balance.gd
 ```
 
 Testy używają oddzielnych plików zapisu. Przebieg z galerią wymaga działającego okna graficznego. Godot Movie Maker zapisuje obraz i miks z działającej gry. [Wyniki testów](TEST_REPORT.md)
@@ -53,6 +57,8 @@ godot --path . --write-movie /tmp/copper-mile.avi --fixed-fps 30 --script tests/
 godot --path . --script tests/regional_window.gd -- --capture-dir=/tmp/hbt-061-gallery
 godot --path . --script tests/regional_window.gd -- --sample-performance
 godot --path . --write-movie /tmp/meridian.avi --fixed-fps 30 --script tests/regional_recording.gd
+godot --path . --script tests/monetization_window.gd -- --capture-dir=/tmp/hbt-070-gallery
+godot --path . --write-movie /tmp/hbt-070-boost.avi --fixed-fps 30 --script tests/monetization_recording.gd
 ```
 
 ## Modele i galeria

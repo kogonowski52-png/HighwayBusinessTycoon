@@ -1,5 +1,9 @@
 # Projekt gry · Trasa 17
 
+## Dobrowolna monetyzacja
+
+Wydanie 0.7.0 pozwala otworzyć cały atlas za gotówkę z obsługi. BOOST ×2 wpływa na wynagrodzenie za usługi i część rozliczenia offline. Pakiety dają określone składniki, a darmowa ścieżka przepustki działa od pierwszego otwartego regionu. Ceny produktów pochodzą z lokalnego Google Play. Osobne przyciski informują o pełnej nagrodzie przed otwarciem filmu. [Reguły i balans](docs/MONETIZATION.md)
+
 ## Kampania sześciu tras
 
 Stacja Północ finansuje Copper Mile, następnie trasa prowadzi przez Green Valley, Alpine Pass i Ocean Coast do Metro City. Dostęp wymaga gotówki, określonej reputacji i rozwoju biznesu poprzednika. Powroty są bezpłatne. Zlecenia, pracownicy, aktywne karty, postęp rozbudowy i wpływy są przypisane do regionu. Karty posiadane przez gracza, ustawienia i kalendarz są wspólne.

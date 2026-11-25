@@ -226,8 +226,10 @@ func begin(ticket: HbtVisit, worker: int) -> void:
 	ticket.duration += preparation
 	ticket.timer = ticket.duration
 	economy.commerce.begin(ticket, economy.level(ticket.service))
-	ticket.invoice = economy.payout(ticket.service, ticket.client.tip, worker)
+	ticket.base_invoice = economy.payout(ticket.service, ticket.client.tip, worker, false)
+	ticket.invoice = economy.payout(ticket.service, ticket.client.tip, worker, true, false)
 	if ticket.trade == "viewing":
+		ticket.base_invoice = ticket.base_invoice.divided(3)
 		ticket.invoice = ticket.invoice.divided(3)
 	started.emit(ticket)
 	state_changed.emit()
@@ -236,6 +238,8 @@ func finish(ticket: HbtVisit) -> void:
 	ticket.phase = Phase.EXIT_WAIT
 	ticket.paid = true
 	economy.commerce.settle(ticket, economy.level(ticket.service))
+	if economy.global_boost != null and economy.global_boost.earning(economy.clock):
+		ticket.invoice = ticket.base_invoice.times(HbtBoost.Policy.INCOME_MULTIPLIER)
 	economy.serve(ticket.service, ticket.invoice, ticket.client.reputation, ticket.worker)
 	completed.emit(ticket)
 	state_changed.emit()

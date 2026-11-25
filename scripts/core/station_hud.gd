@@ -23,11 +23,12 @@ const STAGE_ART := [preload("res://assets/ui/icon_stage_1.png"), preload("res://
 	preload("res://assets/ui/icon_stage_3.png"), preload("res://assets/ui/icon_stage_4.png"), preload("res://assets/ui/icon_stage_5.png")]
 const SETTINGS = preload("res://assets/ui/icon_settings.png")
 const CARDS = preload("res://assets/ui/icon_cards.png")
+const BOLT = preload("res://assets/ui/premium/bolt.png")
 const GIFT = preload("res://assets/ui/icon_gift.png")
 const CALENDAR = preload("res://assets/ui/icon_calendar.png")
 const HELP = preload("res://assets/ui/icon_help.png")
 const NAV := {"sites": UPGRADE_ART, "team": STAFF, "managers": CARDS, "goals": preload("res://assets/ui/icon_goals.png"),
-	"shop": GIFT, "finance": preload("res://assets/ui/icon_finance.png"), "settings": SETTINGS, "calendar": CALENDAR,
+	"shop": GIFT, "boost": BOLT, "pass": CALENDAR, "reward_offer": GIFT, "finance": preload("res://assets/ui/icon_finance.png"), "settings": SETTINGS, "calendar": CALENDAR,
 	"rank": REPUTATION, "achievements": REPUTATION, "help": HELP, "licenses": HELP, "privacy": HELP}
 const Touch = preload("res://scripts/ui/touch_button.gd")
 const IVORY = preload("res://assets/ui/presentation/shell.png")
@@ -81,6 +82,10 @@ var inset := Vector4.ZERO
 var reward_layer := CanvasLayer.new()
 var upgrade_pulse: Tween
 var ready_glow := false
+var boost_button: Button
+var boost_meter: ProgressBar
+var boost_pulse: Tween
+var boost_glow := false
 var wallet_motion: Dictionary = {}
 var wallet_previous: Dictionary = {}
 var wallet_targets: Dictionary = {}
@@ -156,6 +161,27 @@ func _ready() -> void:
 	button_art(atlas, ROAD, 43)
 	atlas.pressed.connect(func() -> void: page_requested.emit("atlas"))
 	pages.atlas = atlas
+
+	boost_button = action(framing, 146, 118, false)
+	boost_button.add_theme_font_size_override("font_size", 24)
+	boost_button.add_theme_stylebox_override("normal", sculpted(UPGRADE, 33, 10))
+	boost_button.add_theme_stylebox_override("hover", sculpted(UPGRADE, 33, 10))
+	boost_button.add_theme_stylebox_override("pressed", sculpted(CREAM_BUTTON, 33, 10))
+	button_art(boost_button, BOLT, 56)
+	boost_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+	boost_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	boost_button.pressed.connect(func() -> void: page_requested.emit("boost"))
+	boost_meter = ProgressBar.new()
+	boost_button.add_child(boost_meter)
+	boost_meter.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	boost_meter.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	boost_meter.offset_top = -13
+	boost_meter.offset_bottom = -6
+	boost_meter.offset_left = 17
+	boost_meter.offset_right = -17
+	boost_meter.show_percentage = false
+	boost_meter.add_theme_stylebox_override("background", style(Color("#b17b47"), Color("#a06d36"), 4, 0))
+	boost_meter.add_theme_stylebox_override("fill", style(Color("#fff086"), Color("#dcc565"), 4, 0))
 
 	dock = band(root, true, PETROL)
 	var tabs := HBoxContainer.new()
@@ -288,6 +314,26 @@ func add_badge(button: Button, key: String) -> void:
 	pin.offset_bottom = 31
 	pin.hide()
 	badges[key] = pin
+
+func set_boost(left: int, cap: int, time_text: String, active_text: String, motion: bool) -> void:
+	if not is_instance_valid(boost_button):
+		return
+	boost_button.text = "×2  " + time_text if left > 0 else "BOOST ×2"
+	boost_button.tooltip_text = active_text + " · " + time_text if left > 0 else "BOOST ×2"
+	boost_meter.max_value = cap
+	boost_meter.value = left
+	cash.add_theme_color_override("font_color", Color("#9c5e19") if left > 0 else MINT)
+	var glow := left > 0 and motion
+	if boost_glow == glow:
+		return
+	boost_glow = glow
+	if boost_pulse != null:
+		boost_pulse.kill()
+	boost_button.modulate = Color.WHITE
+	if glow:
+		boost_pulse = create_tween().set_loops().set_trans(Tween.TRANS_SINE)
+		boost_pulse.tween_property(boost_button, "modulate", Color(1.21, 1.15, .87), .76)
+		boost_pulse.tween_property(boost_button, "modulate", Color.WHITE, .76)
 
 func set_upgrade_ready(enabled: bool, motion: bool) -> void:
 	var glow := enabled and motion

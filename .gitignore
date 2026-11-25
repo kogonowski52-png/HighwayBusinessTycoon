@@ -11,3 +11,5 @@ __pycache__/
 *.jks
 *.p12
 keystore-password.txt
+
+/android/

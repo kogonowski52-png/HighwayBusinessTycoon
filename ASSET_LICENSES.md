@@ -1,5 +1,11 @@
 # Licencje zasobów
 
+## Zasoby 0.7.0
+
+Błyskawica, monety, kryształy, skrzynie, flaga sezonu, brama, helikopter i wirnik są autorskimi modelami generowanymi w Blenderze. W tym samym źródle powstają portrety i rigi Sana Ito, Reese Morgan i Rhea Foster oraz dźwięk BOOST. Modele drogowe korzystają z dotychczasowych zasobów projektu i dodanych elementów nagrody. [Źródło](tools/art/monetization_art.py)
+
+Mobile Ads, UMP, Play Billing, Credential Manager i Google ID pochodzą z oficjalnych pakietów Google Maven. Biblioteki są pobierane w czasie kompilacji Gradle i podlegają warunkom dostawców. Dźwięk i obrazy gry pozostają zasobami projektu. [Zależności i konfiguracja](docs/MONETIZATION.md)
+
 ## Zasoby regionalne 0.6.1
 
 Autorskie skrypty Blendera przygotowują architekturę, geometrię rozbudowy, mosty, tarasy, latarnię i elementy skyline oraz siedem rigów i portretów. Są w `tools/art/regional_atlas.py`, `tools/art/regional_scenery.py` i `tools/art/regional_managers.py`. Modele używają palet i wypalanej okluzji projektu. Oświetlenie, woda, animowana roślinność i warianty oznakowania floty powstały w kodzie projektu. Nagranie używa istniejącej muzyki gry. Wydanie nie dodaje zewnętrznych pakietów zasobów.

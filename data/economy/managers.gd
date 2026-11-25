@@ -27,6 +27,9 @@ const ROSTER := {
 	"mila": {"name": "Mila Sokol", "skill": "offline", "value": 3200, "rarity": "epic", "site": "warehouse", "district": "metro"},
 	"ren": {"name": "Ren Okafor", "skill": "revenue", "value": 2900, "rarity": "epic", "site": "mall", "district": "metro"},
 	"ellis": {"name": "Ellis Park", "skill": "discount", "value": 2000, "rarity": "rare", "site": "dealership", "district": "metro"},
+	"sana": {"name": "Sana Ito", "skill": "revenue", "value": 2000, "rarity": "epic", "site": "", "source": "store"},
+	"reese": {"name": "Reese Morgan", "skill": "speed", "value": 2000, "rarity": "rare", "site": "", "source": "store"},
+	"rhea": {"name": "Rhea Foster", "skill": "offline", "value": 2200, "rarity": "legendary", "site": "", "source": "pass"},
 }
 
 static func value(id: String, rank: int) -> int:
@@ -35,6 +38,6 @@ static func value(id: String, rank: int) -> int:
 		return card.value
 	return floori(card.value * (1.0 + 0.2 * (rank - 1)))
 
-static func catalog(district: String) -> Array:
+static func catalog(district: String, optional := true) -> Array:
 	return ROSTER.keys().filter(func(id: String) -> bool:
-		return not ROSTER[id].has("district") or ROSTER[id].district == district)
+		return (optional or not ROSTER[id].has("source")) and (not ROSTER[id].has("district") or ROSTER[id].district == district))

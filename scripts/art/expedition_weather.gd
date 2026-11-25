@@ -117,7 +117,10 @@ func display_collection(equipped: Dictionary) -> void:
 			var at := bank + Vector3(index * 1.31, 0, 0)
 			if item == "copper_arch" and not HbtEconomy.Regions.has_region(district):
 				at = Vector3(-.28, 3.73, -.06) if desert else Vector3(1.09, 3.01, .40)
-			Art.place(wardrobe, "desert", paths[group] + item, at)
+			if item == "gold_gate":
+				Art.place(wardrobe, "premium", item, at)
+			else:
+				Art.place(wardrobe, "desert", paths[group] + item, at)
 		index += 1
 
 func clear(node: Node3D) -> void:

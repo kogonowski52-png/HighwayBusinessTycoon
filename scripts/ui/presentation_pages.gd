@@ -38,6 +38,8 @@ func settings() -> void:
 		game.t("about_version") % ProjectSettings.get_setting("application/config/version"))
 	var about := HBoxContainer.new()
 	info.add_child(about)
+	panel.button(panel.rows, game.t("analytics_on" if game.campaign.premium.analytics else "analytics_off"),
+		game.set_local_analytics)
 	for name in ["help", "licenses", "privacy"]:
 		var link: Button = panel.button(about, game.t(name), panel.show_page.bind(name))
 		link.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -99,6 +101,8 @@ func handle() -> GradientTexture2D:
 func calendar() -> void:
 	var store: HbtEconomy = game.economy
 	var state = store.recognition
+	if game.ads.available() and game.ads.playable("daily"):
+		panel.button(panel.rows, game.t("offer_daily"), panel.premium.select_offer.bind("daily", {}))
 	var available: bool = state.is_available(store.day_index()) and not store.storage.read_only
 	var slot: int = state.slot()
 	var filled := 30 if slot == 0 and state.daily_count > 0 and not available else slot
@@ -267,8 +271,12 @@ func manager_detail() -> void:
 	if level in range(1, Managers.MAX_RANK):
 		panel.box(game.t("next_effect") % (level + 1), manager_description(manager_id, level + 1))
 	if level == 0:
-		var source: Dictionary = panel.card_source(store, manager_id)
-		panel.button(panel.rows, game.t("manager_source") % source.label, panel.open_card_source.bind(source), false, true)
+		if card.has("source"):
+			panel.button(panel.rows, game.t("shop_header" if card.source == "store" else "pass_header"),
+				game.open_page.bind("shop" if card.source == "store" else "pass"), false, true)
+		else:
+			var source: Dictionary = panel.card_source(store, manager_id)
+			panel.button(panel.rows, game.t("manager_source") % source.label, panel.open_card_source.bind(source), false, true)
 	else:
 		var assigned: bool = manager_id in store.equipped
 		panel.button(panel.rows, game.t("remove" if assigned else "assign"), game.assign_manager.bind(manager_id),
@@ -291,7 +299,7 @@ func manager_description(id: String, rank: int) -> String:
 
 func shop() -> void:
 	var store: HbtEconomy = game.economy
-	panel.feature(hud.GIFT, game.t("shop_header"), game.t("shop_earned"))
+	panel.box(game.t("shop_earned"))
 	var clock := store.boost_until - store.clock
 	if clock > 0:
 		panel.box(game.t("boost_running") % game.clock_text(clock))
@@ -345,7 +353,7 @@ func help() -> void:
 func privacy() -> void:
 	panel.feature(hud.HELP, game.t("privacy_header"))
 	panel.box(game.t("privacy_save"), game.t("privacy_save_body"))
-	panel.box(game.t("privacy_services"), game.t("privacy_services_body"))
+	panel.box(game.t("privacy_services"), game.t("store_privacy"))
 	panel.button(panel.rows, game.t("settings_header"), panel.show_page.bind("settings"))
 
 func licenses() -> void:

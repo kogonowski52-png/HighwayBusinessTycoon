@@ -11,26 +11,29 @@ func _initialize() -> void:
 func run() -> void:
 	var path := ""
 	var seed := false
+	var previous_schema := 6
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--profile="):
 			path = argument.trim_prefix("--profile=")
 		seed = seed or argument == "--seed"
+		if argument.begins_with("--from-schema="):
+			previous_schema = argument.trim_prefix("--from-schema=").to_int()
 	if not path.begins_with("/tmp/hbt-migration-"):
 		expect(false, "use isolated /tmp/hbt-migration-* profile")
-		result("Real 0.6.0 migration")
+		result("Real previous release migration")
 		return
 	var estate := HbtEconomy.new()
 	estate.storage.path = path
 	var saved := HbtCampaign.new(estate)
 	saved.restore(EXPECTED_WALL if seed else EXPECTED_WALL + 720)
 	if seed:
-		write_previous(saved, path)
+		write_previous(saved, path, previous_schema)
 	else:
-		read_previous(saved, path)
-	result("Real 0.6.0 migration")
+		read_previous(saved, path, previous_schema)
+	result("Real previous release migration")
 
-func write_previous(world: HbtCampaign, path: String) -> void:
-	expect(SaveManager.SCHEMA == 6 and world.districts.size() == 1, "fixture made by previous release")
+func write_previous(world: HbtCampaign, path: String, previous: int) -> void:
+	expect(SaveManager.SCHEMA == previous and world.districts.size() == 1, "fixture made by previous release")
 	if failures > 0:
 		return
 	var north := world.current()
@@ -74,9 +77,9 @@ func write_previous(world: HbtCampaign, path: String) -> void:
 		expected.store_string(canonical_profile(world))
 		expected.close()
 
-func read_previous(world: HbtCampaign, path: String) -> void:
+func read_previous(world: HbtCampaign, path: String, previous: int) -> void:
 	var original: Dictionary = world.storage.read_candidate(path)
-	expect(original.get("schema") == 6 and world.active == "desert", "actual previous schema and district detected")
+	expect(original.get("schema") == previous and world.active == "desert", "actual previous schema and district detected")
 	var expected := FileAccess.get_file_as_string(path + ".expected.json")
 	if canonical_profile(world) != expected:
 		var comparison := FileAccess.open(path + ".actual.json", FileAccess.WRITE)

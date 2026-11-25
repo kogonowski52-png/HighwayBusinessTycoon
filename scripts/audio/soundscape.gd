@@ -17,6 +17,7 @@ const FIELD := {
 	"diner": "res://assets/audio/world_diner.ogg",
 }
 const CUES := {
+	"boost": "res://assets/audio/boost.wav",
 	"sale": "res://assets/audio/sale.wav",
 	"reward": "res://assets/audio/reward.wav",
 	"build": "res://assets/audio/build.wav",

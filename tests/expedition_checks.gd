@@ -49,7 +49,7 @@ func exercise_campaign() -> void:
 	copy.storage.path = path
 	var reopened := HbtCampaign.new(copy)
 	reopened.restore(WALL + 1800)
-	expect(copy.storage.read_candidate(path).schema == 7 and reopened.active == "north"
+	expect(copy.storage.read_candidate(path).schema == HbtEconomy.SaveManager.SCHEMA and reopened.active == "north"
 		and reopened.districts.desert.crew.fuel.size() == 1 and reopened.districts.desert.level("fuel") == 1
 		and copy.language == "en" and copy.preferences.volumes.music == .38 and copy.offline_pending.compare(quote) == 0,
 		"restart restores both estates, settings, active district and exact offline reward")

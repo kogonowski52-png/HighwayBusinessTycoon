@@ -1,6 +1,6 @@
 # Podpisywanie testowych wydań Androida
 
-Pakiet zachowuje identyfikator `pl.krystiandevelopment.highwaytycoon`. Wersja 0.6.0 ma kod 6000, a 0.6.1 ma kod 6001. Wersje używają wzoru `major × 1 000 000 + minor × 1 000 + patch`, przy składowych od 0 do 999. Weryfikator odrzuca APK z kodem niezgodnym z wersją, błędnym identyfikatorem lub innym certyfikatem. Publikacje są wykonywane kolejno, a workflow odrzuca wersję starszą od opublikowanej.
+Pakiet zachowuje identyfikator `pl.krystiandevelopment.highwaytycoon`. Wersje 0.6.0, 0.6.1 i 0.7.0 mają odpowiednio kody 6000, 6001 i 7000. Wersje używają wzoru `major × 1 000 000 + minor × 1 000 + patch`, przy składowych od 0 do 999. Weryfikator odrzuca APK z kodem niezgodnym z wersją, błędnym identyfikatorem lub innym certyfikatem. Publikacje są wykonywane kolejno, a workflow odrzuca wersję starszą od opublikowanej.
 
 | Kompilacja | Kod | SHA-256 certyfikatu |
 | --- | ---: | --- |
@@ -34,6 +34,9 @@ Próba publikacji `v0.6.0` zatrzymała się na braku pary sekretów. Dostęp z C
 
 Przebieg `v0.6.1` zatrzymał się przy ładowaniu certyfikatu, ponieważ runner nie otrzymał wymaganej pary sekretów. API sekretów zwróciło `Forbidden` z Cloud. Lokalny podpisany plik `HighwayBusinessTycoon-0.6.1-test.apk` ma SHA-256 `3d158c903ee36dac19c080501a5a5ac08a9e76febdafffc1375e0901e207bc6b`. [Przebieg 0.6.1](https://github.com/kogonowski52-png/HighwayBusinessTycoon/actions/runs/45702931277)
 
+## Testowy APK 0.7.0
+
+`HighwayBusinessTycoon-0.7.0-test.apk` ma SHA-256 `6694224c2f194a76188b8ca3c44b6929f749691def3455f42a1b1780e3c51f6f`. `verify-monetization-apk.sh` potwierdził zgodność identyfikatora i certyfikatu z lokalnym `0.6.1`, rosnący kod wersji oraz obecność natywnych bibliotek. Konfiguracja reklamy używa oficjalnych jednostek testowych Google. Kompilacja na GitHub Actions wymaga tej samej pary sekretów. Klucz do wysyłki AAB i konfiguracja Google Play są potrzebne niezależnie od podpisu testowego. [Konfiguracja monetyzacji](MONETIZATION.md)
 
 ## Aktualizacja i zapis
 

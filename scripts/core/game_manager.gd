@@ -20,7 +20,10 @@ const Lighting = preload("res://scripts/art/world_lighting.gd")
 const Effects = preload("res://scripts/art/world_effects.gd")
 const VenueActivity = preload("res://scripts/art/venue_activity.gd")
 const Crew = preload("res://scripts/employees/world_crew.gd")
-const Ads = preload("res://scripts/monetization/offline_ads.gd")
+const Ads = preload("res://scripts/monetization/ads_manager.gd")
+const Purchases = preload("res://scripts/monetization/purchase_manager.gd")
+const WorldOffers = preload("res://scripts/monetization/world_offers.gd")
+const RevenueConfig = preload("res://data/monetization/config.gd")
 const Operations = preload("res://scripts/core/operations_panel.gd")
 const Tutorial = preload("res://scripts/core/tutorial.gd")
 const Rig = preload("res://scripts/ui/camera_rig.gd")
@@ -58,6 +61,10 @@ var camera := Camera3D.new()
 var lighting := Lighting.new()
 var effects := Effects.new()
 var ads := Ads.new()
+var purchases := Purchases.new()
+var boost_was_active := false
+var last_mission: Dictionary = {}
+var world_offers := WorldOffers.new()
 var tutorial := Tutorial.new()
 var feedback := Feedback.new()
 var camera_rig := Rig.new()
@@ -149,14 +156,26 @@ func _ready() -> void:
 	hud.view_requested.connect(toggle_view)
 	hud.page_requested.connect(open_page)
 	hud.income_requested.connect(income_action)
-	ads.attach()
-	ads.earned.connect(claim_rewarded)
+	add_child(ads)
+	ads.bind(self)
+	ads.rewarded.connect(ad_rewarded)
+	ads.failed.connect(func() -> void: show_message(t("bonus_unavailable")))
+	add_child(purchases)
+	purchases.bind(self)
+	purchases.changed.connect(operations.refresh)
+	purchases.delivered.connect(purchase_delivered)
+	operations.closed.connect(consider_ad_break)
+	add_child(world_offers)
+	world_offers.bind(self)
 	ads.availability_changed.connect(operations.refresh)
 	get_viewport().size_changed.connect(frame_camera)
 	get_viewport().size_changed.connect(operations.apply_layout)
 	frame_camera()
 	on_economy_changed()
 	mounted = true
+	boost_was_active = campaign.boost.earning(economy.clock)
+	if not arrived_from_trip:
+		log_commercial("game_start")
 	if economy.district == "metro" and not economy.preferences.auto_day:
 		set_look(Lighting.Look.NIGHT)
 	update_expedition()
@@ -256,11 +275,27 @@ func _physics_process(delta: float) -> void:
 func tick_game(delta: float) -> void:
 	simulation_clock += delta
 	economy.clock = int(simulation_clock)
+	if wall_override < 0:
+		economy.clock = campaign.boost.observe_device(int(Time.get_unix_time_from_system()))
+	else:
+		campaign.boost.advance(economy.clock)
+	if not ads.busy() and not purchases.busy():
+		campaign.premium.active_seconds += delta
 	if world_second != economy.clock:
 		world_second = economy.clock
+		var current := campaign.boost.earning(economy.clock)
+		if boost_was_active and not current:
+			log_commercial("boost_expired", "boost")
+		boost_was_active = current
+		purchases.tick()
 		update_expedition()
+	if campaign.premium.vip.has(economy.district) and not traffic.dispatch.live.values().any(func(ticket: HbtVisit) -> bool: return ticket.ad_guest):
+		var guest := traffic.dispatch.try_admit("vip")
+		if guest != null:
+			guest.ad_guest = true
 	traffic.physics_step(delta)
 	crew.update(economy, traffic.dispatch, delta)
+	world_offers.tick(delta)
 	update_scene(delta)
 	sound_elapsed += delta
 	if sound_elapsed > 0.19:
@@ -336,16 +371,15 @@ func _notification(what: int) -> void:
 	match what:
 		NOTIFICATION_APPLICATION_PAUSED:
 			if suspended_at < 0:
-				var wall := int(Time.get_unix_time_from_system())
-				if wall_override < 0 and absi(wall - economy.clock) < economy.CONFIG.clock_tolerance_seconds:
-					economy.clock = maxi(economy.clock, wall)
+				if wall_override < 0:
+					economy.clock = campaign.boost.observe_device(int(Time.get_unix_time_from_system()))
 				economy.checkpoint()
 				suspended_at = Time.get_ticks_msec()
 		NOTIFICATION_APPLICATION_RESUMED:
 			if suspended_at >= 0:
-				var away := floori((Time.get_ticks_msec() - suspended_at) / 1000.0)
-				var now := int(Time.get_unix_time_from_system())
-				economy.capture_absence(now, away)
+				var now := campaign.boost.observe_device(int(Time.get_unix_time_from_system()))
+				economy.capture_absence(now)
+				purchases.resume()
 				suspended_at = -1
 				simulation_clock = float(economy.clock)
 				economy.checkpoint()
@@ -389,6 +423,9 @@ func serve_customer() -> void:
 	traffic.dispatch.start_manual(selected)
 
 func open_page(name: String) -> void:
+	if name == "shop":
+		log_commercial("shop_opened")
+		purchases.open()
 	if traveling:
 		return
 	camera_rig.release_gestures()
@@ -416,6 +453,8 @@ func invest() -> void:
 	if bought <= 0:
 		return
 	campaign.ledger.increment(economy, {"building": bought})
+	campaign.premium.record_season(economy.clock, {"building": bought}, bought * 4)
+	log_commercial("building_upgrade", id)
 	var after_bays := economy.capacity(id)
 	var rebuilt: bool = fuel_art_level > before_art or campus.roof_counts[id] > installed or after_bays > previous_bays
 	if id == "fuel" and fuel_art_level > before_art:
@@ -460,6 +499,7 @@ func train_manager(id: String) -> void:
 
 func claim_milestone(id: String) -> void:
 	if economy.claim_reward(id):
+		last_mission = {"mission": id, "offer_day": economy.day_index()}
 		reward_feedback("mission")
 		economy.checkpoint()
 
@@ -570,17 +610,89 @@ func claim_offline() -> void:
 		economy.checkpoint()
 
 func start_offline_ad() -> void:
-	if not ads.request(economy.offline_pending):
+	if not ads.request("offline"):
 		show_message(t("bonus_unavailable"))
 	operations.refresh()
 
-func claim_rewarded(base: HbtAmount) -> void:
-	var value := economy.redeem_offline(true, base)
-	if not value.empty():
+func sync_commercial_clock() -> void:
+	if wall_override >= 0:
+		return
+	var now := campaign.boost.observe_device(int(Time.get_unix_time_from_system()))
+	if suspended_at >= 0:
+		economy.capture_absence(now)
+	else:
+		economy.clock = now
+
+func offer_ad(id: String, detail: Dictionary = {}) -> void:
+	if purchases.busy() or not ads.playable(id, detail):
+		return
+	if ads.ready(id):
+		if not ads.request(id, detail):
+			show_message(t("bonus_unavailable"))
+	else:
+		ads.prepare(id)
+		show_message(t("ad_loading") if ads.loading(id) else t("bonus_unavailable"))
+	operations.refresh()
+
+func ad_rewarded(id: String) -> void:
+	if id == "boost":
+		boost_was_active = true
+		feedback.play("boost", true)
+		if motion_enabled():
+			for building in economy.facilities:
+				if economy.level(building) > 0:
+					effects.confetti(routes.position_of(building, 0), Color("#f6cb58"), 6)
+			hud.animate_reward(hud.boost_button.get_global_rect().get_center(), true)
+		hud.announce(t("boost_earned"), hud.BOLT, motion_enabled())
+	elif id == "offline":
 		operations.hide_page()
-		show_message(t("collect_action") % money(value))
 		reward_feedback()
-		economy.checkpoint()
+	else:
+		reward_feedback("reward", id in ["cash", "mission"])
+		if id == "upgrade":
+			effects.construction(routes.position_of(selected, 0))
+		show_message(t("ad_rewarded"))
+	operations.refresh()
+	refresh()
+
+func purchase_delivered(id: String) -> void:
+	feedback.play("reward", true)
+	hud.announce(t("store_delivered") % t("product_" + id), hud.GIFT, motion_enabled())
+	if motion_enabled():
+		hud.animate_reward(get_viewport().get_visible_rect().get_center(), true, "diamond")
+
+func consider_ad_break() -> void:
+	if operations.page == "atlas":
+		ads.natural_break()
+
+func log_commercial(event: String, placement := "") -> void:
+	campaign.premium.record(event, economy.clock, placement)
+
+func set_local_analytics() -> void:
+	var state := campaign.premium
+	state.analytics = not state.analytics
+	if not state.analytics:
+		state.activity_log.clear()
+	economy.checkpoint()
+	operations.refresh()
+
+func claim_pass(index: int, tier: int, paid: bool) -> void:
+	if index < 0 or index >= RevenueConfig.SEASONS.size() or tier < 1 or tier > RevenueConfig.SEASON_TIERS:
+		return
+	var season := RevenueConfig.season_profile(index)
+	if economy.clock < season.start or economy.clock >= season.claim_end:
+		return
+	var result := campaign.premium.apply(campaign, func() -> bool:
+		var p := campaign.premium.progress(season.sku)
+		var track: Dictionary = p.premium if paid else p.free
+		if p.xp < tier * RevenueConfig.XP_PER_TIER or track.has(str(tier)) or (paid and not campaign.premium.entitlements.has(season.sku)):
+			return false
+		track[str(tier)] = true
+		campaign.premium.grant_items(campaign, economy, RevenueConfig.pass_reward(tier, paid, season.id))
+		return true)
+	if result:
+		reward_feedback()
+		operations.refresh()
 
 func on_economy_changed() -> void:
 	campus.update_sites(economy)
@@ -607,6 +719,8 @@ func on_economy_changed() -> void:
 	known_diamonds = economy.amount("diamond")
 	if economy.tutorial_step != guided_step:
 		guided_step = economy.tutorial_step
+		if guided_step == economy.TUTORIAL_DONE:
+			log_commercial("tutorial_completed")
 		if guided_step < 5:
 			select_site("fuel")
 	if economy.player_level() > displayed_rank:
@@ -629,7 +743,11 @@ func on_economy_changed() -> void:
 	refresh()
 
 func on_sale(ticket: HbtVisit) -> void:
-	campaign.ledger.visit(economy, ticket)
+	var metrics: Dictionary = campaign.ledger.visit(economy, ticket)
+	campaign.premium.record_season(economy.clock, metrics, 6)
+	if ticket.ad_guest:
+		campaign.premium.vip.erase(economy.district)
+		economy.checkpoint()
 	if ticket.service == "market" and venue_activity != null:
 		venue_activity.on_shop_sale(economy.per_service.market.count, traffic.night)
 	var in_register := ticket.worker != -1 and economy.skill("collect", ticket.service) == 0
@@ -683,6 +801,11 @@ func clock_text(seconds: int) -> String:
 func refresh() -> void:
 	if not is_instance_valid(hud.cash):
 		return
+	var left := campaign.boost.remaining(economy.clock)
+	hud.set_boost(left, RevenueConfig.CAP_SECONDS, clock_text(left), t("boost_active"), motion_enabled())
+	if operations.page in ["boost", "reward_offer"] and operations.modal_open():
+		operations.refresh()
+		operations.premium.update_clock()
 	hud.lighting.text = t(LOOK_LABELS[lighting.current])
 	hud.lighting.tooltip_text = t("lighting_tip")
 	hud.view.text = t("station_view" if overview else "map")
@@ -807,6 +930,7 @@ func claim_contract(id: String) -> void:
 
 func claim_season() -> void:
 	if not campaign.storage.read_only and campaign.ledger.claim_event(economy):
+		log_commercial("event_completed", str(campaign.ledger.season().id))
 		reward_feedback("reward")
 		economy.checkpoint()
 
@@ -822,14 +946,18 @@ func redeem_collection(group: String) -> void:
 		economy.checkpoint()
 
 func travel_to(id: String) -> void:
-	if traveling or not campaign.available(id) or id == campaign.active:
+	if traveling or ads.busy() or purchases.busy() or not campaign.available(id) or id == campaign.active:
 		return
+	var first := not campaign.districts.has(id)
 	var destination: PackedScene = load(Atlas.DESTINATIONS[id].scene)
 	if destination == null:
 		return
 	if campaign.travel(id) != OK:
 		refresh()
 		return
+	if first:
+		log_commercial("location_unlocked", id)
+		economy.checkpoint()
 	traveling = true
 	set_physics_process(false)
 	if motion_enabled():
@@ -837,7 +965,7 @@ func travel_to(id: String) -> void:
 	mount_destination.call_deferred(destination)
 
 func confirm_prestige() -> void:
-	if traveling or operations.page != "prestige_confirm" or not operations.modal_open():
+	if traveling or ads.busy() or purchases.busy() or operations.page != "prestige_confirm" or not operations.modal_open():
 		return
 	var destination: PackedScene = load(Atlas.DESTINATIONS[campaign.active].scene)
 	if destination == null or campaign.prestige(true) != OK:

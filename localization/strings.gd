@@ -319,6 +319,8 @@ const PRESENTATION := {
 }
 
 static func phrase(language: String, key: String) -> String:
+	if MONETIZATION.COPY.has(key):
+		return MONETIZATION.COPY[key][int(language == "en")]
 	if EXPEDITION.COPY.has(key):
 		return EXPEDITION.COPY[key][int(language == "en")]
 	if PRESENTATION.has(key):
@@ -328,3 +330,5 @@ static func phrase(language: String, key: String) -> String:
 	return COPY[language][key]
 
 const EXPEDITION = preload("res://localization/expedition.gd")
+
+const MONETIZATION = preload("res://localization/monetization.gd")

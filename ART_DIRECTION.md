@@ -1,5 +1,9 @@
 # Kierunek artystyczny
 
+## Sklep i nagrody 0.7.0
+
+Paleta sklepu używa głębokiego petrolu, kremowych wstęg i złotych akcentów. Warstwowe ilustracje to modele monet, kruszców, skrzyń i wyposażenia. BOOST ma wskaźnik w bocznym pasku i oddzielny kompaktowy panel. Helikopter i pojazdy z nagrodą mają czytelne kształty w istniejącej perspektywie. [Zrzuty Godota](screenshots/0.7.0/README.md)
+
 ## Regionalne dioramy 0.6.1
 
 Riverbend wykorzystuje zielony, falujący płaskowyż, ciepłe dachówki, plantacje i dwa mosty nad rzeką. Alpine Pass tworzą zakręty, warstwy śniegu, drewniane hoteliki i stacja kolejki. Coral Key wprowadza pastelową architekturę nadmorską, palmy, turkusowe fale i latarnię. Metro City kontrastuje z nimi nocnym oświetleniem, pionowymi elewacjami, gęstą zabudową i dużymi rampami przeładunkowymi.

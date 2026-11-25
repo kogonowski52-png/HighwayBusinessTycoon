@@ -57,9 +57,9 @@ func advance(clock: int) -> void:
 func season() -> Dictionary:
 	return Calendar.event_at(high_water)
 
-func visit(site: HbtEconomy, ticket: HbtVisit) -> void:
+func visit(site: HbtEconomy, ticket: HbtVisit) -> Dictionary:
 	if not ticket.paid:
-		return
+		return {}
 	var model: String = ticket.client.model
 	var service := ticket.service
 	spot(site.district, model)
@@ -78,6 +78,7 @@ func visit(site: HbtEconomy, ticket: HbtVisit) -> void:
 	}
 	signal_data["sales_" + service] = 1
 	increment(site, signal_data)
+	return signal_data
 
 func spot(site: String, model: String) -> bool:
 	var fresh := not seen_vehicles.has(model)
@@ -181,7 +182,7 @@ func items(group: String, district := "north") -> Array:
 		"cars": return VEHICLES.VEHICLES.keys().filter(func(id: String) -> bool: return id not in ["atlas", "cargo"])
 		"trucks": return ["atlas", "cargo"]
 		"routes": return Atlas.STAMPS.get(district, [])
-		"managers": return Managers.catalog(district)
+		"managers": return Managers.catalog(district, false)
 		_: return Calendar.COSMETICS.get(group, [])
 
 func owned(site: HbtEconomy, group: String, item: String) -> bool:
@@ -208,7 +209,7 @@ func prize_key(site: HbtEconomy, group: String) -> String:
 	return "%s/%s" % [group, site.district] if group == "routes" else group
 
 func select_cosmetic(site: HbtEconomy, group: String, item: String) -> bool:
-	if not Calendar.COSMETICS.has(group) or item not in items(group) or not owned(site, group, item):
+	if not Calendar.COSMETICS.has(group) or (item not in items(group) and item != "gold_gate") or not owned(site, group, item):
 		return false
 	var set: Dictionary = chosen.get(site.district, {})
 	if set.get(group) == item:

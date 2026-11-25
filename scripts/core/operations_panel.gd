@@ -12,6 +12,7 @@ const Extra = preload("res://scripts/ui/presentation_pages.gd")
 const Campus = preload("res://scripts/buildings/roadside_campus.gd")
 const RegionalCampus = preload("res://scripts/buildings/regional_campus.gd")
 const DesertCampus = preload("res://scripts/buildings/desert_campus.gd")
+const Premium = preload("res://scripts/ui/premium_pages.gd")
 const Expedition = preload("res://scripts/ui/expedition_pages.gd")
 
 var controller: Node3D
@@ -32,6 +33,7 @@ var manager_render_state := ""
 var expedition_render_state := ""
 var extra := Extra.new()
 var expedition := Expedition.new()
+var premium := Premium.new()
 var closing := false
 var animate_bars := false
 var upgrade_counts: Dictionary = {}
@@ -41,6 +43,7 @@ func setup(game: Node3D, hud: CanvasLayer) -> void:
 	theme_source = hud
 	extra.bind_to(self)
 	expedition.bind(self)
+	premium.bind(self)
 	layer = 5
 	shade = ColorRect.new()
 	shade.color = Color("#10252aab")
@@ -121,14 +124,15 @@ func apply_layout() -> void:
 	var size := get_viewport().get_visible_rect().size
 	var safe: Vector4 = theme_source.inset
 	var margin := maxf(25.0, (size.x - 1090.0) * .5)
-	var compact := page in ["offline", "rank"]
+	var compact := page in ["offline", "rank", "boost", "reward_offer"]
 	var short_sheet := page == "upgrades"
+	var boost_sheet := page in ["boost", "reward_offer"]
 	var wide := size.x / maxf(1.0, size.y) > 0.85
-	var upper := 0.38 if compact else 0.36 if short_sheet else 0.23 if not wide else 0.15
+	var upper := (0.24 if wide else 0.41) if boost_sheet else 0.38 if compact else 0.36 if short_sheet else 0.23 if not wide else 0.15
 	if page == "team" and controller.economy.crew[controller.selected].is_empty():
 		upper = 0.43 if wide else 0.57
 	panel.set_anchor(SIDE_TOP, upper)
-	panel.set_anchor(SIDE_BOTTOM, 0.76 if compact else 1.0)
+	panel.set_anchor(SIDE_BOTTOM, 0.84 if boost_sheet else 0.76 if compact else 1.0)
 	panel.offset_left = margin + safe.x
 	panel.offset_right = -margin - safe.z
 	panel.offset_top = safe.y
@@ -175,6 +179,8 @@ func refresh() -> void:
 		return
 	var store: HbtEconomy = controller.economy
 	var state := expedition.signature(page)
+	if state.is_empty():
+		state = premium.signature(page)
 	if not state.is_empty() and expedition_render_state == state:
 		return
 	expedition_render_state = state
@@ -203,7 +209,7 @@ func refresh() -> void:
 		"offline": show_offline()
 		"upgrades": show_upgrades()
 		_:
-			if not expedition.show(page):
+			if not premium.show(page) and not expedition.show(page):
 				extra.show(page)
 	if previous_scroll > 0:
 		scroll.set_deferred("scroll_vertical", previous_scroll)
@@ -288,6 +294,9 @@ func show_upgrades() -> void:
 	var purchase: Button = button(card, controller.hud.upgrade.text, controller.invest, controller.hud.upgrade.disabled, true)
 	tutorial_targets["upgrade_buy"] = purchase
 	theme_source.button_art(purchase, theme_source.UPGRADE_ART, 56)
+	var ad_choice := {"site": site}
+	if controller.ads.available() and controller.ads.playable("upgrade", ad_choice):
+		button(card, controller.t("offer_upgrade"), premium.select_offer.bind("upgrade", ad_choice))
 	var thresholds: Array = [1, 2, 3, 4, 5] if site == "fuel" else Campus.THRESHOLDS
 	if controller.is_regional():
 		thresholds = RegionalCampus.THRESHOLDS
@@ -362,6 +371,9 @@ func show_team() -> void:
 			not Rules.promotion_ready(worker) or not store.can_afford(promotion))
 		train.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		promote.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var ad_choice := {"site": id, "index": index}
+		if controller.ads.available() and controller.ads.playable("training", ad_choice):
+			button(card, controller.t("offer_training"), premium.select_offer.bind("training", ad_choice))
 func card_source(store: HbtEconomy, id: String) -> Dictionary:
 	for item in store.milestones:
 		if item.reward.get("card") == id:
@@ -377,6 +389,8 @@ func open_card_source(source: Dictionary) -> void:
 	show_page("goals")
 
 func show_goals() -> void:
+	if controller.ads.available() and controller.ads.playable("mission", controller.last_mission):
+		button(rows, controller.t("offer_mission"), premium.select_offer.bind("mission", controller.last_mission))
 	section_tabs(["career", "chapters", "events_tab"], goals_tab, switch_goals)
 	var award_shelf := button(rows, controller.t("achievements_header"), show_page.bind("achievements"))
 	theme_source.button_art(award_shelf, theme_source.REPUTATION, 58)
@@ -549,13 +563,13 @@ func show_offline() -> void:
 	mission_bar(card, store.offline_seconds, store.offline_limit())
 	button(card, controller.t("claim_offline") % controller.money(value), controller.claim_offline,
 		controller.ads.busy(), true)
-	if controller.ads.available():
+	if controller.ads.available() and controller.ads.playable("offline"):
 		if controller.ads.busy() or controller.ads.ready():
-			var desc: String = controller.t("bonus_running") if controller.ads.busy() else controller.t("claim_bonus") % controller.money(value.times(2))
+			var desc: String = controller.t("bonus_running") if controller.ads.busy() else controller.t("claim_bonus") % controller.money(value.plus(store.offline_eligible()))
 			button(card, desc, controller.start_offline_ad, controller.ads.busy())
 		else:
 			var loading: bool = controller.ads.loading()
-			button(card, controller.t("ad_loading" if loading else "ad_prepare"), controller.ads.prepare, loading)
+			button(card, controller.t("ad_loading" if loading else "ad_prepare"), controller.ads.prepare.bind("offline"), loading)
 
 func feature(picture: Texture2D, title: String, detail := "") -> VBoxContainer:
 	var surface := PanelContainer.new()

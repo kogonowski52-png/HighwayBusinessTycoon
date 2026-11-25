@@ -1,0 +1,4 @@
+google-auth==2.63.1
+requests==2.34.2
+gunicorn==27.0.1
+cryptography==50.0.2

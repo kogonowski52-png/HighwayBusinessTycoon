@@ -1,5 +1,12 @@
 # Stan projektu
 
+## 0.7.0 · BOOST i monetyzacja testowa
+
+- BOOST ×2 jest wspólny dla sześciu regionów, ma 5 minut za film i 30 minut maksymalnej kolejki. Dochód offline korzysta z rzeczywistego przecięcia czasu. Zachowano kupowanie kuponów za walutę gry i zwykłe wypłaty.
+- Podpisane APK testowe zawiera natywne AdMob, UMP i Play Billing. Produkcyjne identyfikatory, zweryfikowane konto Play, zaplecze HTTPS i klucz upload AAB pozostają do skonfigurowania przez właściciela. Żadnej produkcyjnej usługi nie uruchomiono. [Reklamy i eksport](docs/MONETIZATION.md) · [Weryfikator zakupów](docs/PLAY_BILLING.md)
+- Sklep zawiera rzeczywiste ścieżki płatności z ceną zwracaną przez Play, nagrody darmowe i sześcioterminową przepustkę z 30 progami. Przetestowano logikę i migrację starego zapisu. [Stan etapu 6](docs/STAGE6_STATUS.md)
+- Galeria i klip pochodzą z renderowanego silnika. Film oznacza kontrolowane zdarzenie adaptera. Android z aktywnym Google Play jest potrzebny do prób natywnego odtwarzania, zgód, zakupów i zwrotów. [Galeria](screenshots/0.7.0/README.md) · [Raport testów](TEST_REPORT.md)
+
 ## 0.6.1 · Sześć działających regionów
 
 - Do Stacji Północ i Copper Mile dołączyły Green Valley, Alpine Pass, Ocean Coast oraz Metro City. Kampania obejmuje 41 usług, 590 zadań rozdziałowych, 22 menedżerów i niezależne zarobki każdego regionu. [Audyt etapu 5](docs/STAGE5_STATUS.md) · [Galeria](screenshots/0.6.1/README.md)

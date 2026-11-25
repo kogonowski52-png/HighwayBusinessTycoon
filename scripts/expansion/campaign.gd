@@ -10,16 +10,24 @@ var storage: RefCounted
 var districts: Dictionary = {}
 var active := "north"
 var ledger := Ledger.new()
+var boost := HbtBoost.new()
+var premium := HbtPremiumState.new()
 
 func _init(north: HbtEconomy) -> void:
 	storage = north.storage
 	districts.north = north
+	north.global_boost = boost
 
 func restore(wall := -1) -> void:
 	var root: Dictionary = storage.restore()
 	var north: HbtEconomy = districts.north
-	north.restore_profile(root, wall)
 	var world := HbtEconomy.safe_dict(root.get("world"))
+	boost.restore(HbtEconomy.safe_dict(world.get("boost")))
+	premium.restore(HbtEconomy.safe_dict(world.get("premium")))
+	var observed := int(Time.get_unix_time_from_system()) if wall < 0 else wall
+	var now := boost.observe_device(observed) if wall < 0 else boost.advance(observed)
+	north.restore_profile(root, now, false)
+	north.capture_absence(now)
 	ledger.restore(HbtEconomy.safe_dict(world.get("ledger")))
 	var saved := HbtEconomy.safe_dict(world.get("estates"))
 	for id in Atlas.DESTINATIONS:
@@ -27,6 +35,7 @@ func restore(wall := -1) -> void:
 			continue
 		var estate := HbtEconomy.new(id)
 		estate.storage = storage
+		estate.global_boost = boost
 		estate.restore_profile(saved[id], north.clock, false)
 		districts[id] = estate
 	share_identity(north)
@@ -61,6 +70,7 @@ func theme() -> void:
 
 func checkpoint() -> Error:
 	var estate := current()
+	boost.advance(estate.clock)
 	share_identity(estate)
 	estate.high_water = maxi(estate.clock, estate.high_water)
 	ledger.advance(estate.clock)
@@ -69,10 +79,15 @@ func checkpoint() -> Error:
 	for id in districts:
 		if id != "north":
 			others[id] = districts[id].snapshot()
-	root["world"] = {"active": active, "estates": others, "ledger": ledger.snapshot()}
+	root["world"] = {"active": active, "estates": others, "ledger": ledger.snapshot(), "boost": boost.snapshot(), "premium": premium.snapshot()}
 	var error: Error = storage.store(root)
 	estate.save_error = error
 	estate.dirty = error != OK
+	if error == OK:
+		var regions: Array[PackedInt64Array] = []
+		for region: HbtEconomy in districts.values():
+			regions.append(PackedInt64Array([region.high_water, region.high_water + region.offline_limit()]))
+		boost.prune(regions)
 	return error
 
 func available(id: String) -> bool:
@@ -102,13 +117,14 @@ func travel(id: String) -> Error:
 			return ERR_UNAVAILABLE
 		var opened := HbtEconomy.new(id)
 		opened.storage = storage
+		opened.global_boost = boost
 		opened.clock = source.clock
 		opened.high_water = source.clock
 		districts[id] = opened
 	var arrival: HbtEconomy = districts[id]
 	var prior_ledger := ledger.snapshot().duplicate(true)
 	var source_water := source.high_water
-	var old_offline := [arrival.clock, arrival.high_water, arrival.offline_pending, arrival.offline_seconds, arrival.offline_away_seconds]
+	var old_offline := [arrival.clock, arrival.high_water, arrival.offline_pending, arrival.offline_seconds, arrival.offline_away_seconds, arrival.offline_boosted]
 	share_identity(source)
 	source.high_water = maxi(source.high_water, source.clock)
 	arrival.capture_absence(source.clock)
@@ -126,6 +142,7 @@ func travel(id: String) -> Error:
 			arrival.offline_pending = old_offline[2]
 			arrival.offline_seconds = old_offline[3]
 			arrival.offline_away_seconds = old_offline[4]
+			arrival.offline_boosted = old_offline[5]
 		else:
 			districts.erase(id)
 		source.save_error = error
@@ -158,6 +175,7 @@ func prestige(confirmed: bool) -> Error:
 	var previous := current()
 	var next := HbtEconomy.new(active)
 	next.storage = storage
+	next.global_boost = boost
 	next.clock = previous.clock
 	next.high_water = previous.high_water
 	next.prestige_rank = previous.prestige_rank + 1
@@ -167,6 +185,7 @@ func prestige(confirmed: bool) -> Error:
 	next.paid_player_level = previous.paid_player_level
 	next.offline_tier = previous.offline_tier
 	next.offline_pending = previous.offline_pending
+	next.offline_boosted = previous.offline_boosted
 	next.offline_seconds = previous.offline_seconds
 	next.offline_away_seconds = previous.offline_away_seconds
 	for currency in ["reputation", "diamond", "event"]:
