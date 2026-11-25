@@ -70,6 +70,8 @@ blender -b --python-exit-code 1 --python tools/art/delivery.py
 
 ## Android
 
+Podpisany pakiet testowy 0.5.0 jest dostępny w GitHub Releases. [Pobierz APK Android](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/download/v0.5.0/HighwayBusinessTycoon-0.5.0-debug.apk)
+
 Preset **Android** używa pakietu `pl.krystiandevelopment.highwaytycoon`, orientacji pionowej i architektur arm64 oraz x86_64. W Godocie zainstaluj szablony eksportu zgodne z wersją edytora i ustaw ścieżki Android SDK i JDK. Eksport uruchomisz z terminala.
 
 ```sh

@@ -5,6 +5,7 @@
 - Dostępne są ekran startowy, zwięzły HUD, panele obsługi, kolekcja 15 menedżerów, nagrody awansu, finanse i offline, pomoc, licencje, prywatność oraz sklep za środki z gry. Kalendarz ma 30 nagród, a osiągnięcia 50 odznak z zapisem. [Galeria](screenshots/0.5.0/README.md)
 - Kamera obsługuje dotyk i mysz oraz podąża za modernizacją. Animacje świata wynikają z wizyt i zakupów. Oryginalne utwory i efekty działają na trzech regulowanych kanałach.
 - Sprawdzono zapis utworzony przez wersję 0.4.0 oraz regresję jej 11 usług. Koszty, stawki i trasy zweryfikowano tym samym symulatorem balansu. [Raport testów](TEST_REPORT.md)
+- Podpisany APK z tagu `v0.5.0` opublikowano w GitHub Releases i zweryfikowano po pobraniu. [APK Android](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/download/v0.5.0/HighwayBusinessTycoon-0.5.0-debug.apk)
 - Instalacja, płynność po rozgrzaniu, wibracje i rzeczywiste wycięcia wymagają sprawdzenia na Androidzie. Diagnostyka ekranu i liczniki renderera pochodzą z okna Godota na Linuxie. [Raport wydajności](docs/performance-0.5.0.md)
 
 ## 0.4.0 · Rozwój Trasy 17

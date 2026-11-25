@@ -26,6 +26,12 @@ Film pokazuje wejście z menu, tankowanie, rozbudowę, zatrudnienie i odebranie 
 
 Lokalny APK ma 74 349 357 bajtów i SHA-256 `de17431cbf726a20287e7cb470765b693b35137b30f7f7148aea88345df28780`. Podpis odpowiada lokalnej wersji 0.4.0. Manifest domyślnej kompilacji Android obejmuje wibracje i działanie offline. Fizyczna instalacja, głośność na głośniku telefonu, wibracje i FPS pozostają do sprawdzenia. Po pełnym zamknięciu aplikacji kalendarz offline ufa lokalnemu zegarowi i zachowuje najwyższy znacznik. Cofnięcie nie odnawia wykorzystanej nagrody.
 
+### APK z GitHuba
+
+Plik pobrano z wydania `v0.5.0` zbudowanego z commitu `75de278`. APK ma 74 349 357 bajtów i SHA-256 `ed53c7dc514448e59199a284721aa6998911ec186d2758c95d333fbbcdf17d4f`, zgodne z notą wydania. Pobrany pakiet przeszedł weryfikację archiwum, podpisu v2/v3, wersji i obu architektur. Manifest deklaruje jedynie uprawnienie `VIBRATE`. [APK](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/download/v0.5.0/HighwayBusinessTycoon-0.5.0-debug.apk) · [GitHub Actions](https://github.com/kogonowski52-png/HighwayBusinessTycoon/actions/runs/45652573648)
+
+Debug APK z GitHub Releases 0.4.0 i 0.5.0 mają różne certyfikaty. Aktualizacja istniejącej instalacji na Androidzie wymaga zgodnego certyfikatu. Migrację danych sprawdzono przez bezpośredni odczyt profilu, a para lokalnych APK korzysta z tego samego certyfikatu debug.
+
 ## 0.4.0 · Rozwój Trasy 17
 
 Próby wykonano w Godocie 4.7.2 Stable na Linuxie. Okno gry korzystało z renderera Compatibility i Mesa llvmpipe. Modele i portrety wykonano w Blenderze 4.3.2. [Galeria 19 zrzutów](screenshots/0.4.0/README.md)
