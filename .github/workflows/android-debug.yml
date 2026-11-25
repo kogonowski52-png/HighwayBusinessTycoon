@@ -2,12 +2,15 @@ name: Android debug release
 
 on:
   push:
-    tags: ['v0.3.0']
-    branches: [main]
-    paths: ['.github/workflows/android-debug.yml']
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag (vMAJOR.MINOR.PATCH)
+        required: true
+        type: string
 
-concurrency: android-debug-v0.3.0
+concurrency: android-debug-${{ inputs.tag || github.ref_name }}
 
 jobs:
   publish-apk:
@@ -18,12 +21,17 @@ jobs:
     env:
       GODOT_VERSION: '4.7.2'
       ANDROID_BUILD_TOOLS: '36.0.0'
-      RELEASE_TAG: v0.3.0
-      APK: builds/HighwayBusinessTycoon-0.3.0-debug.apk
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
     steps:
+      - name: Resolve version and APK path
+        shell: bash
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          printf 'APK=builds/HighwayBusinessTycoon-%s-debug.apk\n' "${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ env.RELEASE_TAG }}
+          ref: refs/tags/${{ env.RELEASE_TAG }}
           persist-credentials: false
 
       - name: Prepare Godot and Android SDK
@@ -92,5 +100,5 @@ jobs:
           fi
           checksum=$(sha256sum "$APK" | cut -d ' ' -f 1)
           gh release create "$RELEASE_TAG" "$APK" --repo "$GITHUB_REPOSITORY" \
-            --verify-tag --prerelease --title 'Highway Business Tycoon 0.3.0 · Android debug' \
+            --verify-tag --prerelease --title "Highway Business Tycoon ${RELEASE_TAG#v} · Android debug" \
             --notes "Testowy APK Android dla arm64-v8a i x86_64. Gra działa offline. SHA-256: $checksum"
