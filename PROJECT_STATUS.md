@@ -4,7 +4,7 @@
 
 - Główna stacja ma pięć różniących się konstrukcji. Przełęcz została wybrana po porównaniu z Łukiem i Tarasem w oknie Godota. Otwarty sklep i czynny warsztat mają własne modele wyposażenia. [Galeria i porównanie](screenshots/0.3.2/README.md)
 - Ruch i układ stanowisk przeszły testy rozgrywki. Profil utworzony w `7ea8bf9` otwiera się z portfelem, rozbudową, pracownikiem, językiem i trybem oszczędnym. [Raport testów](TEST_REPORT.md)
-- Eksport Android 0.3.2 jest kompilacją debug do prób na urządzeniach. Lokalna kontrola sprawdza format pakietu, manifest i podpis.
+- GitHub Actions zbudował i opublikował testowy APK Android z tagu `v0.3.2`. Pobrany plik przeszedł weryfikację podpisu, manifestu i sumy kontrolnej. [Pobierz APK](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/download/v0.3.2/HighwayBusinessTycoon-0.3.2-debug.apk)
 
 ## 0.3.1 · Modernizacja wizualna
 

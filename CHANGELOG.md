@@ -6,6 +6,7 @@
 - Przebudowano witrynę oraz zamknięty sklep, wyposażenie garażu i wiatę TIR. Dodano krzywiznę masek i szyb pojazdów, nadkola, detale ciężarówek, dedykowane elementy ubrań oraz drzewa z modelowanymi korzeniami.
 - Dodano pęknięcia i łaty asfaltu, odbicia witryn i ambient occlusion wypalony do palety statycznych modeli.
 - HUD zyskał własne cyfry, portfele z ikonami 3D, animację wpływów i panel pięciu etapów. Klienci sklepu chodzą między parkingiem a wejściem.
+- Opublikowano podpisany testowy APK. GitHub Actions buduje wydania Android na podstawie tagów w formacie `vMAJOR.MINOR.PATCH`. [APK 0.3.2](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.3.2)
 
 ## 0.3.1 · Modernizacja wizualna Trasy 17
 

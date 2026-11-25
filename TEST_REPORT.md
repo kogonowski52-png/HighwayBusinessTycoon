@@ -44,7 +44,11 @@ Liczniki viewportu z tej samej maszyny. Zbliżenie w formacie telefonu używa us
 | Stacja nocą, 1440 × 960 | 306 | 313 | 111 751 | 108 737 |
 | Rozbudowany kompleks, 1728 × 1010 | 464 | 478 | 117 415 | 124 355 |
 
-APK ma 68 812 692 bajty. SHA-256 pliku to `1105c169e28b970c155ec3743eb162d199627b94581d2c8507a6e9a72e2dced8`. Certyfikat jest zgodny z lokalnym testowym APK 0.3.1. Zweryfikowano integralność archiwum i wyłączenie galerii z eksportu.
+Lokalny APK ma 68 812 692 bajty. SHA-256 pliku to `1105c169e28b970c155ec3743eb162d199627b94581d2c8507a6e9a72e2dced8`. Certyfikat jest zgodny z lokalnym testowym APK 0.3.1. Zweryfikowano integralność archiwum i wyłączenie galerii z eksportu.
+
+### APK z GitHuba
+
+Pakiet pobrany z wydania `v0.3.2` zbudowanego z commitu `8cc68eb` ma 68 812 692 bajty. SHA-256 `0f45b22dc21ca33b992be26342f9ece590476ba4fe14e87b04d09a409ed51fc6` zgadza się z sumą publikacji. `apksigner` potwierdził v2 i v3, a manifest wskazuje wersję 0.3.2, kod 5, architektury arm64-v8a i x86_64 oraz brak uprawnienia do internetu. Wydanie ma nowy certyfikat debug. Android wymaga zgodnego certyfikatu przy aktualizowaniu wcześniej zainstalowanej kompilacji. [Wydanie GitHub](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.3.2) · [Przebieg GitHub Actions](https://github.com/kogonowski52-png/HighwayBusinessTycoon/actions/runs/45597974439)
 
 ## 0.3.1 · Modernizacja wizualna
 
