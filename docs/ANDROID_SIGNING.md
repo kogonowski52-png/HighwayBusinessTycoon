@@ -22,10 +22,19 @@ gh secret set ANDROID_TEST_KEYSTORE_PASSWORD --repo kogonowski52-png/HighwayBusi
 
 Drugie polecenie wczytuje hasło ze standardowego wejścia lub w trybie interaktywnym. Workflow weryfikuje odcisk, używa klucza w katalogu tymczasowym runnera i usuwa tę kopię po eksporcie. Gdy brakuje sekretu lub odcisk jest inny, publikacja zatrzymuje się. Po konfiguracji ponownie uruchom workflow dla istniejącego tagu `v0.6.0`.
 
+Próba publikacji `v0.6.0` zatrzymała się na braku pary sekretów. Dostęp z Cloud do API zarządzania sekretami został odrzucony. Sprawdzony APK i zapasowy szyfrowany magazyn przygotowano w prywatnym katalogu pobierania. Ustawienie sekretów w repozytorium oraz przeniesienie kopii do sejfu właściciela pozostają otwarte. [Przebieg GitHub Actions](https://github.com/kogonowski52-png/HighwayBusinessTycoon/actions/runs/45664015493)
+
 ## Aktualizacja i zapis
 
 APK z tym samym identyfikatorem, tym samym podpisem i wyższym kodem jest zgodny z aktualizacją w miejscu. `tools/android/verify-test-apk.sh` przyjmuje poprzedni APK jako trzeci argument i sprawdza te trzy warunki. Migracja gry obejmuje plik `roadside.cfg` i jego atomowe kopie. Próba na urządzeniu obejmuje zainstalowanie starszego lokalnego APK, zrobienie zapisu, `adb install -r` dla nowej wersji i odczyt postępu.
 
 Instalacje GitHub 0.4.0 i 0.5.0 wymagają jednorazowego przeniesienia zapisu. Wariant debug pozwala skopiować dane przez `adb run-as pl.krystiandevelopment.highwaytycoon` na zaufanym komputerze z autoryzowanym debugowaniem USB. Przed zmianą instalacji zlokalizuj plik `roadside.cfg` poleceniem `adb shell run-as pl.krystiandevelopment.highwaytycoon find files -name 'roadside.cfg*'`. Zapisz plik główny oraz istniejące kopie poleceniem `adb exec-out run-as pl.krystiandevelopment.highwaytycoon cat <ścieżka> > <kopia>`. Zweryfikuj zawartość kopii przed migracją. Po instalacji stabilnego APK przywróć pliki do analogicznego katalogu użytkownika przed pierwszym uruchomieniem gry.
+
+Przykład przywrócenia pliku, jeśli polecenie `find` zwróciło `files/roadside.cfg`. Dla plików kopii użyj nazw odnalezionych w poprzedniej instalacji.
+
+```bash
+adb shell run-as pl.krystiandevelopment.highwaytycoon mkdir -p files
+adb shell -T "run-as pl.krystiandevelopment.highwaytycoon sh -c 'cat > files/roadside.cfg'" < roadside.cfg
+```
 
 Próba aktualizacji na urządzeniu wymaga fizycznego Androida lub emulatora. Lokalna kontrola porównuje podpisy dwóch gotowych plików i kod wersji, a osobny test Godota sprawdza odczyt autentycznego zapisu 0.5.0.

@@ -25,6 +25,8 @@ Nagranie obejmuje 434 klatki 486 × 864 przy 30 FPS i ścieżkę stereo 48 kHz. 
 
 APK ma 76 247 383 bajty. SHA-256 `e1f718328619fb42d92a52f043c494b9d1419fe6d2163e78548f6906ff509c13`. Weryfikator pary wersji potwierdził zgodność lokalnej kompilacji 0.5.0 i odrzucił parę z GitHub 0.5.0 ze względu na odmienny podpis. Próba instalacji na Androidzie pozostaje otwarta. [Procedura podpisywania i migracji](docs/ANDROID_SIGNING.md)
 
+Świeży import archiwum tagu `v0.6.0` przeszedł 64/64 kontroli kampanii i test zimnego startu. Przebieg GitHub Actions z commitu `af78f35` zatrzymał się na kontroli brakujących sekretów przed wygenerowaniem pakietu. [Przebieg publikacji](https://github.com/kogonowski52-png/HighwayBusinessTycoon/actions/runs/45664015493)
+
 ## 0.5.0 · Interfejs i rytm Trasy 17
 
 Godot 4.7.2 Stable na Linuxie, renderer Compatibility i Mesa llvmpipe. Próby używają oddzielnych lokalnych profili. [30 zrzutów](screenshots/0.5.0/README.md) · [Porównanie z 0.4.0](screenshots/0.5.0/porownanie-0.4.0.jpg) · [Wydajność](docs/performance-0.5.0.md)
