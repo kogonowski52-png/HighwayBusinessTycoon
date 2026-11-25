@@ -1,9 +1,9 @@
 """Distinct vehicle silhouettes, with suspension-independent wheel meshes."""
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
 from math import cos, pi, sin, sqrt, tau
 
-from kit import Model, clear_objects, export
+from kit import Model, bake_occlusion, clear_objects, export
 
 TRIM = "2b4148"
 RUBBER = "253035"
@@ -95,9 +95,10 @@ def body(model, half_width, bottom, shoulder, length, axles, tire, kind, center=
         mid = max(y + .017, top - .235)
         vertices.extend([(-w * .79, y, z), (w * .79, y, z), (w * .966, y + .028, z),
                          (w, mid, z), (w * .988, belt, z), (w * .87, top - .016, z),
-                         (w * .65, top, z), (-w * .65, top, z), (-w * .87, top - .016, z),
+                         (w * .65, top, z), (w * .38, top + .038, z), (0, top + .051, z),
+                         (-w * .38, top + .038, z), (-w * .65, top, z), (-w * .87, top - .016, z),
                          (-w * .988, belt, z), (-w, mid, z), (-w * .966, y + .028, z)])
-    n = 12
+    n = 15
     faces = [tuple(reversed(range(n)))]
     for k in range(len(rings) - 1):
         for i in range(n):
@@ -122,6 +123,23 @@ def cabin(model, car, front, rear, bottom_y, top_y, width, upright=False):
         j = (i + 1) % 8
         # A broad sky reflection stays legible on the silhouette in the overhead view.
         horizon = "95bcca" if i in (0, 1, 7) else "709aa4"
+        if i == 0:
+            glass = []
+            for k in range(7):
+                t = k / 6
+                arc = .064 * sin(t * pi)
+                glass.extend([(lower[i][0] * (1-t) + lower[j][0] * t, bottom_y, front + arc),
+                              (upper[i][0] * (1-t) + upper[j][0] * t, top_y - .095, upper_front + arc * .80)])
+            model.add(glass, [(k, k + 1, k + 3, k + 2) for k in range(0, 12, 2)], WINDOW,
+                      "Tint", True, vertex_colors=[WINDOW, horizon] * 7)
+            for side in [-1, 1]:
+                model.pipe([(side * width * .20, bottom_y + .041, front + .063),
+                            (side * width * .38, bottom_y + .111, front - .026)],
+                           .012, TRIM, "Rubber", 6)
+            if car.kind in ("coach", "tractor", "trailer"):
+                model.pipe([(0, bottom_y + .015, front + .069), (0, top_y - .09, upper_front + .052)],
+                           .024, PAINT, "CoachPaint", 7)
+            continue
         model.add([lower[i], upper[i], upper[j], lower[j]], [(0, 1, 2, 3)],
                   WINDOW, "Tint", True, vertex_colors=[WINDOW, horizon, horizon, WINDOW])
     cap = polygon(width * (.87 if upright else .76), top_y, upper_front - .006, upper_rear + .021)
@@ -173,6 +191,9 @@ def wheels_for(car):
 
 
 def create_car_model(car):
+    # Visual height only. Wheelbase, road clearance and visit dimensions use the catalog record.
+    rise = .21 if car.kind in ("city", "van", "tractor", "trailer") else .13
+    car = replace(car, roof=car.roof + rise)
     base = Model()
     brake, left, right, head = Model(), Model(), Model(), Model()
     z = car.length * .50
@@ -187,12 +208,26 @@ def create_car_model(car):
     else:
         body(base, w, slab_bottom, car.shoulder, car.length, axles, car.tire, car.kind)
 
+    guards = TRIM if car.kind in ("suv", "pickup", "tractor", "trailer") else PAINT
+    finish = "Rubber" if guards == TRIM else "CoachPaint"
+    for axle in axles:
+        for side in [-1, 1]:
+            x = w * .952 * side
+            points = [(x * (0.95 + 0.092 * sin(j * pi / 12)),
+                       car.tire + car.tire * 1.04 * sin(j * pi / 12),
+                       axle + car.tire * 1.20 * cos(j * pi / 12)) for j in range(13)]
+            base.pipe(points, .036 if not heavy else .059, guards, finish, 8)
+
     if car.kind in ("tractor", "trailer"):
         # Cab below the windscreen, independent chassis and rear load over the bogie.
         base.box((0, 1.13, car.cabin_front - .51), (w * 1.89, .84, 1.36), PAINT, .22, "CoachPaint")
         base.box((0, 1.35, car.cabin_front - 1.02), (w * 1.80, 1.49, .638), PAINT, .16, "CoachPaint")
         base.box((0, car.roof - .38, car.cabin_front - .91), (w * 1.72, .59, .78), PAINT, .13, "CoachPaint")
         cabin(base, car, car.cabin_front, car.cabin_rear, 1.51, car.roof, w * .88, upright=True)
+        visor_z = car.cabin_front - .31
+        base.custom_box((0, car.roof - .105, visor_z), (w * 1.81, .114, .491), PAINT, .17, .036, "CoachPaint")
+        for x in [-.63, -.31, .31, .63]:
+            base.box((x, car.roof - .121, visor_z + .251), (.133, .051, .034), AMBER, .019, "Tint")
         for side in [-1, 1]:
             for i in range(2):
                 base.box((side * .89, .59 + i * .137, car.cabin_front - .77), (.32, .075, .50), CHROME, .024, "Metal")
@@ -264,24 +299,30 @@ def create_car_model(car):
     if car.kind != "ev":
         grille_width = w * (.91 if car.detail not in ("chrome", "tower", "liner") else 1.18)
         grille_height = .17 if not square else .29 if car.kind not in ("tractor", "trailer") else .58
-        base.box((0, grille_y - .036, front_z + .006), (grille_width, grille_height, .133),
-                 TRIM, .046, "Rubber")
+        if heavy or car.kind == "luxury":
+            base.custom_box((0, grille_y - .047, front_z + .015), (grille_width + .095, grille_height + .071, .144),
+                            CHROME, .103, .026, "Metal")
+        base.box((0, grille_y - .036, front_z + .038), (grille_width, grille_height, .133),
+                 TRIM, .054, "Rubber")
         for j in range(5 if square else 3):
             base.box((0, grille_y - grille_height * .40 + j * grille_height / (6 if square else 4),
-                      front_z + .076), (grille_width * .84, .021, .024), CHROME, .005, "Metal")
+                      front_z + .110), (grille_width * .84, .021, .028), CHROME, .006, "Metal")
     for side in [-1, 1]:
         light_x = w * .62 * side
         light_width = w * (.29 if car.detail == "round" else .42)
         front = front_z - (.023 if car.detail == "round" else .056)
         if car.detail == "round":
-            base.orb((light_x, lights_y, front), (.106, .107, .052), TRIM, 12, 7, "Rubber")
-            head.orb((light_x, lights_y + .004, front + .028), (.088, .089, .043), HEAD, 12, 7)
+            base.orb((light_x, lights_y + .015, front), (.142, .141, .075), CHROME, 16, 9, "Metal")
+            head.orb((light_x, lights_y + .021, front + .048), (.113, .113, .058), HEAD, 16, 9)
         else:
             light_height = .096 if car.detail in ("blade", "fastback", "scoop", "wing", "pixel") else .152
             base.box((light_x, lights_y, front), (light_width + .067, light_height + .055, .135),
                      TRIM, .025, "Rubber", side * .26)
             head.box((light_x, lights_y + .009, front + .064),
                      (light_width, light_height, .071), HEAD, .027, "Ceramic", side * .26)
+            if not heavy:
+                base.box((light_x, lights_y - light_height * .61, front + .083),
+                         (light_width * .88, .026, .035), CHROME, .009, "Metal", side * .26)
         target = left if side == 1 else right
         target.box((w * .821 * side, lights_y - .090, front + .015), (.094, .054, .097), AMBER, .019,
                    "Ceramic", side * .26)
@@ -298,7 +339,7 @@ def create_car_model(car):
         head.box((0, lights_y + .021, front_z + .030), (w * 1.36, .037, .053),
                  "d2fff1", .012, "Ceramic")
         brake.box((0, tail_y + .008, back_z - .015), (w * 1.33, .028, .027), TAIL, .007)
-    base.mesh("Chassis")
+    bake_occlusion(base.mesh("Chassis"), .32, .25)
     brake.mesh("BrakeLamps")
     left.mesh("IndicatorLeft")
     right.mesh("IndicatorRight")
@@ -351,6 +392,11 @@ def make_trailer(model, car):
             model.box((side * w * .964, 1.665, -.13 - .47 * j), (.045, 1.31, .040), CHROME, .012, "Metal")
         model.box((side * .40, 1.57, -3.75), (.72, 1.48, .065), "a3b4a6", .042, "Paint")
         model.pipe([(side * .49, 1.00, -3.795), (side * .49, 2.19, -3.795)], .022, TRIM, "Metal", 8)
+        for y in [1.08, 1.55, 2.08]:
+            model.box((side * .79, y, -3.797), (.18, .085, .067), CHROME, .018, "Metal")
+        for z in [-3.59, -2.16, -.72]:
+            model.box((side * w * .976, .837, z), (.046, .087, .159), AMBER, .018, "Tint")
+    model.custom_box((0, 2.514, -1.48), (.79, .091, 3.18), "bac7b2", .19, .035, "Paint")
     model.box((0, 0.83, -1.36), (w * 1.79, .105, .40), CHROME, .03, "Metal")
 
 

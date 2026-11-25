@@ -52,7 +52,7 @@ func run() -> void:
 	root.borderless = true
 	if suite != "studio":
 		await play_scene()
-	if suite not in ["game", "camera"]:
+	if suite not in ["game", "camera", "stations"]:
 		await vehicle_studies()
 		await character_studies()
 		await building_studies()
@@ -72,6 +72,22 @@ func play_scene() -> void:
 	game.set_physics_process(false)
 	game.traffic.dispatch.spawning = false
 	await process_frame
+	if suite == "stations":
+		game.hud.visible = false
+		game.economy.levels["market"] = 1
+		game.campus.update_sites(game.economy)
+		game.station.set_market_open(true)
+		game.landscape.set_forecourt_tier(5)
+		set_window(Vector2i(1440, 960))
+		await process_frame
+		await process_frame
+		game.aim_camera(Vector3(-0.89, 1.16, -0.74), Vector3(6.2, 9.2, 15.4), 22.3)
+		for design in game.station.STUDIES:
+			game.station.setup(5, design)
+			check(game.station.canopy.scene_file_path.ends_with(design + ".glb"), design + " loaded into the playing scene")
+			await capture(design + ".png")
+		game.free()
+		return
 	if suite == "camera":
 		var target: Vector3 = game.campus.focus("fuel") + Vector3(-0.54, 0.52, -0.88)
 		for sample in [["36-stopni.png", Vector3(9.4, 26.5, 35.0), 24.8],
@@ -84,6 +100,8 @@ func play_scene() -> void:
 	var dispatch: HbtDispatch = game.traffic.dispatch
 	var fuel := dispatch.visit_at("fuel", 0)
 	check(game.economy.level("fuel") == 1 and game.traffic.vehicles[fuel.number].model_id == "sprint", "main scene starts with first tier and Sprint")
+	check(game.station.market.scene_file_path.ends_with("market_shuttered.glb") and game.station.pump.scene_file_path.ends_with("pump_vintage.glb"),
+		"starter appearance includes the shuttered shop and mechanical pump")
 	check(game.hud.lighting.text == "Dzień" and game.hud.view.text == "Mapa", "localized lighting and camera controls")
 	await capture("01-stacja-w-grze.png")
 	game.toggle_view()
@@ -127,6 +145,11 @@ func play_scene() -> void:
 		game.invest()
 		check(game.economy.level("fuel") == tier and is_instance_valid(game.station.newest_module),
 			"level %d unlocks dedicated architecture" % tier)
+		check(game.station.canopy.scene_file_path.ends_with(game.station.SHELTERS[tier - 1] + ".glb"),
+			"level %d replaces the full roof geometry" % tier)
+		if not captures.is_empty() and tier < 5:
+			await create_timer(0.72).timeout
+			await capture("stacja-etap-%d.png" % tier)
 	if not captures.is_empty():
 		await create_timer(0.26).timeout
 		await capture("08-rozbudowa-efekt.png", false)
@@ -179,10 +202,14 @@ func play_scene() -> void:
 				and group.mesh == Art.extract_mesh("architecture", Campus.ROOF_MODULES[stage]),
 				"%s roof module at tier %d" % [site, tier])
 	check(game.campus.extra_islands.truck[2].visible, "third freight pump follows the capacity threshold")
+	game.station.set_market_open(true)
+	check(game.station.market.scene_file_path.ends_with("/market.glb") and not game.campus.workshop_shutters.visible,
+		"opening the market and workshop exposes their working interiors")
 	set_window(Vector2i(1728, 1010))
 	await process_frame
 	game.aim_camera(Vector3(8.6, 0.0, -4.6), Vector3(14.0, 40.0, 33.0), 87.0)
 	await capture("16-pelny-kompleks.png")
+	await service_studies(dispatch)
 	game.set_look(Lighting.Look.NIGHT)
 	game.lighting.set_reduced(true)
 	var lights := 0
@@ -190,6 +217,36 @@ func play_scene() -> void:
 		lights += int(lamp.visible)
 	check(lights == 3, "reduced quality keeps local lights budgeted")
 	game.free()
+
+func service_studies(dispatch: HbtDispatch) -> void:
+	var repair := dispatch.try_admit("local", "workshop")
+	if repair != null:
+		for step in range(900):
+			game.tick_game(0.05)
+			if repair.phase == HbtVisit.Phase.READY:
+				dispatch.start_manual("workshop")
+				break
+		game.tick_game(0.05)
+	check(repair != null and repair.phase == HbtVisit.Phase.WORKING and game.crew.performer(repair).cycles == "repair",
+		"an admitted workshop visit uses the repair clip at the lift")
+	set_window(Vector2i(1440, 960))
+	await process_frame
+	game.aim_camera(Campus.WORKSHOP_AT + Vector3(0.45, 1.59, 1.18), Vector3(0.48, 0.63, 3.25), 9.2)
+	if not captures.is_empty():
+		await create_timer(0.45).timeout
+	await capture("17-warsztat-pracuje.png")
+
+	var shopper := dispatch.try_admit("local", "market")
+	if shopper != null:
+		for step in range(900):
+			game.tick_game(0.05)
+			if shopper.phase == HbtVisit.Phase.READY:
+				break
+	check(shopper != null and game.crew.market_visitors.has(shopper.number), "a real market visit brings a shopper onto the footpath")
+	game.aim_camera(Vector3(-6.21, 0.82, -1.78), Vector3(3.66, 5.18, 11.21), 13.2)
+	if not captures.is_empty():
+		await create_timer(0.8).timeout
+	await capture("18-klient-sklepu.png")
 
 func vehicle_studies() -> void:
 	studio(Vector2i(1440, 810), Vector3(0, 0.47, 0.25), Vector3(0, 9.1, 15.0), 18.85)

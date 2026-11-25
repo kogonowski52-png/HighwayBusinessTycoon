@@ -1,5 +1,12 @@
 # Historia zmian
 
+## 0.3.2 · Przebudowa Trasy 17
+
+- Dodano trzy pełne warianty stacji i wybrano Przełęcz. W pięciu etapach zmieniają się zadaszenia, dystrybutory, zaplecze i zużycie placu.
+- Przebudowano witrynę oraz zamknięty sklep, wyposażenie garażu i wiatę TIR. Dodano krzywiznę masek i szyb pojazdów, nadkola, detale ciężarówek, dedykowane elementy ubrań oraz drzewa z modelowanymi korzeniami.
+- Dodano pęknięcia i łaty asfaltu, odbicia witryn i ambient occlusion wypalony do palety statycznych modeli.
+- HUD zyskał własne cyfry, portfele z ikonami 3D, animację wpływów i panel pięciu etapów. Klienci sklepu chodzą między parkingiem a wejściem.
+
 ## 0.3.1 · Modernizacja wizualna Trasy 17
 
 - Przebudowano zadaszenie stacji i plac TIR, wzbogacono fasady usług oraz dodano pięć dostrzegalnych progów rozwoju dachów usługowych.

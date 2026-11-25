@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 
 import bpy
-from kit import Model, clear_objects, export, orientation
+from kit import Model, bake_occlusion, clear_objects, export, orientation
 
 
 @dataclass(frozen=True)
@@ -107,6 +107,21 @@ def actor(role):
             model.box((side * .151, 1.277, .141), (.050, .329, .034), lining, .009,
                       "Paint", yaw=side * .2, bone="spine")
 
+    if role.key in ("customer", "driver"):
+        # A rounded day pack with a separate gusset and the straps over the shoulders.
+        model.custom_box((-.042, 1.29, -.192), (.325, .362, .168), "546c64" if role.key == "driver" else "ba8150", .125, .047)
+        model.parts[-1].bone = "spine"
+        model.box((-.045, 1.19, -.282), (.24, .168, .058), "849682" if role.key == "driver" else "d5a564", .061, bone="spine")
+        for side in [-1, 1]:
+            model.pipe([(side * .155, 1.100, -.099), (side * .195, 1.33, .144),
+                        (side * .173, 1.474, .017), (side * .139, 1.426, -.222)],
+                       .027, "4a6359", "Rubber", sides=8, bone="spine")
+    if role.key in ("mechanic", "attendant", "wash_worker"):
+        model.box((.183, 1.042, .173), (.14, .152, .108), "5b655a", .025, "Rubber", bone="pelvis")
+        model.box((.183, 1.115, .204), (.125, .047, .049), lining, .014, bone="pelvis")
+        model.box((-.13, 1.27, .185), (.13, .108, .065), shirt, .018, bone="spine")
+        model.box((-.13, 1.301, .221), (.114, .031, .023), lining, .009, "Paint", bone="spine")
+
     model.orb((0, 1.689, .023), (.199, .218, .165), skin, 18, 13,
               bone="head", irregular=.028)
     model.orb((0, 1.608, .083), (.139, .095, .102), skin, 13, 8, bone="head")
@@ -119,6 +134,8 @@ def actor(role):
         model.orb((side * .081, 1.723, .165), (.049, .032, .025), whites, 11, 7, bone="head")
         model.orb((side * .076, 1.722, .186), (.024, .027, .013), eye, 10, 7, "Paint", bone="head")
         model.orb((side * .074 + .007, 1.732, .197), (.008, .008, .005), whites, 8, 5, bone="head")
+        model.pipe([(side * .044, 1.737, .187), (side * .081, 1.751, .187),
+                    (side * .120, 1.737, .176)], .007, hair, bone="head", sides=6)
         model.pipe([(side * .039, 1.772, .170), (side * .084, 1.782, .166),
                     (side * .127, 1.768, .146)], .011, hair, bone="head", sides=7)
     model.orb((-.006, 1.736, -.048), (.198, .129 if role.hat else .195, .149), hair,
@@ -161,6 +178,9 @@ def actor(role):
         cover = shirt if role.key in ("driver", "mechanic", "wash_worker", "manager") else skin
         model.pipe([(side * .310, 1.181, .017), (side * .319, 1.115, .032),
                     (side * .321, 1.008, .047)], [.070, .062, .049], cover, bone=elbow, sides=11)
+        if cover == shirt:
+            model.pipe([(side * .320, 1.041, .041), (side * .322, 1.014, .044)],
+                       .056, lining, sides=10, bone=elbow)
         hand_color = "405951" if role.key in ("mechanic", "wash_worker") else skin
         model.orb((side * .325, .976, .064), (.060, .080, .052), hand_color, 12, 8, bone=hand)
         model.orb((side * .287, .990, .101), (.031, .043, .026), hand_color, 10, 7, bone=hand)
@@ -175,7 +195,12 @@ def actor(role):
         model.box((side * .153, .120, .076), (.193, .194, .289), shoes, .075, "Rubber", bone=foot)
         model.box((side * .153, .042, .075), (.202, .075, .302), "c0ae90", .031, "Rubber", bone=foot)
         model.box((side * .153, .146, .186), (.129, .084, .109), shirt, .034, "Paint", bone=foot)
-    model.mesh("Uniform", create_rig())
+    # Enlarge the face and cap around the existing head pivot, so clips and props remain compatible.
+    for part in model.parts:
+        if part.bone == "head":
+            part.vertices = [(x * 1.14, 1.58 + (y - 1.58) * 1.10, .021 + (z - .021) * 1.10)
+                             for x, y, z in part.vertices]
+    bake_occlusion(model.mesh("Uniform", create_rig()), .22, .28)
 
 
 def tools_model():

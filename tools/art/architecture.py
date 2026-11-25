@@ -1,7 +1,7 @@
 """Northpoint architecture, furnishings and additive station structures."""
 from math import cos, pi, sin
 
-from kit import Model, clear_objects, export
+from kit import Model, bake_occlusion, clear_objects, export
 
 COAL = "19363c"
 DARK = "24464b"
@@ -145,6 +145,10 @@ def truck_canopy():
     for z in [-3.34, 0, 3.34]:
         model.custom_box((.02, 5.464, z), (3.21, .165, 1.18), WINDOW, .21, .053, "Tint")
         strip(model, (.02, 4.78, z), (4.46, .048, .113), LAMP)
+        for x in [-2.24, 2.24]:
+            model.pipe([(x, 4.56, z - 1.04), (x * .71, 4.73, z - .54), (x * .53, 4.76, z + .87)],
+                       .064, COOL, "Metal", 9)
+            model.custom_box((x, 5.455, z), (.42, .092, 1.67), "acada3", .12, .034, "Metal")
     strip(model, (0, 5.014, 5.50), (7.28, .038, .037), OCHRE)
     north_mark(model, -2.87, 5.15, 5.557, .43)
     return model
@@ -158,6 +162,10 @@ def island():
     model.box((0, 0.86, 0), (0.96, 1.16, 0.58), TEAL, 0.145, "Paint")
     model.box((0, 1.34, 0.015), (1.08, 0.54, 0.62), CREAM, 0.139, "Paint")
     model.box((0, 1.56, 0.013), (1.02, 0.15, 0.59), OCHRE, 0.068, "Paint")
+    model.custom_box((0, 1.635, .013), (1.047, .072, .613), CREAM, .145, .029, "Paint")
+    for x in [-.461, .461]:
+        model.pipe([(x, .323, .26), (x, .49, .32), (x, 1.27, .32), (x, 1.55, .243)],
+                   .045, "b8afa0", "Metal", 9)
     model.box((0, 1.30, 0.335), (0.76, 0.281, 0.051), COAL, 0.04)
     model.box((0, 1.35, 0.367), (0.53, 0.125, 0.025), "27474d", 0.013, "Tint")
     for x, color in [(-0.17, CORAL), (-0.04, OCHRE), (0.09, MINT)]:
@@ -174,8 +182,34 @@ def island():
                     (side * 1.09, 0.53, 0.19), (side, 1.08, 0.21)],
                    0.038, COAL, "Rubber", sides=10)
         model.box((side, 1.04, 0.241), (0.134, 0.235, 0.112), MINT if sign == 1 else OCHRE, 0.037, "Paint")
+        model.pipe([(sign * .525, 1.09, .145), (sign * .601, 1.09, .145)], .069, IRON, "Metal", 12)
         trim(model, (sign * 1.64, 0.248, 0.02), (0.14, 0.025, 0.50), COOL)
         bollard(model, sign * 1.54, 0.32, 0.59, OCHRE, 0.21)
+    return model
+
+
+def pump_vintage():
+    model = Model()
+    slab(model, (-.12, .09, -.02), (2.94, .18, 1.03), "a7a08b")
+    slab(model, (-.02, .193, -.02), (.928, .12, .65), "748481")
+    model.box((-.02, .69, 0), (.81, .95, .55), "627d74", .149, "Paint")
+    model.custom_box((-.02, 1.307, .027), (.92, .51, .67), "d1b17c", .215, .118, "Paint")
+    model.custom_box((-.02, 1.581, .018), (.782, .144, .58), "9b7552", .172, .054, "Metal")
+    model.box((-.02, 1.345, .366), (.622, .273, .046), "344f51", .045, "Metal")
+    for x in [-.155, .155]:
+        model.pipe([(x, 1.268, .393), (x, 1.268, .418)], .075, "d9ccb0", "Ceramic", 16)
+        model.box((x, 1.267, .432), (.015, .084, .019), "aa594a", .008, yaw=.29 * x)
+    trim(model, (0, 1.363, .399), (.452, .066, .027), COAL)
+    for x in [-.232, -.116, 0, .116, .232]:
+        trim(model, (x, .404, .286), (.053, .194, .026), COOL)
+        trim(model, (x, .802, .289), (.047, .141, .023), "4c6861")
+    model.pipe([(.425, 1.09, .14), (.615, 1.09, .14)], .068, IRON, "Metal", 12)
+    model.pipe([(.53, 1.14, .07), (.73, .66, .042), (.67, .321, .052), (.57, .31, .133),
+                (.46, .55, .211), (.451, .827, .267)], .043, COAL, "Rubber", 11)
+    model.box((.455, .862, .269), (.161, .299, .12), "b28a4a", .048, "Paint")
+    bollard(model, -1.31, .284, .47, "c29965", .16)
+    bollard(model, 1.12, .284, .47, "c29965", .16)
+    north_mark(model, -.04, .94, .294, .24, "dfb675")
     return model
 
 
@@ -218,6 +252,10 @@ def market():
     for i in range(12):
         model.box((3.735, 1.13, -1.86 + i * 0.147), (0.092, 1.71, 0.084), WOOD, 0.02)
     model.box((3.67, 0.60, -1.37), (0.20, 0.49, 0.74), COOL, 0.05, "Paint")
+    for x in [-3.25, -2.63, -2.01, -1.39, -.77, -.15, .47, 1.09, 1.71, 2.33, 2.95]:
+        for row in range(3):
+            tint = ("b2a183", "c0aa87", "ccb899")[row]
+            model.box((x + .09 * (row % 2), .39 + row * .145, -2.249), (.58, .128, .053), tint, .019)
     for x in [-3.48, -1.95, -0.62, 0.71, 2.02, 3.51]:
         trim(model, (x, 1.37, 2.209), (0.099, 2.19, 0.114))
     for y in [0.37, 2.47]:
@@ -240,6 +278,9 @@ def market():
     trim(model, (3.61, 0.68, 1.30), (0.085, 0.10, 1.48))
     # Sign band over a separate rounded awning.
     model.custom_box((0, 2.64, 2.35), (6.87, 0.31, 0.73), DARK, 0.22, 0.063, "Paint")
+    model.custom_box((-.06, 2.86, 2.239), (7.26, .181, 1.189), CREAM, .32, .062, "Paint")
+    for x in [-3.05, 3.04]:
+        model.pipe([(x, 1.957, 2.258), (x, 2.42, 2.61), (x, 2.763, 2.77)], .049, SEA, "Metal", 10)
     strip(model, (0, 2.478, 2.59), (6.27, 0.029, 0.06))
     north_mark(model, -2.28, 2.662, 2.726, 0.28)
     slab(model, (0.08, 0.125, 2.98), (2.0, 0.25, 0.83), CONCRETE)
@@ -313,9 +354,6 @@ def stage_two():
 
 def stage_three():
     model = Model()
-    for col in range(4):
-        for row in range(2):
-            solar(model, -1.62 + col * 1.26, 4.18 + row * 0.075, -0.35 + row * 1.10, 1.16, 0.96)
     # Attached maintenance wing with visible shutters, vent, pipes and roof access.
     slab(model, (-2.63, 0.12, -4.69), (2.81, 0.24, 3.11), CONCRETE)
     model.box((-2.63, 1.22, -4.7), (2.54, 2.20, 2.87), SAND, 0.113)
@@ -323,7 +361,9 @@ def stage_three():
     model.box((-2.63, 1.15, -3.244), (1.72, 1.66, 0.072), DARK, 0.069, "Metal")
     for y in range(7):
         trim(model, (-2.63, 0.47 + y * 0.215, -3.191), (1.62, 0.033, 0.029), COOL)
-    hvac(model, -2.85, 2.73, -4.9)
+    hvac(model, -2.85, 2.73, -5.46)
+    for x in [-3.23, -2.07]:
+        solar(model, x, 2.70, -4.16, 1.03, .91)
     for z in [-5.34, -4.17]:
         model.pipe([(-1.32, 1.88, z), (-1.18, 1.82, z), (-1.18, 0.36, z)], 0.054, IRON, "Metal", 10)
     return model
@@ -350,15 +390,7 @@ def stage_four():
 
 def stage_five():
     model = Model()
-    # Northpoint's rooftop lantern and a wood-slat link to the market.
-    model.custom_box((0.70, 4.33, -0.34), (4.46, 0.21, 1.25), COAL, 0.25, 0.065, "Metal")
-    for x in [-1.36, -0.69, -0.02, 0.65, 1.32, 1.99, 2.67]:
-        trim(model, (x, 4.78, -0.35), (0.083, 0.77, 1.18), "8eb0a3")
-    model.custom_box((0.69, 4.83, -0.33), (4.28, 0.89, 1.19), WINDOW, 0.21, 0.083, "Tint")
-    for x in [-1.16, -0.54, 0.08, 0.70, 1.32, 1.94, 2.56]:
-        strip(model, (x, 4.82, 0.283), (0.52, 0.36, 0.036), "c4dec8")
-    model.custom_box((0.69, 5.27, -0.33), (4.53, 0.265, 1.41), CREAM, 0.29, 0.083, "Paint")
-    model.custom_box((0.69, 5.43, -0.31), (4.15, 0.112, 1.15), SEA, 0.24, 0.035, "Paint")
+    # Covered pedestrian link from the forecourt to the shop and service wing.
     for x in [-4.15, -2.82]:
         model.box((x, 1.52, -1.74), (0.185, 2.71, 0.24), COAL, 0.053, "Metal")
     for i in range(9):
@@ -366,6 +398,9 @@ def stage_five():
     for z in [-2.63, -0.53]:
         model.box((-3.41, 2.791, z), (2.46, 0.18, 0.17), DARK, 0.049, "Metal")
     strip(model, (-3.41, 2.707, -0.43), (2.05, 0.045, 0.064))
+    slab(model, (-3.38, .079, -1.71), (2.46, .157, 2.49), "cbb895")
+    for i in range(7):
+        trim(model, (-3.38, .159, -2.58 + i * .31), (2.14, .016, .022), "b0a289")
     planter(model, -3.39, -1.69, 1.72, CREAM)
     return model
 
@@ -470,6 +505,11 @@ def workshop():
         trim(model, (-2.80 + j * 0.83, 3.34, 0.261), (0.10, 0.49, 0.060), COOL)
     model.custom_box((-0.36, 3.64, -0.49), (5.67, 0.20, 1.64), "658c87", 0.29, 0.066, "Paint")
     model.box((0, 2.62, 2.39), (6.75, 0.36, 0.20), SEA, 0.09, "Paint")
+    model.custom_box((.01, 2.817, 2.34), (7.10, .148, .53), CREAM, .165, .045, "Paint")
+    for x in [-3.33, 0.02, 3.30]:
+        model.box((x, 1.53, 2.44), (.24, 2.42, .187), "c89464", .047, "Paint")
+        for ligature in [-.069, .069]:
+            trim(model, (x + ligature, 1.53, 2.551), (.035, 2.15, .035), IRON)
     for x in [-1.73, 1.72]:
         strip(model, (x, 2.394, 2.36), (2.46, 0.069, 0.104), AQUA)
         strip(model, (x, 2.506, -0.8), (1.98, 0.038, 0.082), LAMP)
@@ -482,6 +522,24 @@ def workshop():
     model.box((1.98, 0.717, -1.72), (1.38, 0.97, 0.56), CORAL, 0.085, "Paint")
     for i in range(4):
         trim(model, (1.98, 0.42 + i * 0.19, -1.407), (1.22, 0.056, 0.063), CREAM)
+    # The active lift has its own steel ramps, overhead link and air reel.
+    for x in [.88, 2.51]:
+        model.custom_box((x, .270, .62), (.30, .057, 2.91), "6c7d7d", .10, .019, "Metal")
+        for z in [-.68, .08, .76, 1.44]:
+            trim(model, (x, .307, z), (.24, .027, .056), "93a79f")
+    trim(model, (1.69, 2.28, -.21), (2.11, .133, .15), IRON)
+    for x in [1.14, 2.18]:
+        model.pipe([(x, 2.25, -.21), (x, 2.07, -.23), (x, 1.89, -.22)], .034, COOL, "Metal", 10)
+    model.pipe([(2.84, 1.879, -1.40), (2.84, 1.879, -1.24)], .231, "c38453", "Paint", 16)
+    model.pipe([(2.84, 1.879, -1.35), (2.84, 1.879, -1.19)], .175, COAL, "Rubber", 16)
+    model.pipe([(2.92, 1.75, -1.20), (2.94, 1.50, -1.18), (2.86, 1.28, -1.16)], .036, OCHRE, "Rubber", 8)
+    # Hand tools and a shelf beside the bay remain off the wheel tracks.
+    for y in [.71, 1.08, 1.49]:
+        model.box((-.16, y, -1.59), (.78, .069, .41), "9eab9f", .027, "Metal")
+        for x in [-.37, -.12, .12]:
+            model.box((x, y + .112, -1.51), (.17, .204, .18), TEAL if x < 0 else CORAL, .035)
+    for x in [-.56, .25]:
+        model.box((x, .91, -1.68), (.087, 1.49, .081), IRON, .018, "Metal")
     model.pipe([(2.74, 2.98, -1.86), (2.74, 3.75, -1.86)], 0.19, IRON, "Metal", 16)
     model.pipe([(2.74, 3.74, -1.86), (2.74, 3.84, -1.86)], 0.27, COOL, "Metal", 16)
     bin_unit(model, -3.33, 2.44)
@@ -572,6 +630,16 @@ def service_console():
     return model
 
 
+def workshop_shutter():
+    model = Model()
+    model.custom_box((1.73, 1.28, 2.157), (2.72, 1.96, .15), "77827a", .11, .053, "Metal")
+    for index in range(12):
+        trim(model, (1.73, .374 + .158 * index, 2.24), (2.55, .045, .041), "a8a394")
+    for x in [.53, 2.93]:
+        model.box((x, 1.31, 2.263), (.104, 1.47, .064), "a08061", .025, yaw=(x - 1.73) * .14)
+    return model
+
+
 def service_clerestory():
     model = Model()
     model.custom_box((0, .20, 0), (1.87, .40, .98), WINDOW, .15, .059, "Tint")
@@ -610,24 +678,29 @@ def service_lantern():
 
 
 MODELS = {
-    "canopy": canopy, "truck_canopy": truck_canopy, "island": island, "price_sign": price_sign, "market": market,
+    "canopy": canopy, "truck_canopy": truck_canopy, "island": island, "pump_vintage": pump_vintage,
+    "price_sign": price_sign, "market": market,
     "stage_2": stage_two, "stage_3": stage_three, "stage_4": stage_four, "stage_5": stage_five,
     "wash": wash, "restaurant": restaurant, "workshop": workshop, "motel": motel, "parking": parking,
     "service_console": service_console, "service_clerestory": service_clerestory,
     "service_solar": service_solar, "service_mechanical": service_mechanical,
     "service_lantern": service_lantern,
+    "workshop_shutter": workshop_shutter,
 }
 
 
 def generate(root):
+    from station_designs import MODELS as STATION_MODELS
+
     folder = root / "assets/models/architecture"
-    for name, make in MODELS.items():
+    for name, make in (MODELS | STATION_MODELS).items():
         clear_objects()
         model = make()
         glass = Model()
         glass.parts = [part for part in model.parts if part.finish == "Glass"]
         model.parts = [part for part in model.parts if part.finish != "Glass"]
-        model.mesh(name.capitalize())
+        opaque = model.mesh(name.capitalize())
+        bake_occlusion(opaque, .78 if "canopy" in name else .91)
         if glass.parts:
             glass.mesh("Glazing")
         export(folder / f"{name}.glb")

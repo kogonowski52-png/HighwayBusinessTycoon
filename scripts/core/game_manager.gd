@@ -20,6 +20,7 @@ const Phase = HbtVisit.Phase
 var economy := HbtEconomy.new()
 var traffic := TrafficManager.new()
 var station := Station.instantiate()
+var landscape := Landscape.new()
 var driver := Driver.instantiate()
 var hud := Hud.instantiate()
 var campus := Campus.new()
@@ -52,12 +53,14 @@ func _ready() -> void:
 	simulation_clock = float(economy.clock)
 	add_child(lighting)
 	setup_camera()
-	add_child(Landscape.new())
+	add_child(landscape)
 	add_child(campus)
 	add_child(effects)
 	add_child(station)
 	fuel_art_level = mini(5, economy.level("fuel"))
+	station.set_market_open(economy.level("market") > 0)
 	station.setup(fuel_art_level)
+	landscape.set_forecourt_tier(fuel_art_level)
 	add_child(traffic)
 	traffic.start(economy, int(Time.get_ticks_usec()) if seed_override < 0 else seed_override)
 	add_child(crew)
@@ -103,8 +106,8 @@ func frame_camera() -> void:
 	if overview:
 		aim_camera(Vector3(7.0, 0.0, -3.9), Vector3(16.0, 39.0, 32.5), maxf(72.0, aspect * 63.0))
 	else:
-		var subject: Vector3 = campus.focus(selected) + Vector3(-0.54, 0.52, -0.88)
-		aim_camera(subject, Vector3(15.3, 34.7, 31.5), maxf(24.1, aspect * 32.5))
+		var subject: Vector3 = campus.focus(selected) + Vector3(-0.54, 0.62, -0.88)
+		aim_camera(subject, Vector3(15.3, 34.7, 31.5), maxf(22.6, aspect * 31.5))
 
 func aim_camera(target: Vector3, offset: Vector3, width: float) -> void:
 	camera.position = target + offset
@@ -155,7 +158,7 @@ func update_scene(delta: float) -> void:
 	if filling != null:
 		var worker: Node3D = driver if filling == primary and primary_manual else crew.performer(filling)
 		var has_prop: bool = is_instance_valid(worker) and is_instance_valid(worker.prop) and worker.prop.visible
-		var source := filling.location + Vector3(0.81, 1.08, -1.92 if filling == primary else -1.48)
+		var source: Vector3 = station.hose_anchor() if filling == primary else campus.hose_anchor(filling)
 		effects.set_hose(has_prop, worker.prop.global_position if has_prop else Vector3.ZERO, source)
 	else:
 		effects.set_hose(false, Vector3.ZERO)
@@ -225,6 +228,7 @@ func serve_customer() -> void:
 
 func invest() -> void:
 	var installed: int = campus.roof_counts[selected]
+	var before_art := fuel_art_level
 	if economy.level(selected) == 0:
 		if economy.unlock(selected):
 			campus.animate_install(selected, installed)
@@ -234,7 +238,7 @@ func invest() -> void:
 	var count := economy.buy_levels(selected, quantity)
 	if count <= 0:
 		return
-	if selected == "fuel" and station.newest_module != null and economy.level("fuel") <= 5:
+	if selected == "fuel" and fuel_art_level > before_art:
 		station.animate_construction()
 	campus.animate_install(selected, installed)
 	effects.construction(Routes.position_of(selected, 0))
@@ -290,9 +294,12 @@ func income_action() -> void:
 		collect_income()
 
 func collect_income() -> void:
+	var origin: Vector2 = hud.income.get_global_rect().get_center()
 	var cash := economy.collect()
 	if not cash.empty():
 		show_message(t("collect_action") % money(cash))
+		if not economy.low_power:
+			hud.animate_reward(origin, true)
 		economy.checkpoint()
 
 func claim_offline() -> void:
@@ -317,10 +324,12 @@ func claim_rewarded(base: HbtAmount) -> void:
 		economy.checkpoint()
 
 func on_economy_changed() -> void:
+	station.set_market_open(economy.level("market") > 0)
 	var art_level := mini(5, economy.level("fuel"))
 	if fuel_art_level != art_level:
 		fuel_art_level = art_level
 		station.setup(art_level)
+		landscape.set_forecourt_tier(art_level)
 	campus.update_sites(economy)
 	crew.roster(economy)
 	Engine.max_fps = 30 if economy.low_power else 60
@@ -337,6 +346,8 @@ func on_sale(ticket: HbtVisit) -> void:
 	if ticket.service == selected:
 		show_message(t("register_sale" if in_register else "sale") % money(ticket.invoice))
 	effects.coin_pop(ticket.location + Vector3(0, 1.24, 0), money(ticket.invoice))
+	if not economy.low_power:
+		hud.animate_reward(camera.unproject_position(ticket.location + Vector3.UP * 1.54), not in_register)
 	if ticket.worker < 0:
 		economy.checkpoint()
 
@@ -391,7 +402,8 @@ func refresh() -> void:
 	hud.people_caption.text = t("customers")
 	hud.people.text = HbtAmount.from(economy.customers).compact(economy.language)
 	for key in hud.wallet_stats:
-		hud.wallet_stats[key].text = "%s  %s" % [t(key), economy.amount(key).compact(economy.language)]
+		hud.wallet_names[key].text = t(key)
+		hud.wallet_stats[key].text = economy.amount(key).compact(economy.language)
 	for name in hud.pages:
 		hud.pages[name].text = t(name)
 	var ready_goals := 0
@@ -400,6 +412,8 @@ func refresh() -> void:
 	if ready_goals > 0:
 		hud.pages.goals.text = t("goals_ready") % ready_goals
 	hud.station.text = site_name(selected)
+	hud.upgrade_preview.text = t("look_action")
+	hud.serve.icon = hud.PUMP if selected in ["fuel", "truck"] else hud.NAV.sites
 	var tier := economy.level(selected)
 	hud.level.text = t("level") % [tier, economy.CONFIG.max_level] if tier > 0 else t("site_closed").to_upper()
 	hud.rate.text = flow_text()

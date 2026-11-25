@@ -4,12 +4,15 @@ signal closed
 
 const Rules = preload("res://scripts/employees/staff_rules.gd")
 const Book = preload("res://data/economy/progression.gd")
+const Campus = preload("res://scripts/buildings/roadside_campus.gd")
 
 var controller: Node3D
 var theme_source: CanvasLayer
 var panel: PanelContainer
 var header: Label
+var page_icon: TextureRect
 var back: Button
+var shade: ColorRect
 var scroll: ScrollContainer
 var rows: VBoxContainer
 var page := ""
@@ -19,7 +22,7 @@ func setup(game: Node3D, hud: CanvasLayer) -> void:
 	controller = game
 	theme_source = hud
 	layer = 5
-	var shade := ColorRect.new()
+	shade = ColorRect.new()
 	shade.color = Color("#10252aab")
 	add_child(shade)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -34,9 +37,14 @@ func setup(game: Node3D, hud: CanvasLayer) -> void:
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 26)
 	panel.add_child(stack)
+	var ribbon := PanelContainer.new()
+	stack.add_child(ribbon)
+	ribbon.add_theme_stylebox_override("panel", hud.sculpted(hud.PETROL, 35, 18))
 	var top := HBoxContainer.new()
-	stack.add_child(top)
-	header = hud.caption(top, 42, hud.INK, hud.HEAVY)
+	ribbon.add_child(top)
+	top.add_theme_constant_override("separation", 9)
+	page_icon = hud.icon(top, hud.UPGRADE_ART, 76)
+	header = hud.caption(top, 38, hud.CREAM, hud.HEAVY)
 	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	back = hud.action(top, 146, 72, false)
@@ -57,10 +65,12 @@ func show_page(name: String) -> void:
 		scroll.scroll_vertical = 0
 	page = name
 	var compact := name == "offline"
-	panel.set_anchor(SIDE_TOP, 0.36 if compact else 0.0)
-	panel.set_anchor(SIDE_BOTTOM, 0.65 if compact else 1.0)
-	panel.offset_top = 0.0 if compact else 218.0
-	panel.offset_bottom = 0.0 if compact else -140.0
+	var upgrades := name == "upgrades"
+	shade.color = Color("#10252a5c") if upgrades else Color("#10252aab")
+	panel.set_anchor(SIDE_TOP, 0.36 if compact else 0.38 if upgrades else 0.0)
+	panel.set_anchor(SIDE_BOTTOM, 0.69 if compact else 1.0)
+	panel.offset_top = 0.0 if compact or upgrades else 218.0
+	panel.offset_bottom = 0.0 if compact else -48.0 if upgrades else -140.0
 	visible = true
 	refresh()
 	if entering:
@@ -81,6 +91,7 @@ func refresh() -> void:
 	if not visible:
 		return
 	header.text = controller.t(page + "_header")
+	page_icon.texture = theme_source.NAV.get(page, theme_source.CASH if page == "offline" else theme_source.UPGRADE_ART)
 	back.text = controller.t("close")
 	for node in rows.get_children():
 		rows.remove_child(node)
@@ -91,6 +102,7 @@ func refresh() -> void:
 		"goals": show_goals()
 		"finance": show_finance()
 		"offline": show_offline()
+		"upgrades": show_upgrades()
 
 func box(title: String, detail := "") -> VBoxContainer:
 	var surface := PanelContainer.new()
@@ -125,6 +137,38 @@ func show_sites() -> void:
 			func() -> void:
 				controller.select_site(id)
 				hide_page(), false, id == controller.selected)
+
+func show_upgrades() -> void:
+	var store: HbtEconomy = controller.economy
+	var site: String = controller.selected
+	var tier := store.level(site)
+	var status: String = controller.gate_text(site) if tier == 0 else controller.t("level") % [tier, store.CONFIG.max_level]
+	var card := box(controller.site_name(site), status)
+	var purchase: Button = button(card, controller.hud.upgrade.text, controller.invest, controller.hud.upgrade.disabled, true)
+	theme_source.button_art(purchase, theme_source.UPGRADE_ART, 56)
+	var thresholds: Array = [1, 2, 3, 4, 5] if site == "fuel" else Campus.THRESHOLDS
+	for index in range(thresholds.size()):
+		var stage_number: int = thresholds[index]
+		var achieved := tier >= stage_number
+		var icon_set: Array = theme_source.STAGE_ART
+		var picture: Texture2D = icon_set[index] if site == "fuel" else theme_source.NAV.sites
+		var tile := PanelContainer.new()
+		tile.add_theme_stylebox_override("panel", theme_source.style(Color("#e8efd9") if achieved else Color("#f6ecda"), theme_source.RIM, 19, 12))
+		rows.add_child(tile)
+		var slot := HBoxContainer.new()
+		tile.add_child(slot)
+		slot.add_theme_constant_override("separation", 14)
+		theme_source.icon(slot, picture, 144)
+		var copy := VBoxContainer.new()
+		slot.add_child(copy)
+		copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		copy.alignment = BoxContainer.ALIGNMENT_CENTER
+		var name_key: String = ("fuel_stage_" if site == "fuel" else "roof_stage_") + str(index + 1)
+		var name: Label = theme_source.caption(copy, 29, theme_source.INK, theme_source.HEAVY)
+		name.text = controller.t(name_key)
+		name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var requirement: Label = theme_source.caption(copy, 22, theme_source.MINT if achieved else theme_source.FADE)
+		requirement.text = controller.t("look_built") if achieved else controller.t("look_requires") % stage_number
 
 func show_team() -> void:
 	var store: HbtEconomy = controller.economy

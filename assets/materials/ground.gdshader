@@ -8,6 +8,9 @@ uniform float field = 1.0;
 uniform vec2 tile = vec2(0.0);
 uniform sampler2D paving_noise : repeat_enable, filter_linear_mipmap;
 uniform bool highway = false;
+uniform float wear_level = 0.0;
+uniform float verge = 0.0;
+uniform vec4 plot;
 
 varying vec2 world_point;
 
@@ -37,7 +40,17 @@ void fragment() {
 		float lane = world_point.y < 10.5 ? 8.78 : 12.17;
 		float rubber = abs(abs(world_point.y - lane) - 0.71);
 		float wear = 1.0 - smoothstep(0.09, 0.49, rubber);
-		base *= 1.0 - wear * (0.054 + 0.082 * sweep);
+		base *= 1.0 - wear * (0.065 + 0.112 * sweep);
+	}
+	if (wear_level > 0.0) {
+		float repair = texture(paving_noise, world_point * vec2(0.090, 0.118) + vec2(0.173, 0.421)).b;
+		float grime = smoothstep(0.58, 0.80, detail.g) * 0.092;
+		base *= 1.0 - wear_level * (repair * (0.18 + 0.20 * sweep) + grime);
+	}
+	if (verge > 0.0) {
+		vec2 margin = plot.zw - abs(world_point - plot.xy);
+		float seam = smoothstep(0.03, verge, min(margin.x, margin.y) + (detail.g - 0.5) * 0.46);
+		base = mix(accent.rgb * 1.10, base, seam);
 	}
 	ALBEDO = base * (1.0 + (detail.r - 0.5) * grain);
 	ROUGHNESS = 0.89 + detail.r * 0.10;

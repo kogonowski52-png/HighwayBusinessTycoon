@@ -34,8 +34,9 @@ static func library(skeleton: Skeleton3D) -> AnimationLibrary:
 				animation.track_set_path(position, bone_path)
 				for i in range(samples.size()):
 					var bounce: float = samples[i].get("bounce", 0.0)
+					var balance: float = samples[i].get("balance", 0.0)
 					animation.position_track_insert_key(position, animation.length * i / 24.0,
-						rest.origin + Vector3.UP * bounce)
+						rest.origin + Vector3(balance, bounce, 0))
 		shared.add_animation(clip, animation)
 	return shared
 
@@ -58,6 +59,7 @@ static func pose(clip: String, phase: float) -> Dictionary:
 		angles["foot_l"] = Vector3(-maxf(0.0, opposite) * 11.0, 0, 0)
 		angles["foot_r"] = Vector3(-maxf(0.0, -opposite) * 11.0, 0, 0)
 		angles["bounce"] = (1.0 - cos(phase * 2.0)) * (0.048 if clip == "run" else 0.016)
+		angles["balance"] = opposite * (0.031 if clip == "run" else 0.024)
 		angles["spine"] = Vector3(13.0 if clip == "run" else 4.0, 6.5 * wave, 3.3 * wave)
 		angles["arm_l"] = Vector3(-20.0 * wave, 0, 5.0)
 		angles["arm_r"] = Vector3(20.0 * wave, 0, -5.0)
@@ -74,14 +76,19 @@ static func pose(clip: String, phase: float) -> Dictionary:
 			angles["bounce"] = 0.012 + 0.012 * wave
 			angles["head"] = Vector3(-1.9 * wave, 4.7 * opposite, 1.9 * wave)
 		"service":
-			var greet := maxf(0.0, sin(phase))
+			var greet := smoothstep(-0.37, 0.96, wave)
+			angles["balance"] = 0.029 * greet
 			angles["arm_r"] = Vector3(-28 - 48 * greet, -8, -10)
 			angles["elbow_r"] = Vector3(-62, 0, -17.0 * opposite)
 			angles["hand_r"] = Vector3(8.0 * wave, 12.5 * opposite, 0)
 			angles["head"] = Vector3(-2.0, opposite * 8.0, 3.0 * wave)
 		"fuel":
-			angles["spine"] = Vector3(6.0 + 1.30 * opposite, -4, -5)
-			angles["bounce"] = -0.016 + wave * 0.010
+			angles["spine"] = Vector3(8.0 + 1.60 * opposite, -4, -5)
+			angles["bounce"] = -0.030 + wave * 0.012
+			angles["balance"] = 0.032 + wave * 0.016
+			angles["leg_l"] = Vector3(-6, 0, 2)
+			angles["knee_l"] = Vector3(11, 0, 0)
+			angles["leg_r"] = Vector3(4, 0, -3)
 			angles["head"] = Vector3(14, -5, -3.2 * wave)
 			angles["arm_l"] = Vector3(-37 - 3.4 * wave, -10, 5)
 			angles["elbow_l"] = Vector3(-47 + 4.5 * wave, 4, 2)

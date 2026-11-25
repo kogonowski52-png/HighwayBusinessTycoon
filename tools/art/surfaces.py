@@ -26,12 +26,13 @@ def field(size, seed):
 def main():
     grit, rock = field(105, 118), field(42, 417)
     variation, patches = field(7, 672), field(16, 287)
+    damage = pavement_damage()
     pixels = []
     for y in range(SIZE):
         for x in range(SIZE):
             detail = grit(x, y) * 0.69 + rock(x, y) * 0.31
             tonal = variation(x, y) * 0.69 + patches(x, y) * 0.31
-            pixels.append((round(detail * 255), round(tonal * 255), 128))
+            pixels.append((round(detail * 255), round(tonal * 255), damage.getpixel((x, y))))
     texture = Image.new("RGB", (SIZE, SIZE))
     texture.putdata(pixels)
     target = Path(__file__).resolve().parents[2] / "assets/textures/paving_noise.png"
@@ -41,6 +42,30 @@ def main():
     panel(ui / "panel_ivory.png", "#fffaf0", "#f7e6c9", "#c9aa85", 27)
     panel(ui / "button_mint.png", "#3f9c82", "#257863", "#1f6456", 17)
     panel(ui / "button_honey.png", "#ffe5a6", "#efb75f", "#b48443", 17)
+    panel(ui / "panel_petrol.png", "#34595c", "#213b40", "#1b3437", 27)
+    panel(ui / "button_cream.png", "#fff9df", "#eed8a8", "#bf9e72", 20)
+
+
+def pavement_damage():
+    rng = Random(6142)
+    sealant = Image.new("L", (SIZE, SIZE), 0)
+    draw = ImageDraw.Draw(sealant)
+    for origin in [(24, 73), (115, 33), (179, 149), (71, 193)]:
+        x, y = origin
+        points = [(x, y)]
+        for _ in range(8):
+            x += rng.randint(2, 6)
+            y += rng.randint(-9, 8)
+            points.append((x, y))
+        draw.line(points, fill=208, width=1)
+        for index in (2, 5):
+            x, y = points[index]
+            draw.line([(x, y), (x + 4, y + 4), (x + 6, y + 13)], fill=166, width=1)
+    for x, y, w, h in [(53, 106, 31, 19), (174, 203, 36, 28)]:
+        scrap = [(x + w * dx, y + h * dy) for dx, dy in [(0, .26), (.26, 0), (.83, .09),
+                 (1, .44), (.92, .67), (.79, .94), (.27, 1), (.08, .72)]]
+        draw.polygon(scrap, fill=52, outline=85)
+    return sealant.filter(ImageFilter.GaussianBlur(0.51))
 
 
 def panel(path, high, low, rim, radius):

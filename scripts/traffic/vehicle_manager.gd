@@ -80,6 +80,7 @@ func apply_paint(chassis: MeshInstance3D, swatch: Color) -> void:
 			if not paints.has(swatch):
 				var finish := StandardMaterial3D.new()
 				finish.albedo_color = swatch
+				finish.vertex_color_use_as_albedo = true
 				finish.roughness = 0.28
 				finish.metallic = 0.18
 				paints[swatch] = finish

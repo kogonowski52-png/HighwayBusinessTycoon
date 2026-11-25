@@ -18,6 +18,8 @@ var rng := RandomNumberGenerator.new()
 var stamps: Dictionary = {}
 var breeze := ShaderMaterial.new()
 var terrain_finish: Material
+var forecourt_finishes: Array[ShaderMaterial] = []
+var oil_marks: ShaderMaterial
 
 func _ready() -> void:
 	rng.seed = 174126
@@ -28,6 +30,7 @@ func _ready() -> void:
 	pavement()
 	road_marking()
 	furniture()
+	forecourt_wear()
 	scenic_edge()
 	planting()
 	for tint in stamps:
@@ -44,19 +47,21 @@ func pavement() -> void:
 	ground(Vector3(32.13, -0.028, -4.01), Vector3(30.78, 0.048, 15.17), concrete, worn, 0.11)
 	ground(Vector3(46.11, -0.015, 3.16), Vector3(4.24, 0.030, 11.82), blacktop, worn, 0.10)
 	ground(Vector3(36.86, -0.017, 3.07), Vector3(3.44, 0.035, 11.51), blacktop, worn, 0.10)
-	ground(Vector3(0, -0.035, 10.50), Vector3(127.0, 0.053, 8.64), concrete, paving, 0.11)
-	ground(Vector3(0, -0.016, 10.50), Vector3(127.0, 0.036, 7.34), blacktop, worn, 0.21, 0.65, Vector2.ZERO, true)
+	ground(Vector3(0, -0.035, 10.50), Vector3(127.0, 0.053, 8.64), concrete, paving, 0.20, 0.70, Vector2.ZERO, false, 0.54, 0.50)
+	ground(Vector3(0, -0.016, 10.50), Vector3(127.0, 0.036, 7.34), blacktop, worn, 0.29, 0.65, Vector2.ZERO, true, 0.87, 0.16)
 	ground(Vector3(-0.4, -0.041, -1.70), Vector3(21.27, 0.075, 14.08), concrete, paving, 0.12, 0.87)
-	ground(Vector3(0.08, -0.01, 2.21), Vector3(17.58, 0.029, 6.67),
-		Color("#929d97"), Color("#b3a78e"), 0.19, 0.59)
+	var plaza := ground(Vector3(0.08, -0.01, 2.21), Vector3(17.58, 0.029, 6.67),
+		Color("#899992"), Color("#b2a486"), 0.24, 0.53, Vector2.ZERO, false, 0.82)
+	forecourt_finishes.append(plaza.material_override as ShaderMaterial)
 	for x in [-8.96, 7.37]:
-		ground(Vector3(x, -0.010, 5.73), Vector3(4.10, 0.036, 2.51),
-			Color("#929d97"), Color("#b3a78e"), 0.19, 0.59)
+		var approach := ground(Vector3(x, -0.010, 5.73), Vector3(4.10, 0.036, 2.51),
+			Color("#899992"), Color("#b2a486"), 0.24, 0.53, Vector2.ZERO, false, 0.82)
+		forecourt_finishes.append(approach.material_override as ShaderMaterial)
 	ground(Vector3(-6.12, -0.004, -1.15), Vector3(7.96, 0.047, 1.36),
 		Color("#bdab92"), Color("#cfba98"), 0.081, 0.43, Vector2(0.62, 0.41))
-	ground(Vector3(-12.08, -0.014, -3.51), Vector3(2.92, 0.035, 20.78), blacktop, worn, 0.11, 0.67)
-	ground(Vector3(-1.40, -0.013, -11.79), Vector3(27.30, 0.037, 2.75), blacktop, worn, 0.10, 0.62)
-	ground(Vector3(12.01, -0.013, -2.59), Vector3(3.13, 0.037, 18.97), blacktop, worn, 0.1, 0.62)
+	ground(Vector3(-12.08, -0.014, -3.51), Vector3(2.92, 0.035, 20.78), blacktop, worn, 0.19, 0.67, Vector2.ZERO, false, 0.47)
+	ground(Vector3(-1.40, -0.013, -11.79), Vector3(27.30, 0.037, 2.75), blacktop, worn, 0.19, 0.62, Vector2.ZERO, false, 0.45)
+	ground(Vector3(12.01, -0.013, -2.59), Vector3(3.13, 0.037, 18.97), blacktop, worn, 0.17, 0.62, Vector2.ZERO, false, 0.41)
 	for pos in [Vector3(-15.65, -0.019, -4.78), Vector3(-7.89, -0.012, -13.50),
 		Vector3(8.48, -0.012, -13.62), Vector3(11.46, -0.012, -5.19)]:
 		ground(pos, Vector3(6.4, 0.034, 2.42),
@@ -122,6 +127,11 @@ func furniture() -> void:
 	var freight_stores: Array[Transform3D] = [transform_at(Vector3(18.18, 0, -11.47), 0.18, 1.16),
 		transform_at(Vector3(28.38, 0, -12.12), 0.05, 1.08), transform_at(Vector3(12.68, 0, -15.71), -PI * 0.5, 0.79)]
 	batch(Art.extract_mesh("landscape", "service_yard"), freight_stores)
+	var compressors: Array[Transform3D] = [transform_at(Vector3(8.65, 0.022, 0.31), 0.28, 1.07),
+		transform_at(Vector3(13.14, 0.025, -15.9), -0.82, 0.86)]
+	batch(Art.extract_mesh("landscape", "air_service"), compressors)
+	var tower := Art.place(self, "landscape", "water_tower", Vector3(-19.38, -0.018, -19.13), 0.12)
+	Art.sign(tower, Vector3(0.02, 4.23, 1.085), "R17", 0.436, CREAM)
 	var sign_board := Art.place(self, "landscape", "billboard", Vector3(16.89, 0, 0.92), -0.17)
 	Art.sign(sign_board, Vector3(0, 2.93, 0.178), "NORTHPOINT", 0.43, CREAM)
 	Art.sign(sign_board, Vector3(0, 2.592, 0.179), "ROUTE 17   /   500 m", 0.175, GOLD)
@@ -151,6 +161,27 @@ func furniture() -> void:
 	cable.radial_segments = 6
 	cable.rings = 0
 	batch(cable, wires, Kit.material(Color("#465a4f")), false)
+
+func forecourt_wear() -> void:
+	oil_marks = ShaderMaterial.new()
+	oil_marks.shader = CONTACT
+	oil_marks.set_shader_parameter("ink", Color("#483d33"))
+	oil_marks.set_shader_parameter("opacity", 0.25)
+	var ground_patches := PlaneMesh.new()
+	ground_patches.size = Vector2.ONE
+	var placements: Array[Transform3D] = []
+	for at in [Vector3(0.69, 0.013, 2.63), Vector3(3.51, 0.013, 3.35), Vector3(-4.11, 0.013, 3.06),
+		Vector3(-8.12, 0.025, -0.03), Vector3(7.15, 0.013, 4.48), Vector3(27.55, 0.013, -6.18),
+		Vector3(25.53, 0.013, -3.84), Vector3(10.77, 0.248, -15.20), Vector3(9.47, 0.248, -14.63)]:
+		var size := Vector3(rng.randf_range(1.1, 2.5), 1, rng.randf_range(0.45, 1.14))
+		placements.append(Transform3D(Basis(Vector3.UP, rng.randf_range(-0.32, 0.28)).scaled_local(size), at))
+	batch(ground_patches, placements, oil_marks, false)
+
+func set_forecourt_tier(tier: int) -> void:
+	var finish := clampf((tier - 1) / 4.0, 0.0, 1.0)
+	for pavement_finish in forecourt_finishes:
+		pavement_finish.set_shader_parameter("wear_level", lerpf(0.82, 0.14, finish))
+	oil_marks.set_shader_parameter("opacity", lerpf(0.25, 0.075, finish))
 
 func scenic_edge() -> void:
 	for profile in [[Vector3(-23.07, 0.0, -24.1), Vector3(10.2, 2.14, 5.2), -0.16],
@@ -247,7 +278,7 @@ func planting() -> void:
 	batch(blur, contact_transforms, shadow, false)
 
 func ground(at: Vector3, size: Vector3, tint: Color, accent: Color, grain: float, field := 1.0,
-		tile := Vector2.ZERO, highway := false) -> MeshInstance3D:
+		tile := Vector2.ZERO, highway := false, wear := 0.0, verge := 0.0) -> MeshInstance3D:
 	var piece := BoxMesh.new()
 	piece.size = size
 	var surface := ShaderMaterial.new()
@@ -259,6 +290,9 @@ func ground(at: Vector3, size: Vector3, tint: Color, accent: Color, grain: float
 	surface.set_shader_parameter("tile", tile)
 	surface.set_shader_parameter("paving_noise", PAVING_NOISE)
 	surface.set_shader_parameter("highway", highway)
+	surface.set_shader_parameter("wear_level", wear)
+	surface.set_shader_parameter("verge", verge)
+	surface.set_shader_parameter("plot", Vector4(at.x, at.z, size.x * 0.5, size.z * 0.5))
 	var instance := MeshInstance3D.new()
 	instance.mesh = piece
 	instance.material_override = surface

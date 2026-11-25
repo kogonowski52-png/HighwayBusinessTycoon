@@ -37,6 +37,7 @@ var roof_counts: Dictionary = {}
 var roof_batches: Array[MultiMesh] = []
 var roof_slots: Array[Dictionary] = []
 var extra_islands: Dictionary = {}
+var workshop_shutters: Node3D
 
 func _ready() -> void:
 	var wash := Art.place(self, "architecture", "wash", WASH_AT)
@@ -45,6 +46,7 @@ func _ready() -> void:
 	Art.sign(kitchen, Vector3(0, 2.706, 1.767), "JUNIPER", 0.343, CREAM)
 	var workshop := Art.place(self, "architecture", "workshop", WORKSHOP_AT)
 	Art.sign(workshop, Vector3(0, 2.622, 2.497), "MILE 17 GARAGE", 0.244, CREAM)
+	workshop_shutters = Art.place(self, "architecture", "workshop_shutter", WORKSHOP_AT)
 	var motel := Art.place(self, "architecture", "motel", MOTEL_AT)
 	Art.sign(motel, Vector3(4.14, 3.394, 2.320), "MOTEL", 0.224, CREAM)
 	var parking := Art.place(self, "architecture", "parking", PARKING_AT)
@@ -81,6 +83,7 @@ func _ready() -> void:
 		roof_slots.append({})
 
 func update_sites(economy: HbtEconomy) -> void:
+	workshop_shutters.visible = economy.level("workshop") == 0
 	var roofs_changed := false
 	for id in markers:
 		var level := economy.level(id)
@@ -133,3 +136,7 @@ func focus(id: String) -> Vector3:
 	if id == "fuel":
 		return Vector3(-0.2, 0.0, 1.45)
 	return Routes.position_of(id, 0)
+
+func hose_anchor(visit: HbtVisit) -> Vector3:
+	var island: Node3D = extra_islands[visit.service][visit.bay - int(visit.service == "fuel")]
+	return island.to_global(Station.HOSE_SOCKET)

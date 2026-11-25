@@ -1,5 +1,6 @@
 """Render the original Route 17 HUD icons with Blender's CPU renderer."""
 import sys
+from math import cos, pi, sin, tau
 from pathlib import Path
 
 import bpy
@@ -102,6 +103,62 @@ def finance():
     return model
 
 
+def diamond():
+    model = Model()
+    vertices = [(0, -.08, .01)]
+    for y, radius in [(.38, .56), (.65, .34)]:
+        vertices.extend((cos(i * tau / 6 + .28) * radius, y, sin(i * tau / 6 + .28) * radius * .86)
+                        for i in range(6))
+    shades = ["ac8edf", "8760c2", "c4a2f1", "936dcb", "7252ad", "bea0ec"]
+    for i, tint in enumerate(shades):
+        j = (i + 1) % 6
+        model.add(vertices, [(0, 1 + i, 1 + j), (1 + i, 7 + i, 7 + j, 1 + j)], tint, "Paint")
+    model.add(vertices, [tuple(reversed(range(7, 13)))], "d0b3f7", "Tint")
+    return model
+
+
+def reput():
+    model = Model()
+    layers = [(0.0, .88), (.047, 1), (.163, .97), (.202, .81)]
+    vertices = []
+    for z, scale in layers:
+        for i in range(10):
+            t = pi / 2 + i * tau / 10
+            radius = (.62 if i % 2 == 0 else .312) * scale
+            vertices.append((cos(t) * radius, .58 + sin(t) * radius, z))
+    faces = [tuple(reversed(range(10)))]
+    for layer in range(len(layers) - 1):
+        for i in range(10):
+            j = (i + 1) % 10
+            faces.append((layer * 10 + i, layer * 10 + j, (layer + 1) * 10 + j, (layer + 1) * 10 + i))
+    faces.append(tuple(range(30, 40)))
+    model.add(vertices, faces, GOLD, "Paint")
+    model.orb((-.097, .606, .205), (.081, .146, .017), "ffe5ae", 10, 6, yaw=.34)
+    return model
+
+
+def ticket():
+    model = Model()
+    for offset, tint in [(-.057, "9b5944"), (.037, CORAL)]:
+        model.box((offset, .463 + offset, 0), (.99, .78, .154), tint, .157, "Paint")
+    model.box((.04, .478, .085), (.679, .523, .065), CREAM, .096)
+    model.pipe([(-.226, .440, .131), (-.115, .543, .135), (-.017, .431, .135),
+                (.090, .552, .135), (.194, .439, .133)], .029, CORAL, "Paint", 8)
+    return model
+
+
+def upgrade():
+    model = Model()
+    model.box((0, .167, 0), (.93, .232, .62), "ce9451", .099, "Paint")
+    vertices = [(-.216, .26, -.14), (.216, .26, -.14), (.216, .62, -.14), (.434, .62, -.14),
+                (0, 1.07, -.14), (-.434, .62, -.14), (-.216, .62, -.14)]
+    model.add(vertices + [(x, y, z + .318) for x, y, z in vertices],
+              [tuple(reversed(range(7))), tuple(range(7, 14))] +
+              [(i, (i + 1) % 7, (i + 1) % 7 + 7, i + 7) for i in range(7)], GOLD, "Paint")
+    model.pipe([(-.241, .669, .195), (0, .902, .197), (.24, .665, .195)], .034, CREAM, "Paint", 8)
+    return model
+
+
 def point_at(obj, target):
     obj.rotation_euler = (target - obj.location).to_track_quat("-Z", "Y").to_euler()
 
@@ -148,5 +205,11 @@ def render(name, make):
     bpy.ops.render.render(write_still=True)
 
 
-for key, make in dict(cash=wallet, fuel=fuel, road=road, sites=sites, staff=people, goals=goals, finance=finance).items():
+for key, make in dict(cash=wallet, fuel=fuel, road=road, sites=sites, staff=people, goals=goals, finance=finance,
+                      diamond=diamond, reputation=reput, event=ticket, upgrade=upgrade).items():
     render(key, make)
+
+from station_designs import worn, rehab, service, cantilever, ridge
+
+for number, make in enumerate((worn, rehab, service, cantilever, ridge), start=1):
+    render(f"stage_{number}", make)

@@ -1,5 +1,7 @@
 # Trasa 17 przed i po modernizacji
 
+Przebudowa modeli z wersji 0.3.2 ma osobne porównanie z 0.3.1, trzy warianty stacji i galerię pięciu etapów. [Galeria 0.3.2](0.3.2/README.md)
+
 Kadry pochodzą z okna Godota 4.7.2. Wersję bazową uruchomiono z commitu `9e82886`, a nowe kadry z wersji 0.3.1. Do porównania użyto tej samej stacji, floty i scenariusza rozgrywki. Pliki JPG są zapisami viewportu. Plansze porównawcze skalują i zestawiają te kadry obok siebie.
 
 [Porównanie na jednej planszy](porownanie.jpg) · [Próba trzech kątów kamery](porownanie-kamery.jpg)

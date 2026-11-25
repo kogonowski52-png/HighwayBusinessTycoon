@@ -1,10 +1,11 @@
 """Build original game meshes in metres, with +Y up and +Z toward the viewer."""
-from dataclasses import dataclass, field
-from math import cos, pi, sin, tau
+from dataclasses import dataclass
+from math import cos, pi, sin, sqrt, tau
 from pathlib import Path
 
 import bpy
 from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 
 
 @dataclass
@@ -228,6 +229,39 @@ def clear_objects():
     for mesh in list(bpy.data.meshes):
         if mesh.users == 0:
             bpy.data.meshes.remove(mesh)
+
+
+def bake_occlusion(obj, radius=0.95, strength=0.42):
+    """Bake short-range hemisphere occlusion into the palette carried by the GLB."""
+    mesh = obj.data
+    positions = [vertex.co.copy() for vertex in mesh.vertices]
+    polygons = [tuple(face.vertices) for face in mesh.polygons
+                if mesh.materials[face.material_index].name not in ("Glass", "Light")]
+    if not polygons:
+        return
+    bvh = BVHTree.FromPolygons(positions, polygons)
+    colors = mesh.color_attributes["Tint"].data
+    samples = 8
+    golden_angle = pi * (3 - sqrt(5))
+    for vertex in mesh.vertices:
+        normal = vertex.normal
+        if normal.length_squared < 0.5:
+            continue
+        tangent = normal.cross(Vector((0, 0, 1)) if abs(normal.z) < 0.88 else Vector((1, 0, 0))).normalized()
+        bitangent = normal.cross(tangent)
+        origin = vertex.co + normal * 0.014
+        blocked = 0.0
+        for index in range(samples):
+            cone = (index + 0.5) / samples
+            azimuth = index * golden_angle
+            ray = normal * sqrt(1 - cone) + sqrt(cone) * (tangent * cos(azimuth) + bitangent * sin(azimuth))
+            _, _, _, distance = bvh.ray_cast(origin, ray, radius)
+            if distance is not None and distance > 0.003:
+                blocked += (1 - distance / radius) ** 0.75
+        if blocked > 0.0:
+            shade = 1 - strength * blocked / samples
+            r, g, b, a = colors[vertex.index].color
+            colors[vertex.index].color = (r * shade, g * shade, b * shade, a)
 
 
 def export(path):

@@ -1,5 +1,51 @@
 # Raport testów
 
+## 0.3.2 · Przebudowa Trasy 17
+
+Testy wykonano w Godocie 4.7.2 Stable na Linuxie, w rendererze Compatibility z Mesa llvmpipe. Modele wygenerowano w Blenderze 4.3.2. Galeria zawiera 22 kadry z uruchomionej gry i plansz modeli, trzy ujęcia wariantów w tej samej scenie oraz porównanie z ujęciami z commitu `7ea8bf9`. [Galeria 0.3.2](screenshots/0.3.2/README.md)
+
+| Próba | Wynik |
+| --- | --- |
+| Import projektu i start sceny | Zakończone bez błędów |
+| Ekonomia, zapis i dochód offline | 63/63 |
+| Ruch i rezerwacje stanowisk | 23/23 |
+| Symulacja balansu | 46/46 |
+| Pętla rozgrywki bez okna | 27/27 |
+| Pętla rozgrywki w oknie | 36/36, w tym kliknięcie zakupu w nowym panelu etapów i ponowny odczyt zapisu |
+| Geometria i animacje bez okna | 98/98 |
+| Geometria i animacje w oknie | 119/119, wraz z zapisem 21 kadrów, ruchem klienta sklepu i obsługą w warsztacie |
+| Trzy warianty stacji w oknie | 6/6, w tym zapis trzech kadrów |
+| Zapis utworzony przez uruchomioną wersję 0.3.1 | Zachowane saldo, 11 diamentów, poziom 5 stacji, otwarty sklep, pracownik, język angielski i limit 30 FPS. Scena pokazała właściwe zadaszenie wczytanego poziomu. |
+| APK debug | Pakiet `pl.krystiandevelopment.highwaytycoon`, wersja 0.3.2, kod 5, arm64-v8a i x86_64, min. API 24, cel API 36, podpis v2/v3 |
+
+W 20-minutowym teście ruchu ukończono 253 obsługi we wszystkich ośmiu usługach. Sześć pojazdów odjechało bez obsługi. Nie wystąpiło awaryjne zwalnianie rezerwacji. W próbie okienkowej sprawdzono tankowanie, zatrudnienie, wypłatę, zakup ulepszenia i widok tabletowy w rzeczywistych kontrolkach.
+
+### Geometria modeli
+
+W tabeli podano liczbę indeksowanych trójkątów przed LOD. Każdy z trzech wariantów dachu ma własną geometrię. W wariantach Łuk, Przełęcz i Taras policzono odpowiednio 3 528, 6 288 i 6 448 trójkątów. Początkowa wiata ma 3 906 trójkątów.
+
+| Model | 0.3.1 | 0.3.2 |
+| --- | ---: | ---: |
+| Otwarty sklep | 30 660 | 35 548 |
+| Warsztat | 8 320 | 13 544 |
+| Samochód miejski Sprint | 5 042 | 6 530 |
+| Ciężarówka Cargo z naczepą | 9 502 | 14 090 |
+| Kierowca | 7 636 | 8 188 |
+| Drzewo liściaste | 2 284 | 2 752 |
+
+### Koszt renderowania
+
+Liczniki viewportu z tej samej maszyny. Zbliżenie w formacie telefonu używa ustawień kamery danej wersji. Pozostałe ujęcia zachowują wspólne kadry. Liczniki pozwalają porównać obciążenie sceny. Pomiar FPS, zużycia energii i instalacja APK na fizycznym Androidzie pozostają do wykonania.
+
+| Ujęcie | Wywołania 0.3.1 | Wywołania 0.3.2 | Prymitywy 0.3.1 | Prymitywy 0.3.2 |
+| --- | ---: | ---: | ---: | ---: |
+| Start, 756 × 1344 | 271 | 282 | 92 229 | 96 821 |
+| Mapa za dnia, 1440 × 960 | 360 | 373 | 102 061 | 99 673 |
+| Stacja nocą, 1440 × 960 | 306 | 313 | 111 751 | 108 737 |
+| Rozbudowany kompleks, 1728 × 1010 | 464 | 478 | 117 415 | 124 355 |
+
+APK ma 68 812 692 bajty. SHA-256 pliku to `1105c169e28b970c155ec3743eb162d199627b94581d2c8507a6e9a72e2dced8`. Certyfikat jest zgodny z lokalnym testowym APK 0.3.1. Zweryfikowano integralność archiwum i wyłączenie galerii z eksportu.
+
 ## 0.3.1 · Modernizacja wizualna
 
 Godot 4.7.2 Stable, Blender 4.3.2 oraz Mesa llvmpipe z rendererem Compatibility. Zrzuty pochodzą z uruchomionej sceny, plansz modeli i testu sterowanego kliknięciami. Przejrzano widoki dzienny, nocny, telefon, tablet i rozbudowany kompleks. W drugiej iteracji skorygowano import kolorów GLB i jasność materiałów. Kolejna próba sprawdziła połączenia nasypów z terenem oraz grupowanie dachów.

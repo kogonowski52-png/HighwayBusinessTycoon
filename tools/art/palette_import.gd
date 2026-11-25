@@ -2,8 +2,10 @@
 extends EditorScenePostImport
 
 const PRACTICAL = preload("res://assets/materials/practical.gdshader")
+const DISPLAY_GLASS = preload("res://assets/materials/display_glass.gdshader")
 
 var practical: ShaderMaterial
+var glazing: ShaderMaterial
 
 func _post_import(scene: Node) -> Object:
 	practical = ShaderMaterial.new()
@@ -11,6 +13,9 @@ func _post_import(scene: Node) -> Object:
 	practical.resource_name = "Practical fixture"
 	var asset := get_source_file().get_file().get_basename()
 	practical.set_shader_parameter("beacon", asset in ["price_sign", "service_lantern"])
+	glazing = ShaderMaterial.new()
+	glazing.shader = DISPLAY_GLASS
+	glazing.resource_name = "Glazing reflections"
 	color_surfaces(scene)
 	return scene
 
@@ -25,5 +30,7 @@ func color_surfaces(node: Node) -> void:
 			material.vertex_color_use_as_albedo = true
 			if material.resource_name == "Light":
 				mesh.surface_set_material(surface, practical)
+			elif material.resource_name == "Glass":
+				mesh.surface_set_material(surface, glazing)
 	for child in node.get_children():
 		color_surfaces(child)

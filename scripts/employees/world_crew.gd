@@ -11,6 +11,7 @@ const MANAGER_SPOTS := {
 var staff: Dictionary = {}
 var directors: Dictionary = {}
 var manual: Dictionary = {}
+var market_visitors: Dictionary = {}
 
 func roster(economy: HbtEconomy) -> void:
 	for id in economy.facilities:
@@ -30,6 +31,8 @@ func roster(economy: HbtEconomy) -> void:
 func update(economy: HbtEconomy, dispatch: HbtDispatch, delta: float) -> void:
 	var jobs := {}
 	for visit: HbtVisit in dispatch.live.values():
+		if visit.service == "market" and visit.phase in [HbtVisit.Phase.READY, HbtVisit.Phase.WORKING] and not market_visitors.has(visit.number):
+			market_visitors[visit.number] = market_walk(visit)
 		if visit.phase != HbtVisit.Phase.WORKING:
 			continue
 		if visit.worker >= 0:
@@ -46,6 +49,16 @@ func update(economy: HbtEconomy, dispatch: HbtDispatch, delta: float) -> void:
 		if ticket == null or ticket.phase != HbtVisit.Phase.WORKING:
 			manual[id].queue_free()
 			manual.erase(id)
+	for number in market_visitors.keys():
+		var ticket: HbtVisit = dispatch.live.get(number)
+		if ticket == null or ticket.phase not in [HbtVisit.Phase.READY, HbtVisit.Phase.WORKING]:
+			var shopper: Actor = market_visitors[number]
+			var bay := 0 if ticket == null or ticket.bay < 0 else ticket.bay
+			var walk: Array[Vector3] = [shopper.position, Vector3(-6.19, 0.06, -1.26),
+				Routes.position_of("market", bay) + Vector3(0.69, 0, -0.53)]
+			shopper.arrived.connect(shopper.queue_free, CONNECT_ONE_SHOT)
+			shopper.configure_walk(walk, "walk", 2.0, false)
+			market_visitors.erase(number)
 	for id in staff:
 		for index in range(staff[id].size()):
 			var actor: Actor = staff[id][index]
@@ -68,6 +81,14 @@ func update(economy: HbtEconomy, dispatch: HbtDispatch, delta: float) -> void:
 
 func performer(visit: HbtVisit) -> Node3D:
 	return staff[visit.service][visit.worker] if visit.worker >= 0 else manual.get(visit.number)
+
+func market_walk(visit: HbtVisit) -> Actor:
+	var start := visit.location + Vector3(0.69, 0, -0.53)
+	var shopper := person("customer", start)
+	var walk: Array[Vector3] = [start, Vector3(start.x, 0.06, -1.26), Vector3(-6.19, 0.06, -1.26),
+		Vector3(-6.07, 0.25, -2.19)]
+	shopper.configure_walk(walk, "walk", 1.75, false)
+	return shopper
 
 func person(role: String, at: Vector3) -> Actor:
 	var figure := Actor.new()

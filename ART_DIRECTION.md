@@ -2,6 +2,30 @@
 
 Stacja Północ przy Trasie 17 to stylizowana makieta drogowa. Dachy o zaokrąglonych narożnikach, turkusowa emalia, ciepłe kruszywo i przygaszona roślinność tworzą wspólny język materiałów. Bursztyn wyróżnia stację, a koral, szałwia i chłodny błękit rozróżniają obiekty w tle. Kamera ortograficzna utrzymuje czytelność przy małym ekranie.
 
+## 0.3.2 · Od przydrożnego punktu do Przełęczy
+
+Przegląd `7ea8bf9` pokazał, że duża nowoczesna wiata pierwszego poziomu i oszklony zamknięty sklep wyglądały jak ukończony kompleks. Płaskie powierzchnie maski i szyb zlewały się z góry w jedną plamę. Jednakowe czapy koron i pusty warsztat nadawały otoczeniu rytm regularnej zabudowy. Na telefonie nacisk przenosił się z obsługi na szeroki panel statystyk.
+
+Trzy modele porównano w tej samej scenie na piątym etapie, z identyczną kamerą, otwartym sklepem i światłem dziennym. Warianty różnią się bryłą, sposobem podparcia i materiałami. Wybrano Przełęcz za rozpoznawalną sylwetkę i dobrą widoczność dystrybutora z przodu. [Zrzuty trzech modeli](screenshots/0.3.2/README.md#trzy-warianty)
+
+| Wariant | Geometria i materiał | Ocena kadru |
+| --- | --- | --- |
+| Łuk | Niska wypukła powłoka z zaokrąglonymi czołami, turkusowa emalia i jasne profile. | Czytelna prostota. Symetryczny łuk daje małą różnicę między końcami wiaty. |
+| Przełęcz | Asymetryczny płat z miedzianą krawędzią, pochylone nogi, rurowe wsporniki i osobny świetlik. | Wznosząca się prawa część wyróżnia stację, a cofnięte podpory pozostawiają widok na samochód. |
+| Taras | Dwukondygnacyjna platforma z balustradą, świetlikiem, donicami i czterema podporami. | Najbogatsze wyposażenie dachu. Duża bryła konkuruje ze sklepem oraz zasłania część zaplecza. |
+
+| Element | Przebudowa |
+| --- | --- |
+| Etapy stacji | Krótka wiata z blachy zmienia się kolejno w szerokie zadaszenie, konstrukcję ze świetlikiem, wspornikowy plac i asymetryczną Przełęcz. Zaplecze dostaje miejsce odpoczynku, skrzydło techniczne, ogród usługowy i kryty łącznik. Plamy oleju i pęknięcia słabną wraz z odnową placu. |
+| Dystrybutory i sklep | Mechaniczny dystrybutor ma okrągłe zegary, odlewane czoło i gniazdo węża. Kolejne stanowisko ma obudowę z chromowanymi narożnikami i wyświetlaczem. Otwarty sklep zastępuje budkę z blachą i zabitymi witrynami. |
+| Garaż i transport ciężki | Stalowe rampy, poprzeczka podnośnika, zwijacz powietrza i regał narzędziowy są odsłonięte po uruchomieniu warsztatu. Barwne profile fasady i kratownice pod wiatą TIR powtarzają metalowe wsporniki stacji. |
+| Pojazdy | Dwadzieścia nadwozi ma wypukłą maskę, nową krzywiznę przedniej szyby, wycieraczki i obręcze nadkoli. Mały Sprint zyskuje duże okrągłe reflektory. Ciągniki mają daszki i dzielone szyby. Naczepa otrzymała zawiasy, reling dachowy i boczne odblaski. |
+| Pracownicy i klienci | Większe twarze, plecaki, kieszenie narzędziowe i mankiety pozwalają rozróżnić role z kamery gry. Ciało przechyla się podczas chodu i sięgania po pistolet. Wizyty w sklepie uruchamiają przejście klienta od auta do wejścia. |
+| Otoczenie | Wieża ciśnień, sprężarki przy placach oraz drzewa z korzeniami i oddzielnymi gałęziami nadają punktom charakter. Mapa asfaltu zawiera pęknięcia, łatki i zabrudzenia. Kontakty przy podłożu łączą się z ambient occlusion wypalonym do kolorów wierzchołków. Szyby witryn zmieniają intensywność odbicia przy zmianie kąta. |
+| HUD | Cztery portfele z renderowanymi ikonami, własne cyfry liczników, krótsza karta obsługi oraz półekranowy panel etapów z miniaturami modeli. Animowana gotówka dociera do kasy lub przycisku odbioru zgodnie z przebiegiem rzeczywistej sprzedaży. |
+
+W bardzo bliskim kadrze twarze i tkaniny wciąż opierają się na uproszczonych kształtach i kolorach wierzchołków. Odbicia szyb są stylizowane. Pomiar płynności na fizycznym Androidzie pozostaje otwarty. [Raport testów](TEST_REPORT.md)
+
 ## 0.3.1 · Modernizacja wizualna
 
 W czterech dołączonych kadrach Roadside Empire budynki mają zwarte obrysy, zadaszenia są większe od ich podstaw, a pojazdy i postacie wyróżniają się na nawierzchni. Wyższa kamera pokazuje wejścia oraz to, co dzieje się za budynkami. Place z jasnego piasku przechodzą w zieleń. Wyposażenie jest skupione przy usługach, a kierunkowe słońce i ciemniejsze styki z podłożem dodają bryłom głębi. Jasne karty ulepszeń pokazują ikonę, opis i koszt w tym samym wierszu. Animacje oceniano podczas uruchomionej rozgrywki Highway Business Tycoon. Kolaż referencyjny zawiera nieruchome kadry.

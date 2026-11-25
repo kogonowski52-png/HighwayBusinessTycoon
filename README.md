@@ -24,11 +24,13 @@ godot --headless --path . --script tests/station_smoke.gd
 godot --headless --path . --script tests/art_gallery.gd
 ```
 
-Test zapisu korzysta z własnego pliku i obejmuje migrację, uszkodzenie pliku głównego oraz wczytanie kopii po przerwanym zapisie. Test sceny można uruchomić w oknie z opcją `-- --capture-dir=/pełna/ścieżka`. Zrzuty aktualnej rozgrywki są w [galerii testowej](docs/gameplay-0.3.0/README.md).
+Test zapisu korzysta z własnego pliku i obejmuje migrację, uszkodzenie pliku głównego oraz wczytanie kopii po przerwanym zapisie. Test sceny można uruchomić w oknie z opcją `-- --capture-dir=/pełna/ścieżka`. [Wyniki testów](TEST_REPORT.md)
 
 ## Modele i galeria
 
 Modele GLB są częścią repozytorium. Blender jest potrzebny do ponownego wygenerowania geometrii z autorskich skryptów.
+
+Galeria 0.3.2 zawiera test trzech pełnych modeli stacji oraz ujęcia przebudowy. Do ponownego porównania wariantów w oknie użyj `godot --path . --script tests/art_gallery.gd -- --suite=stations --capture-dir=/pełna/ścieżka`. [Galeria przebudowy](screenshots/0.3.2/README.md)
 
 ```sh
 blender -b -t 2 --python-exit-code 1 --python tools/art/generate.py
@@ -36,11 +38,11 @@ godot --headless --editor --import --path . --quit
 godot --path . --script tests/art_gallery.gd -- --capture-dir=/pełna/ścieżka
 ```
 
-Można wygenerować pojedynczą rodzinę, dodając na końcu polecenia Blendera `-- architecture`, `-- vehicles`, `-- characters` lub `-- landscape`. Do zapisu PNG uruchom Godota z oknem i wskaż istniejący katalog. Gotowe kadry są w [galerii](docs/art-gallery/README.md).
+Można wygenerować pojedynczą rodzinę, dodając na końcu polecenia Blendera `-- architecture`, `-- vehicles`, `-- characters` lub `-- landscape`. Do zapisu PNG uruchom Godota z oknem i wskaż istniejący katalog.
 
 Wersja 0.3.1 ma osobną galerię z ujęciami przed i po modernizacji. Trzy kąty kamery można zapisać poleceniem `godot --path . --script tests/art_gallery.gd -- --suite=camera --capture-dir=/pełna/ścieżka`. [Porównanie grafiki](screenshots/README.md)
 
-Teksturę gruntu i panele generuje `python3 tools/art/surfaces.py` z biblioteką Pillow. Ikony renderuje `blender -b -t 4 --python-exit-code 1 --python tools/art/hud_icons.py`.
+Teksturę gruntu i panele generuje `python3 tools/art/surfaces.py` z biblioteką Pillow. Ikony renderuje `blender -b -t 4 --python-exit-code 1 --python tools/art/hud_icons.py`. Czcionkę liczników odtwarza `python3 tools/art/display_font.py` z biblioteką fontTools.
 
 ## Android
 

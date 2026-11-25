@@ -1,5 +1,11 @@
 # Stan projektu
 
+## 0.3.2 · Przebudowa geometrii Trasy 17
+
+- Główna stacja ma pięć różniących się konstrukcji. Przełęcz została wybrana po porównaniu z Łukiem i Tarasem w oknie Godota. Otwarty sklep i czynny warsztat mają własne modele wyposażenia. [Galeria i porównanie](screenshots/0.3.2/README.md)
+- Ruch i układ stanowisk przeszły testy rozgrywki. Profil utworzony w `7ea8bf9` otwiera się z portfelem, rozbudową, pracownikiem, językiem i trybem oszczędnym. [Raport testów](TEST_REPORT.md)
+- Eksport Android 0.3.2 jest kompilacją debug do prób na urządzeniach. Lokalna kontrola sprawdza format pakietu, manifest i podpis.
+
 ## 0.3.1 · Modernizacja wizualna
 
 - Stacja, Trasa 17 i osiem działających usług mają nową oprawę. Pięć progów dachów, wydzielona wiata TIR i animowane elementy oświetlenia są dostępne w uruchomionej grze.

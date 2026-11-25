@@ -2,7 +2,7 @@
 from math import cos, pi, sin, tau
 import random
 
-from kit import Model, clear_objects, export, ring_faces
+from kit import Model, bake_occlusion, clear_objects, export, ring_faces
 
 METAL = "586e6a"
 DARK = "29464a"
@@ -34,20 +34,23 @@ def pine():
 
 def broadleaf():
     model = Model()
-    main = (-.06, 2.36, -.04)
-    model.pipe([(0, -.025, 0), (.12, .45, .08), (.02, 1.27, .07), main],
-               [.28, .23, .16, .10], BEAM, sides=13)
+    model.pipe([(0, -.037, 0), (.03, .23, .07), (.12, .71, .12), (.07, 1.33, .11), (-.09, 2.43, -.11)],
+               [.31, .239, .185, .158, .064], BEAM, sides=14)
+    for n in range(4):
+        angle = n * tau / 4 + .31
+        dx, dz = cos(angle), sin(angle)
+        model.pipe([(.09, .29, .09), (dx * .34, .08, dz * .35), (dx * .59, -.015, dz * .57)],
+                   [.108, .087, .014], "84664f", sides=7)
     leaves = [
-        (-.83, 2.28, .35, .98, .87, .84, "517d47"), (.78, 2.49, .28, .95, 1.02, .88, "73965a"),
-        (-.64, 3.10, -.41, .93, 1.01, .89, "739650"), (.30, 3.59, -.02, .93, 1.03, .91, "9daa5f"),
-        (-.25, 3.44, .44, 1.06, .95, .85, "779850"), (.64, 3.06, -.58, .89, .96, .80, "628852"),
-        (.58, 2.70, .70, .84, .77, .73, "85a660"), (-.47, 2.71, .87, .87, .85, .68, "668f49"),
+        (-.98, 2.40, .27, 1.04, .69, .91, "517d47"), (.78, 2.57, .28, .97, .71, .85, "73965a"),
+        (-.62, 3.02, -.49, .98, .86, .93, "739650"), (.28, 3.55, -.12, 1.10, .81, .88, "9daa5f"),
+        (-.39, 3.28, .56, .91, .71, .78, "779850"), (.66, 3.10, -.56, .84, .62, .75, "628852"),
+        (.67, 2.82, .63, .73, .51, .67, "85a660"), (-.54, 2.65, .87, .71, .57, .63, "668f49"),
     ]
     for x, y, z, w, h, d, color in leaves:
-        model.orb((x, y, z), (w, h, d), color, 14, 10, irregular=.077)
-    for x, y, z in [(-.68, 2.47, .30), (.53, 2.57, -.26), (.42, 2.54, .54)]:
-        model.pipe([(.03, 1.38, .03), (x * .62, y * .87, z * .76), (x, y, z)],
-                   [.14, .093, .058], "917257", sides=10)
+        model.orb((x, y, z), (w, h, d), color, 16, 9, irregular=.093)
+        model.pipe([(.07, 1.36, .12), (x * .42, y * .75, z * .55), (x * .78, y * .89, z * .90), (x, y, z)],
+                   [.094, .072, .051, .028], "917257", sides=7)
     return model
 
 
@@ -55,10 +58,9 @@ def golden_tree():
     model = Model()
     model.parts = broadleaf().parts
     from kit import rgba
-    swaps = ["99614a", "b98a4f", "cd9b5b", "dfa95f", "ba824d",
-             "cc9b5f", "c48a4d", "d6a04c", "af774c"]
-    for index, part in enumerate(model.parts[:len(swaps)]):
-        part.color = rgba(swaps[index])
+    swaps = ["ba824d", "cf9552", "cb9158", "e9b76f", "df9d51", "c78649", "d9a06b", "c98d56"]
+    for i, tint in enumerate(swaps):
+        model.parts[5 + i * 2].color = rgba(tint)
     return model
 
 
@@ -208,6 +210,47 @@ def service_yard():
     return model
 
 
+def air_service():
+    model = Model()
+    model.custom_box((0, .079, 0), (1.64, .158, 1.21), "b0a78d", .20, .044)
+    model.pipe([(-.41, .42, -.09), (-.32, .42, -.09), (.32, .42, -.09), (.43, .42, -.09)],
+               [.138, .209, .209, .137], "c88552", "Paint", 16)
+    for x in [-.30, .29]:
+        model.box((x, .265, -.095), (.092, .189, .26), DARK, .029, "Metal")
+    model.box((.16, .695, -.09), (.39, .191, .33), METAL, .058, "Metal")
+    model.pipe([(-.046, .63, -.06), (-.19, .81, -.07), (-.31, .805, .17), (-.31, .805, .231)],
+               .035, "a8aa99", "Metal", 10)
+    model.pipe([(-.31, .805, .205), (-.31, .805, .276)], .09, CREAM, "Paint", 16)
+    model.box((-.31, .802, .286), (.021, .102, .018), "9d5e41", .009, yaw=.29)
+    points = []
+    for i in range(35):
+        theta = i * tau / 12
+        points.append((-.10 + cos(theta) * .222, .185 + .003 * i, .34 + sin(theta) * .194))
+    model.pipe(points, .028, "ddac58", "Rubber", 7)
+    model.pipe([(0.40, .42, -.09), (.53, .45, .08), (.43, .20, .39), (.13, .183, .49)], .027, "ddb25f", "Rubber", 7)
+    return model
+
+
+def water_tower():
+    model = Model()
+    for side in [-1, 1]:
+        for depth in [-1, 1]:
+            x, z = side * .98, depth * .93
+            model.custom_box((x, .11, z), (.47, .22, .47), "a59a84", .12, .046)
+            model.pipe([(x, .22, z), (x * .94, 1.80, z * .94), (x * .79, 3.51, z * .79)], .084, BEAM, "Metal", 8)
+            model.pipe([(x * .90, .68, z * .90), (-x * .79, 3.19, z * .81)], .039, "a7a084", "Metal", 7)
+    model.pipe([(0, 3.36, 0), (0, 3.60, 0), (0, 3.72, 0), (0, 4.96, 0), (0, 5.17, 0)],
+               [.69, .91, 1.08, 1.08, .85], "849994", "Metal", 28)
+    model.pipe([(0, 5.03, 0), (0, 5.25, 0), (0, 5.51, 0)], [1.09, .92, .161], "b5a780", "Paint", 28)
+    for y in [3.79, 4.72]:
+        model.pipe([(0, y, 0), (0, y + .058, 0)], 1.096, "a2a58f", "Metal", 28)
+    for dx in [-.125, .125]:
+        model.pipe([(dx + .64, .78, .91), (dx + .64, 3.15, .91), (dx + .64, 3.45, .78)], .021, DARK, "Metal", 7)
+    for y in [.97, 1.20, 1.43, 1.66, 1.89, 2.12, 2.35, 2.58, 2.81, 3.04, 3.26]:
+        model.pipe([(.515, y, .914), (.765, y, .914)], .019, METAL, "Metal", 7)
+    return model
+
+
 def lamp():
     model = Model()
     model.box((0, .079, 0), (.36, .16, .36), "a39d89", .065)
@@ -265,14 +308,16 @@ def route_sign():
 
 MODELS = dict(pine=pine, broadleaf=broadleaf, golden_tree=golden_tree, hedge=hedge, stone=stone,
               meadow=meadow, bank=bank, wetland=wetland, reeds=reeds, overlook=overlook,
-              cactus=cactus, service_yard=service_yard,
+              cactus=cactus, service_yard=service_yard, air_service=air_service, water_tower=water_tower,
               lamp=lamp, rail=rail, billboard=billboard, pole=utility_pole, route_sign=route_sign)
 
 
 def generate(root):
     for name, make in MODELS.items():
         clear_objects()
-        make().mesh(name.capitalize())
+        mesh = make().mesh(name.capitalize())
+        if name in ("broadleaf", "golden_tree", "air_service", "water_tower", "service_yard", "overlook"):
+            bake_occlusion(mesh, .69, .35)
         if name == "wetland":
             water().mesh("Water")
         export(root / "assets/models/landscape" / f"{name}.glb")

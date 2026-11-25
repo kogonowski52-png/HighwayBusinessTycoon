@@ -41,8 +41,13 @@ func run() -> void:
 	await capture("01-tankowanie.png")
 	step(2.0)
 	expect(economy.amount("cash").decimal() == "155" and economy.customers == 1, "first purchase amount is earned by refueling")
-	click(game.hud.upgrade)
-	expect(economy.level("fuel") == 2 and economy.amount("cash").empty(), "clicked upgrade commits new tier")
+	click(game.hud.upgrade_preview)
+	await process_frame
+	expect(game.operations.visible and game.operations.page == "upgrades", "building illustration and upgrade sheet opens")
+	await capture("08-etapy.png")
+	await click_row(game.hud.upgrade.text)
+	expect(economy.level("fuel") == 2 and economy.amount("cash").empty(), "upgrade sheet commits the same purchase")
+	click(game.operations.back)
 
 	click(game.hud.pages.goals)
 	await process_frame
