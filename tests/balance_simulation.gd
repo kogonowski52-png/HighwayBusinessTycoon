@@ -70,9 +70,9 @@ func simulate(seed: int) -> void:
 		elif limit == 7200:
 			expect(row.sites == 8 and row.best_level >= 20, "seed %d: 2 h opens all services" % seed)
 		elif limit == 86400:
-			expect(row.best_level >= 45 and not offline.empty(), "seed %d: day-one progress includes offline earnings" % seed)
+			expect(row.best_level >= 45 and row.best_level < 100 and not offline.empty(), "seed %d: day-one progress includes offline earnings and stays below cap" % seed)
 		elif limit == 604800:
-			expect(row.best_level >= 80 and row.workers >= 14, "seed %d: first week develops capacity" % seed)
+			expect(row.best_level >= 80 and row.workers >= 14 and row.min_level < 100, "seed %d: first week develops capacity and leaves room to grow" % seed)
 		elif limit == 2592000:
 			expect(row.best_level == 100 and row.min_level >= 95, "seed %d: all free branches approach the cap" % seed)
 	expect(first_sale >= 0.0 and first_sale <= 5.0, "seed %d first income by 5s" % seed)

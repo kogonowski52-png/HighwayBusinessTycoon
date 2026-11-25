@@ -13,7 +13,7 @@ Symulacja używa tych samych klas ruchu, popytu, portfela, cen i dochodu offline
 
 Pierwszy przychód wystąpił po **2,75 s**, a pierwsze ulepszenie po **4,25 s** we wszystkich trzech przebiegach. Na koniec 30 dni każda usługa osiągnęła poziom 100. Na koniec pierwszego tygodnia pozostały usługi na poziomie 97–98. Usunięcie konfliktów tras umożliwiło zwykłym przebiegom działanie bez awaryjnego zwalniania rezerwacji.
 
-Regresja zakończyła się wynikiem **46/46**. Automatyczne progi obejmują pierwsze zarobki, pierwszą inwestycję, stopniowe odblokowywanie, zatrudnienie, nieujemną trwałą progresję i sprawne zwalnianie rezerwacji. W oddzielnym teście sprawdzono też wzrost ceny i stawki na każdym z 100 poziomów każdej usługi.
+Regresja zakończyła się wynikiem **46/46**. Automatyczne progi obejmują pierwsze zarobki, pierwszą inwestycję, stopniowe odblokowywanie, zatrudnienie, ograniczanie zbyt szybkiego dojścia do limitu oraz sprawne zwalnianie rezerwacji. W oddzielnym teście sprawdzono też wzrost ceny i stawki na każdym z 100 poziomów każdej usługi.
 
 Pełne dane z 18 punktów kontrolnych znajdują się w [pliku JSON](balance-0.3.0.json). Polecenie odtwarza ten raport.
 

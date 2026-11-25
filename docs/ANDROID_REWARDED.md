@@ -11,7 +11,7 @@ gradle --project-dir tools/android_rewarded assembleRelease
 cp tools/android_rewarded/build/outputs/aar/HighwayRewarded-release.aar addons/highway_rewarded/highway-rewarded.aar
 ```
 
-Zainstaluj szablon Gradle w edytorze Godot i włącz **Highway Rewarded Android** w ustawieniach wtyczek projektu. W kopii presetu Android włącz kompilację Gradle. Ustaw identyfikatory aplikacji i jednostki formatu Rewarded w sekcji `highway_rewarded` ustawień projektu. Wtyczka dodaje AAR oraz metadane i zależności tylko przy obecności artefaktu i poprawnym formacie obu identyfikatorów.
+Zainstaluj szablon Gradle w edytorze Godot oraz narzędzia Android Build Tools wymagane przez ten szablon. Weryfikacja z Godotem 4.7.2 korzystała z wersji 36.1.0. Włącz **Highway Rewarded Android** w ustawieniach wtyczek projektu. W kopii presetu Android włącz kompilację Gradle. Ustaw identyfikatory aplikacji i jednostki formatu Rewarded w sekcji `highway_rewarded` ustawień projektu. Wtyczka dodaje AAR oraz metadane i zależności tylko przy obecności artefaktu i poprawnym formacie obu identyfikatorów.
 
 Do prób urządzeniowych można użyć publicznych identyfikatorów testowych Google dla Androida.
 
@@ -21,3 +21,5 @@ Do prób urządzeniowych można użyć publicznych identyfikatorów testowych Go
 | `rewarded_unit` | `ca-app-pub-3940256099942544/5224354917` |
 
 Produkcja wymaga własnych identyfikatorów i treści zgody w AdMob. Urządzeniowy test odtwarzania powinien objąć pełne obejrzenie i zamknięcie przed przyznaniem nagrody. Kwota dodatkowa jest naliczana dopiero po zdarzeniu `OnUserEarnedRewardListener` dla bieżącego identyfikatora oferty.
+
+Testowy eksport przeszedł kompilację Gradle i sprawdzenie podpisu. Manifest zawierał moduł, uprawnienie do internetu i oba publiczne identyfikatory testowe. Odtwarzanie i nagroda z SDK pozostają do sprawdzenia na Androidzie.

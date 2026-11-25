@@ -5,7 +5,7 @@ var exporter: EditorExportPlugin
 
 func _enter_tree() -> void:
 	for key in ["application_id", "rewarded_unit"]:
-		var path := "highway_rewarded/" + key
+		var path: String = "highway_rewarded/" + key
 		if not ProjectSettings.has_setting(path):
 			ProjectSettings.set_setting(path, "")
 		ProjectSettings.add_property_info({"name": path, "type": TYPE_STRING})
@@ -41,7 +41,7 @@ class RewardedExport extends EditorExportPlugin:
 		return PackedStringArray(["com.google.android.gms:play-services-ads:24.8.0",
 			"com.google.android.ump:user-messaging-platform:3.2.0"]) if configured() else PackedStringArray()
 
-	func _get_android_manifest_application_element(_platform: EditorExportPlatform, _debug: bool) -> String:
+	func _get_android_manifest_application_element_contents(_platform: EditorExportPlatform, _debug: bool) -> String:
 		if not configured():
 			return ""
 		return '<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" android:value="%s" />\n<meta-data android:name="highwaytycoon.rewarded_unit" android:value="%s" />' \
