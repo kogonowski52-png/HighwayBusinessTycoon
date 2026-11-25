@@ -6,7 +6,7 @@
 - Osiem usług obsługuje poziomy 1–100, progi pojemności, cztery tryby zakupu i oddzielne stawki. Fizyka ruchu korzysta z rezerwacji, odstępów i odzyskiwania po blokadzie.
 - Pracownicy widoczni w świecie wykonują zadania, zyskują doświadczenie i awansują. Pięć kart menedżerów daje osobne efekty. Cele, osiągnięcia i rotujące wydarzenia pozwalają rozwijać kompleks za waluty zdobywane w grze.
 - Dochód offline, atomowy zapis i odzyskiwanie obsługują istniejące profile. Opcjonalny moduł reklamowy działa w wariancie eksportu Android z odpowiednią konfiguracją. Podstawowy APK debug nadal działa offline.
-- Tag `v0.3.0` uruchamia kompilację i publikację APK debug w GitHub Actions.
+- APK debug 0.3.0 został zbudowany z tagu `v0.3.0` przez GitHub Actions i udostępniony jako wydanie testowe. [Pobierz APK](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/download/v0.3.0/HighwayBusinessTycoon-0.3.0-debug.apk)
 
 Fizyczne testy Androida, pomiary wydajności i wyświetlenie reklamy z docelową konfiguracją wymagają urządzenia. Projekt rozgrywa się w kompleksie Trasy 17. Kolejne lokalizacje i publikacja sklepowa są w planie.
 
