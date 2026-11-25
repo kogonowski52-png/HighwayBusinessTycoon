@@ -7,6 +7,7 @@
 - Dodano cztery dokładne waluty, 100 poziomów na usługę, zakupy grupowe, statystyki, premie i wydarzenia dzienne.
 - Dodano dochód offline, migrację zapisów, odzyskiwanie kopii oraz opcjonalny wariant Android z reklamą nagradzaną.
 - Dodano automatyczne sprawdzanie balansu w sześciu horyzontach i testy pętli gry z rzeczywistymi kliknięciami w oknie.
+- Dodano procedurę kompilacji, weryfikacji podpisu i publikacji APK debug 0.3.0 na GitHubie.
 
 ## 0.2.0 · Oprawa Trasy 17
 

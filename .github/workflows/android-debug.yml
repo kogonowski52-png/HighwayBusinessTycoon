@@ -1,0 +1,83 @@
+name: Android debug release
+
+on:
+  push:
+    tags: ['v0.3.0']
+
+jobs:
+  publish-apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      GODOT_VERSION: '4.7.2'
+      ANDROID_BUILD_TOOLS: '36.0.0'
+      APK: builds/HighwayBusinessTycoon-0.3.0-debug.apk
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Prepare Godot and Android SDK
+        shell: bash
+        run: |
+          godot_dir="$RUNNER_TEMP/hbt-godot"
+          templates_dir="$godot_dir/editor_data/export_templates/$GODOT_VERSION.stable"
+          mkdir -p "$templates_dir"
+          cd "$godot_dir"
+
+          release_url="https://github.com/godotengine/godot-builds/releases/download/$GODOT_VERSION-stable"
+          editor="Godot_v$GODOT_VERSION-stable_linux.x86_64"
+          templates="Godot_v$GODOT_VERSION-stable_export_templates.tpz"
+          curl --fail --silent --show-error --location --retry 3 --output "$editor.zip" "$release_url/$editor.zip"
+          curl --fail --silent --show-error --location --retry 3 --output "$templates" "$release_url/$templates"
+          sha512sum -c <<'CHECKSUMS'
+          9aa00f7a605200940bce3027a567b782f49bd8e940dd06ae9e987bd65aee1b1467edd56ed84fcdcbdd44354bf613bdbb4e5d2913e925850368e150c59ed54c65  Godot_v4.7.2-stable_linux.x86_64.zip
+          ca4d71c4d7b81dfc15d1a98baa07534aa95b03fdda78a0075b06672e1648d2e5f40980c9adc28d23e1b92e732ee7bf3461997aa804af74ec2fcd7a93ccb84079  Godot_v4.7.2-stable_export_templates.tpz
+          CHECKSUMS
+          unzip -q "$editor.zip"
+          mv "$editor" godot
+          unzip -qj "$templates" 'templates/android_debug.apk' -d "$templates_dir"
+          touch _sc_
+
+          if [[ ! -x "$ANDROID_HOME/build-tools/$ANDROID_BUILD_TOOLS/apksigner" ]]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;$ANDROID_BUILD_TOOLS"
+          fi
+
+          "$JAVA_HOME_21_X64/bin/keytool" -genkeypair -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname 'CN=Android Debug,O=Android,C=US' -alias androiddebugkey \
+            -keystore "$godot_dir/debug.keystore" -storepass android -keypass android
+          cat > "$godot_dir/editor_data/editor_settings-4.7.tres" <<SETTINGS
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/java_sdk_path = "$JAVA_HOME_21_X64"
+          export/android/debug_keystore = "$godot_dir/debug.keystore"
+          SETTINGS
+          printf '%s\n' "$godot_dir" >> "$GITHUB_PATH"
+
+      - name: Build and verify APK
+        shell: bash
+        run: |
+          godot --headless --editor --import --path . --quit
+          godot --headless --path . --export-debug Android "$APK"
+          build_tools="$ANDROID_HOME/build-tools/$ANDROID_BUILD_TOOLS"
+          "$build_tools/apksigner" verify --verbose "$APK"
+          badging=$("$build_tools/aapt" dump badging "$APK")
+          printf '%s\n' "$badging" | sed -n '/^package:/p; /^native-code:/p'
+          [[ "$badging" == *"name='pl.krystiandevelopment.highwaytycoon'"* ]]
+          [[ "$badging" == *"versionName='${GITHUB_REF_NAME#v}'"* ]]
+          [[ "$badging" == *"native-code: 'arm64-v8a' 'x86_64'"* ]]
+          [[ "$badging" != *'android.permission.INTERNET'* ]]
+
+      - name: Publish APK to GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          checksum=$(sha256sum "$APK" | cut -d ' ' -f 1)
+          gh release create "$GITHUB_REF_NAME" "$APK" --repo "$GITHUB_REPOSITORY" \
+            --verify-tag --prerelease --title 'Highway Business Tycoon 0.3.0 · Android debug' \
+            --notes "Testowy APK Android dla arm64-v8a i x86_64. Gra działa offline. SHA-256: $checksum"

@@ -13,6 +13,7 @@
 | Pętla gry w oknie, w tym zdjęcia i układ tabletu | 34/34 |
 | Regresja oprawy i światła bez okna | 52/52 |
 | Eksport APK debug 0.3.0 | Podpis v2/v3 zweryfikowany, arm64-v8a i x86_64, bez uprawnienia do internetu |
+| Procedura eksportu dla GitHub Actions | Lokalna kompilacja z czystych źródeł. Zweryfikowano podpis, wersję, identyfikator pakietu i obie architektury. |
 | Kompilacja opcjonalnego modułu reklamowego | Gradle 8.13 zakończył `assembleRelease` i wytworzył AAR |
 | Testowy eksport Android z reklamą | Gradle z szablonu Godot zapakował moduł, a w podpisanym APK sprawdzono rejestrację wtyczki, oba testowe identyfikatory i uprawnienie do internetu |
 | Działanie na fizycznym Androidzie | Próba instalacji, wyświetlenie reklamy i pomiar FPS wymagają urządzenia |
