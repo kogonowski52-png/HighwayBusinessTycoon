@@ -22,7 +22,7 @@ Godot 4.7.2 Stable na Linuxie, renderer Compatibility i Mesa llvmpipe. Próby u�
 
 Sprawdzono wszystkie 30 dni kalendarza i 50 odbiorów odznak, pominięcie dni, cofnięcie czasu oraz ponowne otwarcie zapisu po każdej nagrodzie. Test okienkowy objął start, kliknięcia w panele, płynny powrót kamery po zmianie wiaty, zakup za walutę gry, suwak każdego kanału i blokadę gestu pod panelem. Animacja bramy wynikała z aktywnej rezerwacji, klient wysiadł przy sklepie, a zakończona sprzedaż uruchomiła dostawę z paczką. Symulacja balansu bez odbierania nowych nagród dała identyczny raport JSON jak 0.4.0. [Raport balansu](docs/balance-0.4.0.md)
 
-Film pokazuje wejście z menu, tankowanie, rozbudowę, zatrudnienie i odebranie nagrody. Zapis zawiera 484 klatki w rozdzielczości 486 × 864 przy 30 FPS oraz stereofoniczny miks z silnika. [Nagranie](screenshots/0.5.0/rozgrywka.mp4)
+Film pokazuje wejście z menu, tankowanie, rozbudowę, zatrudnienie i odebranie nagrody. Zapis zawiera 464 klatki w rozdzielczości 486 × 864 przy 30 FPS oraz kompletną ścieżkę stereo z silnika. Godot Movie Maker zgłosił pozostające zasoby audio przy zamykaniu nagrywania. Zimny start, scenariusz bez nagrywania i przejście galerii zakończyły się bez tego ostrzeżenia. [Nagranie](screenshots/0.5.0/rozgrywka.mp4)
 
 Lokalny APK ma 74 349 357 bajtów i SHA-256 `de17431cbf726a20287e7cb470765b693b35137b30f7f7148aea88345df28780`. Podpis odpowiada lokalnej wersji 0.4.0. Manifest domyślnej kompilacji Android obejmuje wibracje i działanie offline. Fizyczna instalacja, głośność na głośniku telefonu, wibracje i FPS pozostają do sprawdzenia. Po pełnym zamknięciu aplikacji kalendarz offline ufa lokalnemu zegarowi i zachowuje najwyższy znacznik. Cofnięcie nie odnawia wykorzystanej nagrody.
 

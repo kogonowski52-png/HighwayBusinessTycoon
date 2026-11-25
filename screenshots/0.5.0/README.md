@@ -1,6 +1,6 @@
 # Trasa 17 · galeria 0.5.0
 
-30 kadrów z działającej gry, zapisanych z okna Godota 4.7.2. Test obsługuje elementy interfejsu tak jak gracz. W dalszej części używa osobnego profilu testowego do otwarcia całego kompleksu i sprawdzenia wypłaty offline. Porównanie korzysta z czterech analogicznych widoków z faktycznej galerii 0.4.0. [Porównanie](porownanie-0.4.0.jpg) · [16 sekund rozgrywki z dźwiękiem](rozgrywka.mp4)
+30 kadrów z działającej gry, zapisanych z okna Godota 4.7.2. Test obsługuje elementy interfejsu tak jak gracz. W dalszej części używa osobnego profilu testowego do otwarcia całego kompleksu i sprawdzenia wypłaty offline. Porównanie korzysta z czterech analogicznych widoków z faktycznej galerii 0.4.0. [Porównanie](porownanie-0.4.0.jpg) · [15 sekund rozgrywki z dźwiękiem](rozgrywka.mp4)
 
 ![Porównanie interfejsu 0.4.0 i 0.5.0](porownanie-0.4.0.jpg)
 

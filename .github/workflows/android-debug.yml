@@ -3,6 +3,8 @@ name: Android debug release
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
+    branches: [main]
+    paths: ['.github/workflows/android-debug.yml']
   workflow_dispatch:
     inputs:
       tag:
@@ -21,13 +23,18 @@ jobs:
     env:
       GODOT_VERSION: '4.7.2'
       ANDROID_BUILD_TOOLS: '36.0.0'
-      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+      REQUESTED_TAG: ${{ inputs.tag || (github.ref_type == 'tag' && github.ref_name) || '' }}
     steps:
       - name: Resolve version and APK path
         shell: bash
         run: |
-          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
-          printf 'APK=builds/HighwayBusinessTycoon-%s-debug.apk\n' "${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+          tag="$REQUESTED_TAG"
+          if [[ -z "$tag" ]]; then
+            tags=$(git ls-remote --tags --refs --sort=-version:refname "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git")
+            tag=$(awk '$2 ~ /^refs\/tags\/v[0-9]+\.[0-9]+\.[0-9]+$/ { sub(/^refs\/tags\//, "", $2); print $2; exit }' <<< "$tags")
+          fi
+          [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          printf 'RELEASE_TAG=%s\nAPK=builds/HighwayBusinessTycoon-%s-debug.apk\n' "$tag" "${tag#v}" >> "$GITHUB_ENV"
 
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -87,18 +94,40 @@ jobs:
           [[ "$badging" == *"native-code: 'arm64-v8a' 'x86_64'"* ]]
           [[ "$badging" != *'android.permission.INTERNET'* ]]
 
+      - name: Store verified APK as a workflow artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        continue-on-error: true
+        with:
+          name: HighwayBusinessTycoon-${{ env.RELEASE_TAG }}-Android
+          path: ${{ env.APK }}
+          if-no-files-found: error
+          compression-level: 0
+
       - name: Publish APK to GitHub Releases
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          if assets=$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' 2>/dev/null); then
-            if ! grep -Fxq "${APK##*/}" <<< "$assets"; then
-              gh release upload "$RELEASE_TAG" "$APK" --repo "$GITHUB_REPOSITORY"
-            fi
-            exit 0
-          fi
           checksum=$(sha256sum "$APK" | cut -d ' ' -f 1)
-          gh release create "$RELEASE_TAG" "$APK" --repo "$GITHUB_REPOSITORY" \
-            --verify-tag --prerelease --title "Highway Business Tycoon ${RELEASE_TAG#v} · Android debug" \
-            --notes "Testowy APK Android dla arm64-v8a i x86_64. Gra działa offline. SHA-256: $checksum"
+          notes="Testowy APK Android dla arm64-v8a i x86_64. Gra działa offline. SHA-256: $checksum"
+          publish_release() {
+            local release
+            if ! release=$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets,isDraft); then
+              gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --prerelease \
+                --title "Highway Business Tycoon ${RELEASE_TAG#v} · Android debug" --notes "$notes" || return 1
+              release='{"assets":[],"isDraft":true}'
+            fi
+            if ! jq -e --arg name "${APK##*/}" '.assets | any(.name == $name and .size > 0)' <<< "$release" >/dev/null; then
+              gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --notes "$notes" >/dev/null || return 1
+              gh release upload "$RELEASE_TAG" "$APK" --repo "$GITHUB_REPOSITORY" --clobber || return 1
+            fi
+            if jq -e '.isDraft' <<< "$release" >/dev/null; then
+              gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false >/dev/null || return 1
+            fi
+          }
+          for attempt in 1 2 3; do
+            if publish_release; then exit 0; fi
+            printf 'Publish attempt %s failed\n' "$attempt" >&2
+            if [[ "$attempt" != 3 ]]; then sleep "$((attempt * 5))"; fi
+          done
+          exit 1
