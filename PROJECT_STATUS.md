@@ -1,5 +1,11 @@
 # Stan projektu
 
+## 0.9.1 · Dotyk i rozbudowa
+
+Wspólny panel przewija całą powierzchnią, utrzymuje bezwładność po puszczeniu palca i rozróżnia ruch pionowy od regulacji suwaka. Rozbudowa sortuje gotowe inwestycje, ma cztery zakładki i umożliwia budowę z listy. Dotknięcie budynku albo znacznika otwiera jego własny panel. Pierwsza zmiana prowadzi do zakupu sklepu. Górny HUD zajmuje mniej miejsca, a dolny panel można zwinąć.
+
+Porównano światło w tym samym ujęciu zwykłej rozgrywki. Kod 9001 zachowuje Application ID i certyfikat testowy 0.9.0. Rzeczywiste sprawdzenie ergonomii i wydajności na telefonie pozostaje zadaniem odbiorczym. [Galeria](screenshots/0.9.1/README.md) · [Raport testów](TEST_REPORT.md)
+
 ## 0.9.0 · Release Candidate
 
 Kandydat z kodem 9000 i stałym testowym podpisem Androida. Zmieniono tytuł, ekran wczytywania i ikonę aplikacji. Rozbudowa pokazuje następną inwestycję. Dopracowano oświetlenie Alpine Pass i Ocean Coast. Poprawiono granice przyznawania zakupów, ponawianie weryfikacji i komunikaty BOOST.

@@ -1,5 +1,9 @@
 # Licencje zasobów
 
+## Zasoby 0.9.1
+
+Ilustracje 41 usług pochodzą z własnych modeli gry i zostały wyrenderowane w Godocie. Kolorowy młotek i kłódka są autorskimi ikonami tego wydania. [Generator kadrów](tools/art/render_business_cards.gd)
+
 ## Zasoby 0.9.0 RC
 
 Ikonę, grafikę promocyjną i zdjęcie tła wykonano na własnym modelu stacji i samochodu Vela w Godot. Kompozycja i znaki graficzne powstają w skrypcie projektu z użyciem wcześniej licencjonowanego Open Sans. Kadry i film zachowują własne modele, tekstury i miks. [Scena przechwytująca](tests/release_brand_view.gd) · [Źródło kompozycji](tools/release/brand.py) · [Licencja Open Sans](assets/fonts/LICENSE-Open-Sans.txt)

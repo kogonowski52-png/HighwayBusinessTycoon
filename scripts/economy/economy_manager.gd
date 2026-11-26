@@ -215,6 +215,8 @@ func restore_profile(data: Dictionary, wall: int, accrue := true) -> void:
 	player_xp = mini(Journey.LEVEL_XP.back(), counter(data.get("player_xp", previous_xp())))
 	paid_player_level = clampi(int(data.get("paid_player_level", 1)), 1, player_level())
 	tutorial_step = clampi(int(data.get("tutorial_step", tutorial_step if data.is_empty() else TUTORIAL_DONE)), 0, TUTORIAL_DONE)
+	if tutorial_step == 5 and level("market") > 0:
+		tutorial_step = TUTORIAL_DONE
 	feedback_enabled = data.get("feedback_enabled", true) == true
 	preferences.restore(safe_dict(data.get("preferences")), feedback_enabled)
 	recognition.restore(safe_dict(data.get("recognition")))
@@ -380,11 +382,29 @@ func gate_open(id: String) -> bool:
 	return level(id) == 0 and level(facility.prerequisite) >= facility.prerequisite_level \
 		and amount("reputation").compare(HbtAmount.from(facility.reputation_gate)) >= 0
 
+func construction_quote(id: String) -> Dictionary:
+	var service: HbtService = facilities[id]
+	var cost := HbtAmount.from(service.unlock_cost)
+	var grade := level(service.prerequisite)
+	var reputation := metric("reputation")
+	var level_ok := grade >= service.prerequisite_level
+	var reputation_ok := reputation >= service.reputation_gate
+	var cash_ok := can_afford(cost)
+	return {"cost": cost, "level": grade, "reputation": reputation, "level_ok": level_ok,
+		"reputation_ok": reputation_ok, "cash_ok": cash_ok,
+		"ready": level(id) == 0 and level_ok and reputation_ok and cash_ok and not storage.read_only}
+
+func estimated_bay_income(id: String) -> HbtAmount:
+	var tier := maxi(1, level(id))
+	return price(id, tier).times(6000).divided(ceili(duration(id, -1, tier) * 100.0))
+
 func unlock(id: String) -> bool:
 	var facility: HbtService = facilities[id]
 	if not gate_open(id) or not debit(HbtAmount.from(facility.unlock_cost)):
 		return false
 	levels[id] = 1
+	if id == "market" and tutorial_step == 5:
+		tutorial_step = TUTORIAL_DONE
 	add_xp(12)
 	touch()
 	return true
@@ -418,9 +438,9 @@ func promote(id: String, index: int) -> bool:
 	touch()
 	return true
 
-func duration(id: String, worker: int) -> float:
+func duration(id: String, worker: int, at_level := -1) -> float:
 	var facility: HbtService = facilities[id]
-	var tier := level(id)
+	var tier := level(id) if at_level < 0 else at_level
 	var time := maxf(facility.minimum_seconds, facility.seconds * pow(0.972, tier - 1))
 	if id == "fuel" and tier >= 1 and tier <= LEGACY.service_seconds.size():
 		time = LEGACY.service_seconds[tier - 1]
@@ -480,7 +500,7 @@ func collect() -> HbtAmount:
 		registers[id] = HbtAmount.new()
 	credit("cash", total)
 	if tutorial_step == 4:
-		tutorial_step = 5
+		tutorial_step = TUTORIAL_DONE if level("market") > 0 else 5
 	touch()
 	return total
 

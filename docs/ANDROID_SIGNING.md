@@ -65,3 +65,7 @@ Próba aktualizacji na urządzeniu wymaga fizycznego Androida lub emulatora. Lok
 ## Kandydat 0.9.0
 
 Wariant `HighwayBusinessTycoon-0.9.0-RC.apk` ma kod `9000`. Weryfikator odczytał identyczny certyfikat testowy i Application ID z 0.8.0 oraz wyrównanie ZIP i ELF 16 KiB. Do AAB potrzebne są `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`, `GODOT_ANDROID_KEYSTORE_RELEASE_USER` i `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD` dla certyfikatu upload z Play Console. Zdefiniuj też publiczne parametry kompilacji z instrukcji monetyzacji. Kandydat ma oddzielny artefakt testowy oraz przygotowany preset produkcyjny. SHA-256 pliku ARM64 to `6ec6ff02c4fd725c959940d78452702af331874c910fa355e7193398e320ff67`. [Konfiguracja](MONETIZATION.md) · [Google Play](PLAY_CONSOLE_RC.md)
+
+## Testowy APK 0.9.1
+
+`HighwayBusinessTycoon-0.9.1-test.apk` zawiera ABI ARM64 i ma kod 9001. Podpis, identyfikator pakietu i wzrost kodu potwierdzono względem 0.9.0 RC. Obie biblioteki ELF i wpisy ZIP zachowują wyrównanie 16 KiB. SHA-256 podpisanego pliku to `86d6c758951c17dbbb5ee9bcef533288a5e47df3d4f7c44a5d98c62551092e13`. Zapis 0.9.0 przetestowano oddzielnie w Godot 4.7.2. [Wyniki aktualizacji zapisu i dotyku](../TEST_REPORT.md)

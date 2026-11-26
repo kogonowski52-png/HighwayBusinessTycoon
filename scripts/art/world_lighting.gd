@@ -40,6 +40,7 @@ func _ready() -> void:
 	reflected_sky.sun_angle_max = 0.0
 	environment.sky = sky
 	environment.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
+	environment.adjustment_enabled = true
 	supports_glow = RenderingServer.get_current_rendering_method() != "gl_compatibility"
 	environment.glow_intensity = 0.29
 	environment.glow_hdr_threshold = 1.08
@@ -140,6 +141,12 @@ func set_look(look: Look) -> void:
 	if district == "metro" and look == Look.NIGHT:
 		environment.ambient_light_energy = .33
 		sun.light_energy = .28
+	var daylight := look in [Look.DAY, Look.GOLDEN, Look.DAWN]
+	if daylight:
+		environment.ambient_light_energy *= .79
+		sun.light_energy *= .90
+	environment.adjustment_contrast = 1.055 if daylight else 1.02
+	environment.adjustment_saturation = 1.10 if daylight else 1.03
 	RenderingServer.global_shader_parameter_set(&"hbt_ambient_motion", 0.0 if reduced else 1.0)
 	environment.glow_enabled = supports_glow and not reduced and look in [Look.EVENING, Look.NIGHT]
 	for index in range(practical_lights.size()):

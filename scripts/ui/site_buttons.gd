@@ -1,7 +1,12 @@
 extends CanvasLayer
 
 const Building = preload("res://scripts/buildings/roadside_campus.gd")
+const Station = preload("res://scripts/buildings/building_manager.gd")
 const Desert = preload("res://scripts/buildings/desert_campus.gd")
+const DesertRoutes = preload("res://data/world/desert_routes.gd")
+const Geometry = preload("res://data/visual/business_bounds.gd")
+const HAMMER = preload("res://assets/ui/business/hammer.png")
+const LOCK = preload("res://assets/ui/business/locked.png")
 const ELEVATION := {"fuel": 4.55, "market": 3.6, "parking": 2.9, "wash": 3.5, "truck": 5.7,
 	"workshop": 4.2, "restaurant": 3.6, "tires": 3.55, "truck_park": 3.12, "motel": 4.7, "charge": 2.12}
 
@@ -9,7 +14,7 @@ var controller: Node3D
 var hud: CanvasLayer
 var root := Control.new()
 var buttons: Dictionary = {}
-var active: Dictionary = {}
+var states: Dictionary = {}
 
 func bind_to(game: Node3D) -> void:
 	controller = game
@@ -19,50 +24,57 @@ func bind_to(game: Node3D) -> void:
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for id in game.economy.facilities:
-		var pin: Button = hud.action(root, 114, 105, false)
-		hud.button_art(pin, hud.NAV.sites, 73)
-		pin.pressed.connect(open_site.bind(id))
+		var pin: Button = hud.action(root, 86, 83, false)
+		pin.pressed.connect(controller.manage_site.bind(id))
 		pin.hide()
 		buttons[id] = pin
 
-func open_site(id: String) -> void:
-	var selected: String = controller.selected
-	controller.select_site(id)
-	if selected == id or active.get(id, false):
-		controller.open_page("upgrades")
-
 func refresh() -> void:
 	var store: HbtEconomy = controller.economy
-	for id in buttons:
+	for id: String in buttons:
 		var tier := store.level(id)
-		var is_ready: bool = store.quote_upgrade(id, 1).affordable if tier > 0 else store.gate_open(id) \
-			and store.can_afford(HbtAmount.from(store.facilities[id].unlock_cost))
-		if active.get(id) != is_ready:
-			var pin: Button = buttons[id]
-			pin.add_theme_stylebox_override("normal", hud.sculpted(hud.UPGRADE if is_ready else hud.CREAM_BUTTON, 36, 10))
-			pin.icon = hud.UPGRADE_ART if is_ready else hud.ROAD
-		active[id] = is_ready
-		buttons[id].tooltip_text = controller.site_name(id) + " · " + controller.t("site_upgrade_pin" if is_ready else "site_focus_pin")
+		var quote := store.construction_quote(id) if tier == 0 else {}
+		var state := "build" if tier == 0 and quote.ready else "locked" if tier == 0 \
+			else "upgrade" if store.quote_upgrade(id, 1).affordable else "built"
+		var pin: Button = buttons[id]
+		var changed: bool = states.get(id) != state
+		if changed:
+			var tint: Texture2D = hud.ACTION if state == "build" else hud.UPGRADE if state == "upgrade" else hud.CREAM_BUTTON
+			var skin: StyleBox = hud.style(Color("#dddccf"), Color("#929b91"), 20, 7) if state == "locked" else hud.sculpted(tint, 32, 8)
+			for mode in ["normal", "hover", "pressed"]:
+				pin.add_theme_stylebox_override(mode, skin)
+			var picture: Texture2D = HAMMER if state == "build" else LOCK if state == "locked" else hud.UPGRADE_ART if state == "upgrade" else hud.ROAD
+			hud.button_art(pin, picture, 48)
+			for color_key in ["font_color", "font_hover_color", "font_pressed_color"]:
+				pin.add_theme_color_override(color_key, hud.CREAM if state == "build" else hud.INK)
+			pin.custom_minimum_size.x = 163 if state == "build" else 82
+			states[id] = state
+		var amount: String = controller.money(quote.cost) if state == "build" else ""
+		if changed or pin.text != amount:
+			pin.text = amount
+			pin.reset_size()
+		var description := "site_ready" if state == "build" else "site_closed" if state == "locked" \
+			else "site_upgrade_pin" if state == "upgrade" else "site_manage"
+		pin.tooltip_text = controller.site_name(id) + " · " + controller.t(description)
 
 func _process(_delta: float) -> void:
 	if controller == null:
 		return
-	var obscured: bool = not controller.mounted or not hud.visible or controller.operations.modal_open() \
-		or not controller.camera_rig.film.is_empty()
+	if not controller.mounted or not hud.visible or controller.operations.visible or not controller.camera_rig.film.is_empty():
+		for pin: Button in buttons.values():
+			pin.hide()
+		return
 	var lens: Camera3D = controller.camera
 	var selected: String = controller.selected
-	var order: Array = [selected]
-	if controller.overview:
-		order.append_array(buttons.keys().filter(func(key: String) -> bool: return key != selected))
+	var order: Array = buttons.keys().filter(func(id: String) -> bool: return states.get(id) == "build")
+	if selected not in order:
+		order.append(selected)
+	for id: String in buttons:
+		if id not in order and (controller.overview or states.get(id) == "locked"):
+			order.append(id)
 	var occupied: Array[Rect2] = []
-	if obscured:
-		for id in buttons:
-			buttons[id].hide()
-		return
 	var shown := {}
-	for id in order:
-		if controller.economy.level(id) == 0 and not active.get(id, false) and id != selected:
-			continue
+	for id: String in order:
 		var pin: Button = buttons[id]
 		var target := world_anchor(id)
 		var center := lens.unproject_position(target)
@@ -73,10 +85,46 @@ func _process(_delta: float) -> void:
 		pin.position = rect.position
 		shown[id] = true
 		occupied.append(rect.grow(8.0))
-	for id in buttons:
+	for id: String in buttons:
 		buttons[id].visible = shown.has(id)
 
+func tap_world(point: Vector2) -> bool:
+	var lens: Camera3D = controller.camera
+	var from := lens.project_ray_origin(point)
+	var to := from + lens.project_ray_normal(point) * lens.far
+	var best := INF
+	var picked := ""
+	for id: String in buttons:
+		var hit: Variant = venue_bounds(id).intersects_segment(from, to)
+		if hit is Vector3:
+			var distance := from.distance_squared_to(hit)
+			if distance < best:
+				best = distance
+				picked = id
+	if picked.is_empty():
+		return false
+	controller.manage_site(picked)
+	return true
+
+func venue_bounds(id: String) -> AABB:
+	var district: String = controller.economy.district
+	var bounds: AABB = Geometry.BOXES[district + "_" + id]
+	var origin: Vector3
+	if controller.is_regional():
+		origin = controller.routes.origin(id)
+	elif controller.is_desert():
+		origin = DesertRoutes.FRONTS[id] if id != "fuel" else controller.station.position
+	else:
+		origin = Station.CANOPY_AT if id == "fuel" else Building.ROOFS[id][0]
+	bounds.position += origin
+	if district != "north" and controller.economy.level(id) == 0:
+		bounds.position.y = origin.y - .10
+		bounds.size.y = .95
+	return bounds.grow(.22)
+
 func world_anchor(id: String) -> Vector3:
+	if controller.economy.district != "north" and controller.economy.level(id) == 0:
+		return venue_bounds(id).get_center() + Vector3.UP * 1.40
 	if controller.is_regional():
 		return controller.campus.pin_at(id)
 	if controller.is_desert():

@@ -173,6 +173,7 @@ func _ready() -> void:
 	hud.view_requested.connect(toggle_view)
 	hud.page_requested.connect(open_page)
 	hud.income_requested.connect(income_action)
+	hud.management_toggled.connect(refresh)
 	add_child(ads)
 	ads.bind(self)
 	ads.rewarded.connect(ad_rewarded)
@@ -464,6 +465,10 @@ func select_site(id: String) -> void:
 	frame_camera()
 	refresh()
 
+func manage_site(id: String) -> void:
+	select_site(id)
+	open_page("upgrades")
+
 func select_quantity(count: int) -> void:
 	quantity = count
 	refresh()
@@ -485,11 +490,6 @@ func open_page(name: String) -> void:
 	camera_rig.cancel_film(true)
 	if economy.tutorial_step == 2 and name == "goals":
 		operations.goals_tab = "career"
-	if economy.tutorial_step == 5 and name == "sites":
-		economy.finish_tutorial()
-		economy.checkpoint()
-		feedback.play("reward", true)
-		show_message(t("guide_complete"))
 	operations.show_page(name)
 
 func skip_tutorial() -> void:
@@ -497,14 +497,24 @@ func skip_tutorial() -> void:
 	economy.checkpoint()
 
 func invest() -> void:
-	var id := selected
+	invest_in(selected, economy.level(selected) == 0)
+
+func build_site(id: String) -> void:
+	if economy.level(id) == 0:
+		invest_in(id, true)
+
+func invest_in(id: String, opening: bool) -> void:
+	if traveling or economy.storage.read_only:
+		return
 	var installed: int = campus.roof_counts[id]
 	var before_art := fuel_art_level
 	var previous_bays := economy.capacity(id)
-	var opening := economy.level(id) == 0
+	var finishes_guide := opening and id == "market" and economy.tutorial_step == 5
 	var bought := int(economy.unlock(id)) if opening else economy.buy_levels(id, quantity)
 	if bought <= 0:
 		return
+	if opening and selected != id:
+		select_site(id)
 	campaign.ledger.increment(economy, {"building": bought})
 	campaign.premium.record_season(economy.clock, {"building": bought}, bought * 4)
 	log_commercial("building_upgrade", id)
@@ -517,7 +527,7 @@ func invest() -> void:
 	if rebuilt or opening:
 		var at: Vector3 = routes.position_of(id, 0)
 		effects.construction(at)
-		if operations.modal_open() and operations.page == "upgrades":
+		if operations.modal_open() and (opening or operations.page == "upgrades"):
 			operations.hide_page()
 		camera_rig.start_film(campus.focus(id), func() -> void:
 			var caption := t("opened_notice" if opening else "venue_expanded") % site_name(id)
@@ -526,6 +536,8 @@ func invest() -> void:
 			hud.announce(caption, hud.UPGRADE_ART, motion_enabled()))
 	if not opening:
 		show_message(t("bought_levels") % bought)
+	elif finishes_guide:
+		show_message(t("guide_complete"))
 	economy.checkpoint()
 
 func hire_worker() -> void:
@@ -909,6 +921,7 @@ func refresh() -> void:
 	hud.badges.goals.visible = economy.ready_rewards() > 0
 	hud.badges.calendar.visible = economy.recognition.is_available(economy.day_index())
 	hud.station.text = site_name(selected)
+	hud.management_toggle.text = t("management_expand" if hud.management_collapsed else "management_collapse")
 	hud.upgrade_preview.text = t("look_action")
 	if quantity != 1:
 		hud.upgrade_preview.text = "MAX" if quantity == 0 else "+%d" % quantity
@@ -923,9 +936,9 @@ func refresh() -> void:
 	hud.serve.text = t("serve_fuel" if pumps else "serve_work")
 	hud.serve.disabled = checkout == null
 	if tier == 0:
-		var unlock_cost := HbtAmount.from(economy.facilities[selected].unlock_cost)
-		hud.upgrade.text = t("unlock") % money(unlock_cost)
-		hud.upgrade.disabled = not economy.gate_open(selected) or not economy.can_afford(unlock_cost)
+		var quote := economy.construction_quote(selected)
+		hud.upgrade.text = t("unlock") % money(quote.cost)
+		hud.upgrade.disabled = not quote.ready
 	else:
 		var estimate := economy.quote_upgrade(selected, quantity)
 		hud.upgrade.text = t("max") if tier == economy.CONFIG.max_level else t("upgrade") % money(estimate.cost)

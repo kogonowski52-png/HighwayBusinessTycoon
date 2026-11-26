@@ -1,5 +1,13 @@
 # Historia zmian
 
+## 0.9.1 · Dotyk i rozbudowa
+
+- Przewijanie paneli palcem, wygaszanie bezwładności i ochrona przycisków oraz kamery podczas gestu.
+- Cztery zakładki Rozbudowy, rzeczywiste ilustracje 41 usług, koszt, szacunek przychodu stanowiska i oddzielne warunki poziomu oraz reputacji.
+- Budowa za podaną cenę bezpośrednio z listy z przejściem kamery do animacji. Zielony młotek z ceną, szara kłódka i zarządzanie po dotknięciu modelu na mapie.
+- Samouczek prowadzi przez zebranie środków i reputacji do otwarcia sklepu. Węższy górny HUD, zwijany dół oraz korekta jasności i kontrastu w zwykłym kadrze.
+- Android ARM64 z kodem 9001 i stałym certyfikatem testowym. [Kadry](screenshots/0.9.1/README.md)
+
 ## 0.9.0 · Release Candidate
 
 - Weryfikator wydaje zakupy dopiero po potwierdzeniu lub konsumpcji. Równoległe próby i niejednoznaczne odpowiedzi odtwarzają właściwy stan. Klient odkłada błędy przejściowe i usuwa z kolejki nierozliczalne paragony.

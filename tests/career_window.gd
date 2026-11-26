@@ -71,10 +71,16 @@ func first_shift() -> void:
 	click(game.hud.income)
 	await process_frame
 	expect(store.holding().empty() and store.tutorial_step == 5, "collection advances the first shift")
+	expect(game.tutorial.instruction.text != game.t("guide_5") or store.construction_quote("market").ready,
+		"the guide explains the gate before the shop can be built")
+	await earn_for_shop()
 	click(game.hud.pages.sites)
 	await process_frame
-	expect(store.tutorial_step == store.TUTORIAL_DONE and not game.tutorial.visible, "tutorial finishes after opening the business directory")
+	expect(store.tutorial_step == 5 and game.tutorial.visible, "opening Build keeps the guide on the shop investment")
 	await capture("08-uslugi-trasy17.png")
+	await click_row(game.t("unlock") % game.money(store.construction_quote("market").cost))
+	expect(store.level("market") == 1 and store.tutorial_step == store.TUTORIAL_DONE and not game.tutorial.visible,
+		"the tutorial finishes after the real shop purchase")
 	await close_sheet()
 
 func late_complex() -> void:
@@ -86,7 +92,7 @@ func late_complex() -> void:
 	store.credit("cash", HbtAmount.from("180000000"))
 	store.credit("reputation", HbtAmount.from(180))
 	for id in store.facilities:
-		if id != "fuel":
+		if id != "fuel" and store.level(id) == 0:
 			expect(store.unlock(id), "actual expansion purchase " + id)
 		store.buy_levels(id, 38 - store.level(id))
 		if store.crew[id].is_empty():

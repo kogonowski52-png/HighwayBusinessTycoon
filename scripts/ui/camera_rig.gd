@@ -4,6 +4,7 @@ const LIMIT_MIN := Vector2(-45.0, -25.0)
 const LIMIT_MAX := Vector2(52.0, 18.0)
 const MIN_WIDTH := 11.5
 const MAX_WIDTH := 142.0
+const TAP_DISTANCE := 17.0
 
 var controller: Node3D
 var lens: Camera3D
@@ -15,7 +16,11 @@ var angle := heading
 var zoom := width
 var momentum := Vector3.ZERO
 var pointers: Dictionary = {}
+var touch_origin := Vector2.ZERO
+var touch_moved := false
 var mouse_drag := false
+var mouse_origin := Vector2.ZERO
+var mouse_moved := false
 var mouse_button := MOUSE_BUTTON_LEFT
 var drift_age := 1.0
 var film: Dictionary = {}
@@ -46,7 +51,7 @@ func _process(delta: float) -> void:
 	if lens == null:
 		return
 	drift_age += delta
-	if controller.operations.modal_open():
+	if controller.operations.visible:
 		release_gestures()
 	elif not mouse_drag and pointers.is_empty() and momentum.length_squared() > 0.008:
 		target += momentum * delta
@@ -123,11 +128,23 @@ func zoom_at(multiplier: float, position: Vector2) -> void:
 # Release over a menu must clear the pointer as well.
 func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch and not event.pressed and pointers.has(event.index):
+		var tap: bool = not event.canceled and pointers.size() == 1 and not touch_moved \
+			and touch_origin.distance_to(event.position) < TAP_DISTANCE
 		pointers.erase(event.index)
 		if not pointers.is_empty():
 			momentum = Vector3.ZERO
-	elif event is InputEventMouseButton and not event.pressed and event.button_index == mouse_button:
+		if tap:
+			tap_venue(event.position)
+		get_viewport().set_input_as_handled()
+	elif event is InputEventMouseButton and event.device != InputEvent.DEVICE_ID_EMULATION \
+			and mouse_drag and not event.pressed and event.button_index == mouse_button:
 		mouse_drag = false
+		if mouse_button == MOUSE_BUTTON_LEFT and not mouse_moved and mouse_origin.distance_to(event.position) < TAP_DISTANCE:
+			tap_venue(event.position)
+
+func tap_venue(point: Vector2) -> void:
+	if not controller.operations.visible and not controller.hud.blocks_world(point):
+		controller.site_buttons.tap_world(point)
 
 func begin_gesture() -> void:
 	if not film.is_empty():
@@ -136,10 +153,15 @@ func begin_gesture() -> void:
 	drift_age = 0.06
 
 func _unhandled_input(event: InputEvent) -> void:
-	if controller == null or controller.operations.modal_open() or not controller.mounted:
+	if controller == null or controller.operations.visible or not controller.mounted:
+		return
+	if event is InputEventMouse and event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
 	if event is InputEventScreenTouch and event.pressed and not controller.hud.blocks_world(event.position):
 		begin_gesture()
+		if pointers.is_empty():
+			touch_origin = event.position
+		touch_moved = not pointers.is_empty()
 		pointers[event.index] = event.position
 		get_viewport().set_input_as_handled()
 	elif event is InputEventScreenDrag and pointers.has(event.index):
@@ -155,7 +177,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			if minf(old_gap, new_gap) > 10.0:
 				zoom_at(clampf(old_gap / new_gap, 0.81, 1.24), (other + event.position) * 0.5)
 		else:
-			drag(event.position - pointers[event.index])
+			var delta: Vector2 = event.position - pointers[event.index]
+			if not touch_moved:
+				delta = event.position - touch_origin
+				touch_moved = delta.length() >= TAP_DISTANCE
+				if touch_moved:
+					delta -= delta.normalized() * TAP_DISTANCE
+			if touch_moved:
+				drag(delta)
 		pointers[event.index] = event.position
 		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton and event.pressed and pointers.is_empty():
@@ -168,8 +197,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE]:
 			begin_gesture()
 			mouse_button = event.button_index
+			mouse_origin = event.position
+			mouse_moved = false
 			mouse_drag = true
 			get_viewport().set_input_as_handled()
 	elif event is InputEventMouseMotion and mouse_drag and pointers.is_empty():
-		drag(event.relative)
+		var delta: Vector2 = event.relative
+		if not mouse_moved:
+			delta = event.position - mouse_origin
+			mouse_moved = delta.length() >= TAP_DISTANCE
+			if mouse_moved:
+				delta -= delta.normalized() * TAP_DISTANCE
+		if mouse_moved:
+			drag(delta)
 		get_viewport().set_input_as_handled()

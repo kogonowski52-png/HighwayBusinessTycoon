@@ -2,7 +2,7 @@ config_version=5
 
 [application]
 config/name="Highway Business Tycoon"
-config/version="0.9.0"
+config/version="0.9.1"
 boot_splash/image="res://assets/ui/presentation/krystian-development.png"
 boot_splash/bg_color=Color(0.064, 0.165, 0.192, 1)
 config/icon="res://assets/icons/highway-rc.png"
@@ -21,6 +21,11 @@ window/size/window_height_override=864
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
+
+[input_devices]
+
+pointing/emulate_mouse_from_touch=true
+pointing/emulate_touch_from_mouse=false
 
 [rendering]
 renderer/rendering_method="gl_compatibility"

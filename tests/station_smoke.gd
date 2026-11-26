@@ -89,16 +89,14 @@ func run() -> void:
 	await capture("03-zespol.png")
 	await close_sheet()
 
-	for turn in range(1100):
-		if economy.metric("reputation") >= 4:
-			break
-		step(0.05)
+	await earn_for_shop()
+	var quote := economy.construction_quote("market")
+	expect(quote.ready, "market unlock reached through ordinary sales")
 	click(game.hud.pages.sites)
 	await process_frame
-	await click_row("Szczegóły")
-	expect(game.selected == "market" and not game.hud.upgrade.disabled, "market unlock reached through ordinary sales")
-	click(game.hud.upgrade)
-	expect(economy.level("market") == 1, "locked building opens from its detail card")
+	await click_row(game.t("unlock") % game.money(quote.cost))
+	expect(game.selected == "market" and economy.level("market") == 1, "market opens from the priced directory action")
+	await close_sheet()
 	click(game.hud.upgrade_preview)
 	await process_frame
 	await click_row("+10")
@@ -187,6 +185,17 @@ func mount(at: int) -> Node3D:
 	root.add_child(instance)
 	instance.set_physics_process(false)
 	return instance
+
+func earn_for_shop() -> void:
+	var economy: HbtEconomy = game.economy
+	for _turn in range(360):
+		var quote := economy.construction_quote("market")
+		if quote.ready:
+			break
+		step(.25)
+		if not quote.cash_ok and not economy.holding().empty():
+			click(game.hud.income)
+	await process_frame
 
 func step(seconds: float) -> void:
 	for i in range(roundi(seconds / 0.05)):

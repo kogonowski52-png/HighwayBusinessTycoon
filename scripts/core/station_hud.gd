@@ -6,6 +6,7 @@ signal lighting_requested
 signal view_requested
 signal page_requested(page: String)
 signal income_requested
+signal management_toggled
 
 const REGULAR = preload("res://assets/fonts/OpenSans-Regular.ttf")
 const BOLD = preload("res://assets/fonts/OpenSans-Bold.ttf")
@@ -91,6 +92,9 @@ var wallet_previous: Dictionary = {}
 var wallet_targets: Dictionary = {}
 var wallet_languages: Dictionary = {}
 var detail_icon: TextureRect
+var management_body: VBoxContainer
+var management_toggle: Button
+var management_collapsed := false
 
 func _ready() -> void:
 	var root := Control.new()
@@ -98,9 +102,11 @@ func _ready() -> void:
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top = band(root, false, PETROL)
+	top.add_theme_stylebox_override("panel", sculpted(PETROL, 45, 10))
+	top.resized.connect(position_framing)
 	var header := VBoxContainer.new()
 	top.add_child(header)
-	header.add_theme_constant_override("separation", 6)
+	header.add_theme_constant_override("separation", 3)
 	var hero := HBoxContainer.new()
 	header.add_child(hero)
 	hero.add_theme_constant_override("separation", 10)
@@ -108,19 +114,19 @@ func _ready() -> void:
 	hero.add_child(heading)
 	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	location = caption(heading, 18, Color("#f0be79"), HEAVY)
-	title = caption(heading, 38, CREAM, HEAVY)
+	title = caption(heading, 36, CREAM, HEAVY)
 	title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	var stats := action(hero, 110, 88, false)
-	button_art(stats, NAV.finance, 61)
+	var stats := action(hero, 104, 76, false)
+	button_art(stats, NAV.finance, 57)
 	stats.pressed.connect(func() -> void: page_requested.emit("finance"))
 	pages.finance = stats
-	var daily := action(hero, 110, 88, false)
-	button_art(daily, CALENDAR, 64)
+	var daily := action(hero, 104, 76, false)
+	button_art(daily, CALENDAR, 57)
 	daily.pressed.connect(func() -> void: page_requested.emit("calendar"))
 	pages.calendar = daily
 	add_badge(daily, "calendar")
-	settings = action(hero, 110, 88, false)
-	button_art(settings, SETTINGS, 66)
+	settings = action(hero, 104, 76, false)
+	button_art(settings, SETTINGS, 59)
 	settings.pressed.connect(func() -> void: page_requested.emit("settings"))
 	pages.settings = settings
 
@@ -140,7 +146,7 @@ func _ready() -> void:
 		wallet_names[data[0]] = caption(purse, 16, FADE, HEAVY)
 		wallet_stats[data[0]] = caption(purse, 30, data[3], counter)
 		wallet_stats[data[0]].text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	rank = action(balances, 176, 86, false)
+	rank = action(balances, 176, 75, false)
 	rank.add_theme_stylebox_override("normal", sculpted(UPGRADE, 35, 12))
 	button_art(rank, REPUTATION, 45)
 	rank.pressed.connect(func() -> void: page_requested.emit("rank"))
@@ -192,7 +198,7 @@ func _ready() -> void:
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tab.add_theme_font_size_override("font_size", 25)
 		tab.add_theme_stylebox_override("normal", sculpted(LAVENDER if page == "shop" else CREAM_BUTTON, 38, 11))
-		button_art(tab, NAV[page], 69)
+		button_art(tab, NAV[page], 75)
 		tab.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
 		tab.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		tab.pressed.connect(func() -> void: page_requested.emit(page))
@@ -217,17 +223,27 @@ func _ready() -> void:
 	upgrade_preview.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button_art(upgrade_preview, UPGRADE_ART, 51)
 	upgrade_preview.pressed.connect(func() -> void: page_requested.emit("upgrades"))
+	management_toggle = action(top_row, 128, 82, false)
+	management_toggle.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	management_toggle.pressed.connect(func() -> void:
+		management_collapsed = not management_collapsed
+		management_body.visible = not management_collapsed
+		resize_management.call_deferred()
+		management_toggled.emit())
 
+	management_body = VBoxContainer.new()
+	management_body.add_theme_constant_override("separation", 6)
+	card.add_child(management_body)
 	var details := HBoxContainer.new()
 	details.add_theme_constant_override("separation", 9)
-	card.add_child(details)
+	management_body.add_child(details)
 	status = caption(details, 25, FADE, BOLD)
 	status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	rate = caption(details, 23, MINT, counter)
 	rate.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	progress = ProgressBar.new()
-	card.add_child(progress)
+	management_body.add_child(progress)
 	progress.custom_minimum_size.y = 14
 	progress.max_value = 1.0
 	progress.step = 0.0
@@ -236,7 +252,7 @@ func _ready() -> void:
 	progress.add_theme_stylebox_override("background", style(Color("#cfc0a4"), Color("#af9879"), 8, 0))
 	progress.add_theme_stylebox_override("fill", style(Color("#5cad8a"), Color("#2e745a"), 8, 0))
 	var actions := HBoxContainer.new()
-	card.add_child(actions)
+	management_body.add_child(actions)
 	actions.add_theme_constant_override("separation", 9)
 	serve = action(actions, 0, 112, true)
 	serve.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -249,10 +265,11 @@ func _ready() -> void:
 	upgrade.add_theme_stylebox_override("pressed", style(Color("#ecb35e"), Color("#b48443"), 26, 10))
 	serve.pressed.connect(func() -> void: serve_requested.emit())
 	upgrade.pressed.connect(func() -> void: upgrade_requested.emit())
-	income = action(card, 0, 81, false)
+	income = action(management_body, 0, 81, false)
 	button_art(income, CASH, 54)
 	income.visible = false
 	income.pressed.connect(func() -> void: income_requested.emit())
+	bottom.minimum_size_changed.connect(func() -> void: resize_management.call_deferred())
 	add_child(reward_layer)
 	reward_layer.layer = 7
 	reward_layer.add_child(overlay)
@@ -299,8 +316,17 @@ func apply_safe(safe: Vector4) -> void:
 	bottom.offset_bottom = -174.0 - inset.w
 	framing.offset_left = -171.0 - inset.z
 	framing.offset_right = -19.0 - inset.z
-	framing.offset_top = 239.0 + inset.y
-	framing.offset_bottom = 239.0 + inset.y
+	position_framing()
+
+func position_framing() -> void:
+	if not is_instance_valid(framing):
+		return
+	var edge := top.get_global_rect().end.y + 13.0
+	framing.offset_top = edge
+	framing.offset_bottom = edge
+
+func resize_management() -> void:
+	bottom.offset_top = bottom.offset_bottom - bottom.get_combined_minimum_size().y
 
 func add_badge(button: Button, key: String) -> void:
 	var pin := Panel.new()
@@ -356,7 +382,7 @@ func tile(parent: Control, texture: Texture2D, tint: Color) -> VBoxContainer:
 	var row := HBoxContainer.new()
 	shell.add_child(row)
 	row.add_theme_constant_override("separation", 4)
-	icon(row, texture, 64)
+	icon(row, texture, 59)
 	var body := VBoxContainer.new()
 	row.add_child(body)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL

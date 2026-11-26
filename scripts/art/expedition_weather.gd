@@ -46,7 +46,7 @@ func apply(site: HbtEconomy, event: Dictionary, quality: int, choice: String) ->
 	weather = condition
 	var fog: Environment = lighting.environment
 	fog.fog_enabled = condition != "clear"
-	fog.fog_density = .011 if condition == "haze" else .0038 if district == "alpine" else .007
+	fog.fog_density = .0085 if condition == "haze" else .0030 if district == "alpine" else .0048
 	fog.fog_light_color = Color("#efbf93") if desert else Color("#c7d8e5")
 	site.conditions = {}
 	match condition:

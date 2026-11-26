@@ -14,6 +14,8 @@ const RegionalCampus = preload("res://scripts/buildings/regional_campus.gd")
 const DesertCampus = preload("res://scripts/buildings/desert_campus.gd")
 const Premium = preload("res://scripts/ui/premium_pages.gd")
 const Expedition = preload("res://scripts/ui/expedition_pages.gd")
+const TouchScroll = preload("res://scripts/ui/touch_scroll.gd")
+const BusinessDirectory = preload("res://scripts/ui/business_directory.gd")
 
 var controller: Node3D
 var theme_source: CanvasLayer
@@ -22,7 +24,7 @@ var header: Label
 var page_icon: TextureRect
 var back: Button
 var shade: ColorRect
-var scroll: ScrollContainer
+var scroll: TouchScroll
 var rows: VBoxContainer
 var page := ""
 var opening: Tween
@@ -34,9 +36,14 @@ var expedition_render_state := ""
 var extra := Extra.new()
 var expedition := Expedition.new()
 var premium := Premium.new()
+var business := BusinessDirectory.new()
 var closing := false
 var animate_bars := false
 var upgrade_counts: Dictionary = {}
+var refresh_pending := false
+var shade_finger := -1
+var shade_start := Vector2.ZERO
+var shade_mouse := false
 
 func setup(game: Node3D, hud: CanvasLayer) -> void:
 	controller = game
@@ -73,7 +80,9 @@ func setup(game: Node3D, hud: CanvasLayer) -> void:
 	header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	back = hud.action(top, 145, 90, false)
 	back.pressed.connect(hide_page)
-	scroll = ScrollContainer.new()
+	business.setup(self, stack)
+	scroll = TouchScroll.new()
+	scroll.touch_area = panel
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var rail := scroll.get_v_scroll_bar()
@@ -82,10 +91,12 @@ func setup(game: Node3D, hud: CanvasLayer) -> void:
 	for style_name in ["grabber", "grabber_highlight", "grabber_pressed"]:
 		rail.add_theme_stylebox_override(style_name, hud.style(Color("#a88c69"), Color("#826f55"), 7, 0))
 	stack.add_child(scroll)
+	scroll.interaction_finished.connect(flush_refresh)
 	rows = VBoxContainer.new()
 	rows.add_theme_constant_override("separation", 15)
 	rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(rows)
+	get_viewport().size_changed.connect(func() -> void: apply_layout.call_deferred())
 	visible = false
 
 func modal_open() -> bool:
@@ -93,12 +104,21 @@ func modal_open() -> bool:
 
 func show_page(name: String) -> void:
 	var entering := not modal_open() or page != name
+	if entering:
+		scroll.cancel_interaction()
+		refresh_pending = false
 	if page != name or closing:
 		scroll.scroll_vertical = 0
 	if opening != null and opening.is_running() and entering:
 		opening.kill()
 	page = name
+	business.tabs.visible = page == "sites"
+	if entering and page == "sites" and controller.economy.tutorial_step == 5:
+		business.filter = "sites_all"
 	closing = false
+	scroll.listening = true
+	shade_finger = -1
+	shade_mouse = false
 	shade.mouse_filter = Control.MOUSE_FILTER_STOP
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	back.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -149,12 +169,14 @@ func hide_page() -> void:
 	if not modal_open():
 		return
 	closing = true
+	scroll.listening = false
+	scroll.cancel_interaction()
+	refresh_pending = false
 	if opening != null:
 		opening.kill()
 	if not controller.motion_enabled():
 		finish_close()
 		return
-	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	absorb_clicks(rows)
@@ -169,13 +191,38 @@ func finish_close() -> void:
 	closed.emit()
 
 func shade_tap(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		hide_page()
-	elif event is InputEventScreenTouch and event.pressed:
-		hide_page()
+	if not modal_open():
+		return
+	if event is InputEventScreenTouch:
+		if event.pressed and shade_finger == -1:
+			shade_finger = event.index
+			shade_start = event.position
+		elif not event.pressed and shade_finger == event.index:
+			shade_finger = -1
+			if not event.canceled and shade_start.distance_to(event.position) < TouchScroll.SLOP:
+				hide_page()
+	elif event is InputEventScreenDrag and shade_finger == event.index \
+			and shade_start.distance_to(event.position) >= TouchScroll.SLOP:
+		shade_finger = -1
+	elif event is InputEventMouseButton and event.device != InputEvent.DEVICE_ID_EMULATION and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			shade_mouse = true
+			shade_start = event.position
+		elif shade_mouse:
+			shade_mouse = false
+			if shade_start.distance_to(event.position) < TouchScroll.SLOP:
+				hide_page()
+
+func flush_refresh() -> void:
+	if refresh_pending:
+		refresh_pending = false
+		refresh.call_deferred()
 
 func refresh() -> void:
 	if not modal_open():
+		return
+	if scroll.interacting():
+		refresh_pending = true
 		return
 	var store: HbtEconomy = controller.economy
 	var state := expedition.signature(page)
@@ -202,7 +249,7 @@ func refresh() -> void:
 		rows.remove_child(node)
 		node.queue_free()
 	match page:
-		"sites": show_sites()
+		"sites": business.draw()
 		"team": show_team()
 		"goals": show_goals()
 		"finance": show_finance()
@@ -265,40 +312,20 @@ func button(parent: Control, label: String, operation: Callable, disabled := fal
 	action.pressed.connect(operation)
 	return action
 
-func show_sites() -> void:
-	var store: HbtEconomy = controller.economy
-	var next_site := ""
-	for id: String in store.facilities:
-		if store.level(id) > 0:
-			continue
-		if next_site.is_empty() or store.gate_open(id):
-			next_site = id
-		if store.gate_open(id):
-			break
-	if not next_site.is_empty():
-		var quote: String = controller.money(HbtAmount.from(store.facilities[next_site].unlock_cost))
-		var detail: String = controller.t("site_next_price") % quote
-		if not store.gate_open(next_site):
-			detail += "\n" + controller.gate_text(next_site)
-		var goal := feature(theme_source.NAV.sites, controller.t("site_next") % controller.site_name(next_site), detail)
-		button(goal, controller.t("site_next_focus"), func() -> void:
-			controller.select_site(next_site)
-			hide_page(), false, true)
-	for id in store.facilities:
-		var tier := store.level(id)
-		var subtitle: String = controller.gate_text(id) if tier == 0 else controller.t("level") % [tier, store.CONFIG.max_level]
-		var card := box(controller.site_name(id), subtitle)
-		button(card, controller.t("map") if tier > 0 else controller.t("site_details"),
-			func() -> void:
-				controller.select_site(id)
-				hide_page(), false, id == controller.selected)
-
 func show_upgrades() -> void:
 	var store: HbtEconomy = controller.economy
 	var site: String = controller.selected
 	var tier := store.level(site)
-	var status: String = controller.gate_text(site) if tier == 0 else controller.t("level") % [tier, store.CONFIG.max_level]
-	var card := box(controller.site_name(site), status)
+	var card: VBoxContainer
+	if tier == 0:
+		var quote := store.construction_quote(site)
+		var picture := load("res://assets/ui/business/%s_%s.png" % [store.district, site]) as Texture2D
+		card = feature(picture, controller.site_name(site), controller.t(business.availability(site, tier, quote)))
+		var conditions := box(controller.t("site_card_cost") % controller.money(quote.cost),
+			controller.t("site_projection") % controller.money(store.estimated_bay_income(site)))
+		business.requirements(conditions, store.facilities[site], quote)
+	else:
+		card = box(controller.site_name(site), controller.t("level") % [tier, store.CONFIG.max_level])
 	if tier > 0:
 		var options := HBoxContainer.new()
 		card.add_child(options)
@@ -310,6 +337,8 @@ func show_upgrades() -> void:
 			upgrade_counts[choice] = toggle
 	var purchase: Button = button(card, controller.hud.upgrade.text, controller.invest, controller.hud.upgrade.disabled, true)
 	tutorial_targets["upgrade_buy"] = purchase
+	if site == "market" and tier == 0:
+		tutorial_targets["first_business"] = purchase
 	theme_source.button_art(purchase, theme_source.UPGRADE_ART, 56)
 	var ad_choice := {"site": site}
 	if controller.ads.available() and controller.ads.playable("upgrade", ad_choice):

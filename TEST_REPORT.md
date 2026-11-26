@@ -1,5 +1,24 @@
 # Raport testów
 
+## 0.9.1 · Przewijanie i budowa na telefonie
+
+Próby w Godot 4.7.2 i Compatibility OpenGL na Linuksie. W wydaniu 0.9.0 pionowy gest nad kartami dał przesunięcie 0. Ten sam ciąg `InputEventScreenDrag` po zmianach przesunął listę o 71 jednostek. Test wspólnego panelu wprowadza surowe zdarzenia dotykowe przez Viewport oraz przez `Input.parse_input_event` z aktywną emulacją myszy. [Scenariusz](tests/mobile_input_window.gd) · [Kadry i film](screenshots/0.9.1/README.md)
+
+| Sprawdzenie | Wynik |
+| --- | --- |
+| Dotyk w renderowanym oknie Godota | 70/70 |
+| Dotyk headless | 60/60 |
+| Przegląd paneli | 14 ekranów. 13 list z nadmiarem treści przewinęło się. Zespół z obsadą stacji mieścił się w oknie i nie przesuwał kamery ani zawartości. |
+| Ochrona interakcji | Przeciągnięcie od ceny nie buduje, puszczenie na tle nie zamyka panelu, dotknięcie hamuje rozpędzoną listę. Aktualizacja stanu gospodarki nie usuwa kart podczas nacisku. Test zużył dokładnie jeden koszt budowy po dotknięciu. |
+| Suwak i kamera | Poziomy gest reguluje dźwięk, pionowy przewija treść. Dotknięcie sklepu otwiera zarządzanie. Przesunięcie jednym palcem przesuwa mapę. Szczypnięcie dwoma palcami przybliża kadr. |
+| Pełna pierwsza zmiana | 45/45 od pierwszego tankowania po otwarcie sklepu z realnymi przychodami. Zapis odtwarza sklep i ukończenie samouczka. |
+| Regresja głównych systemów | Stacja 27/27, ekonomia i zapis 70/70, regiony 93/93, prezentacja 49/49, monetyzacja 86/86. |
+| Układ i proporcje | W skali projektowej karta sklepu 232 → 178, około 23% niższa. Górny HUD 221 → 195, około 12% niższy. Zwijanie i rozwijanie oraz dopasowanie panelu na wąskim telefonie i tablecie sprawdzono z symulacją wcięcia. |
+| Porównanie światła | To samo ujęcie i szerokość kamery. Oddzielne kadry światła dziennego i złotej godziny z 0.9.0 i 0.9.1. |
+| Zapis i Android | Zapis sześciu lokalizacji utworzony przez 0.9.0 przeszedł 6/6 prób odczytu i odzyskania. APK ARM64 9001 ma dotychczasowy pakiet, certyfikat i wyrównanie bibliotek 16 KiB. |
+
+Emulator wymagał KVM i zwrócił brak obsługi VMX/SVM. Próby dotyku i kadrów wykonano w Godocie. Instalacja aktualizacji, odczucie przewijania i ergonomia jednej ręki wymagają jeszcze telefonu. [Podpis Androida](docs/ANDROID_SIGNING.md)
+
 ## 0.9.0 · Release Candidate
 
 Godot 4.7.2 na Linuksie x86_64. Próby zakupowe i reklamowe korzystały z kontrolowanych odpowiedzi. Okno Godota z Mesa llvmpipe rejestrowało rzeczywisty obraz i interakcję. [Audyt usterek i oceny](docs/RELEASE_AUDIT.md) · [Pomiary](docs/performance-0.9.0.md) · [Bezpieczeństwo](docs/SECURITY_RC.md)
