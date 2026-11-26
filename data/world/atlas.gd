@@ -15,6 +15,15 @@ const DESTINATIONS := {
 		"scene": "res://scenes/world/metro.tscn", "from": "ocean", "cost": 27500, "fuel": 9, "rep": 65, "gate": "vip_park", "tier": 3},
 }
 
+const EXPANSION_CHAPTER := {
+	"tropical": {"pl": "Tropical Island", "en": "Tropical Island", "area": "Palmwater", "position": Vector2(.20, .68), "color": "#5cae95"},
+	"route66": {"pl": "Route 66", "en": "Route 66", "area": "Copper Spur", "position": Vector2(.20, .25), "color": "#c17d55"},
+	"harbor": {"pl": "Industrial Harbor", "en": "Industrial Harbor", "area": "Breakwater", "position": Vector2(.51, .69), "color": "#72969f"},
+	"luxury": {"pl": "Luxury City", "en": "Luxury City", "area": "Gilded Mile", "position": Vector2(.51, .26), "color": "#b9938f"},
+	"japan": {"pl": "Japan Highway", "en": "Japan Highway", "area": "Akari Junction", "position": Vector2(.81, .68), "color": "#a692b6"},
+	"wilderness": {"pl": "Northern Wilderness", "en": "Northern Wilderness", "area": "Timberline", "position": Vector2(.81, .24), "color": "#92ab9b"},
+}
+
 const STAMPS := {
 	"north": ["trail", "meridian", "cargo"],
 	"desert": ["mesa", "atlas", "kestrel"],
@@ -25,5 +34,12 @@ const STAMPS := {
 }
 
 static func location_name(id: String, language: String) -> String:
-	var item: Dictionary = DESTINATIONS[id]
+	var item := destination(id)
 	return item.en if language == "en" else item.pl
+
+static func destination(id: String) -> Dictionary:
+	return DESTINATIONS.get(id, EXPANSION_CHAPTER.get(id, {}))
+
+static func chapter_routes(expansion: bool) -> Array:
+	return EXPANSION_CHAPTER.keys() if expansion else DESTINATIONS.keys().filter(
+		func(id: String) -> bool: return not EXPANSION_CHAPTER.has(id))

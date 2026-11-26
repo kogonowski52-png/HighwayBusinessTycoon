@@ -30,7 +30,7 @@ static func viewport(size: Vector2i) -> SubViewport:
 	view.add_child(light)
 	return view
 
-static func atlas(parent: Control) -> TextureRect:
+static func atlas(parent: Control, expansion: bool) -> TextureRect:
 	var frame := image(parent, Vector2i(792, 522), 514)
 	var view: SubViewport = frame.get_child(0)
 	var terrain := Node3D.new()
@@ -44,12 +44,17 @@ static func atlas(parent: Control) -> TextureRect:
 	camera.current = true
 	land(terrain, Vector3(-4.45, -.85, -.15), Vector2(4.60, 5.0), Color("#b4a778"), Color("#779885"), .22)
 	land(terrain, Vector3(3.0, -.84, -.14), Vector2(5.94, 5.04), Color("#a3a47e"), Color("#77978b"), .64)
-	for key in Atlas.DESTINATIONS:
-		var entry: Dictionary = Atlas.DESTINATIONS[key]
+	for key: String in Atlas.chapter_routes(expansion):
+		var entry := Atlas.destination(key)
 		var coordinate: Vector2 = entry.position
 		var pos := Vector3((coordinate.x - .5) * 18.20, -.10, (coordinate.y - .5) * 12.0)
 		land(terrain, pos, Vector2(2.43, 1.63), Color(entry.color), Color(entry.color).darkened(.29), coordinate.x * 3.8)
 		var object := pos + Vector3(-.63, .14, -.43)
+		if expansion:
+			if entry.has("scene"):
+				var miniature := Art.place(terrain, "regions", key + "_atlas", pos + Vector3(0, .12, -.31))
+				miniature.scale = Vector3.ONE * .19
+			continue
 		match key:
 			"north": Art.place(terrain, "architecture", "canopy_rehab", object).scale = Vector3.ONE * .21
 			"desert":
@@ -63,12 +68,19 @@ static func atlas(parent: Control) -> TextureRect:
 					Art.place(terrain, "regions", "ocean_lighthouse", object + Vector3(-.26, 0, -.37)).scale = Vector3.ONE * .21
 				else:
 					Art.place(terrain, "regions", "metro_tower_1", object + Vector3(.73, 0, -.28)).scale = Vector3.ONE * .14
-	for marks in [
+	var routes := [
 		[Vector3(-3.65, .05, -2.48), Vector3(-2.95, .05, -1.29), Vector3(-2.65, .05, .25), Vector3(-3.10, .05, 2.82)],
 		[Vector3(.52, .05, .3), Vector3(.69, .05, -1.54), Vector3(.80, .05, -3.64)],
 		[Vector3(.55, .061, .39), Vector3(2.2, .061, 1.32), Vector3(4.84, .061, 2.6)],
 		[Vector3(2.2, .058, 1.21), Vector3(3.45, .058, -.38), Vector3(5.39, .058, -1.49)],
-	]:
+	]
+	if expansion:
+		var trail: Array[Vector3] = []
+		for id: String in Atlas.chapter_routes(true):
+			var coordinate: Vector2 = Atlas.destination(id).position
+			trail.append(Vector3((coordinate.x - .5) * 18.20, .07, (coordinate.y - .5) * 12.0))
+		routes = [trail]
+	for marks in routes:
 		for index in range(1, marks.size()):
 			var a: Vector3 = marks[index - 1]
 			var b: Vector3 = marks[index]
@@ -120,6 +132,10 @@ static func detail(parent: Control, group: String, item: String) -> void:
 		subject = Art.place(presentation, "architecture", "canopy_ridge")
 		width = 11.9
 		focus_y = 1.12
+	elif Atlas.EXPANSION_CHAPTER.has(group):
+		subject = Art.place(presentation, "regions", group + "_atlas")
+		width = 12.9
+		focus_y = .93
 	elif Regions.has_region(group):
 		subject = Art.place(presentation, "regions", group + "_fuel")
 		match group:

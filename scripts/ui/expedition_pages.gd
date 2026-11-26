@@ -14,6 +14,7 @@ var destination := "desert"
 var collection := "cars"
 var collection_item := ""
 var position := 0
+var expansion_side := false
 var clocks: Array = []
 
 func bind(owner: CanvasLayer) -> void:
@@ -40,7 +41,7 @@ func signature(page: String) -> String:
 	var site: HbtEconomy = game.economy
 	var local := [page, site.language]
 	match page:
-		"atlas": local.append_array([world.active, world.districts.size(), Atlas.DESTINATIONS.keys().filter(world.available)])
+		"atlas": local.append_array([expansion_side, world.active, world.districts.size(), Atlas.DESTINATIONS.keys().filter(world.available)])
 		"district":
 			local.append_array([destination, world.available(destination), world.completion(destination)])
 			if world.districts.has(destination):
@@ -66,10 +67,18 @@ func balance(value: int) -> String:
 func show_atlas() -> void:
 	var campaign: HbtCampaign = game.campaign
 	panel.feature(hud.ROAD, text("atlas_title"), text("atlas_intro"))
-	var board := Preview.atlas(panel.rows)
+	var chapter_switch := HBoxContainer.new()
+	panel.rows.add_child(chapter_switch)
+	chapter_switch.add_theme_constant_override("separation", 8)
+	for side in [false, true]:
+		var button: Button = panel.button(chapter_switch, text("atlas_frontiers" if side else "atlas_original"),
+			show_chapter.bind(side), false, side == expansion_side)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var ids := Atlas.chapter_routes(expansion_side)
+	var board := Preview.atlas(panel.rows, expansion_side)
 	var index := 0
-	for id in Atlas.DESTINATIONS:
-		var point: Vector2 = Atlas.DESTINATIONS[id].position
+	for id: String in ids:
+		var point: Vector2 = Atlas.destination(id).position
 		var pin: Button = hud.action(board, 103, 84, false)
 		hud.button_art(pin, hud.REPUTATION if id == campaign.active else hud.ROAD if campaign.districts.has(id) else hud.NAV.sites, 44)
 		var ready := campaign.available(id)
@@ -94,6 +103,8 @@ func show_atlas() -> void:
 		label.offset_right = 136
 		label.offset_top = 41
 		label.text = game.district_name(id)
+		if campaign.districts.has(id):
+			label.text += " · %d%%" % campaign.completion(id)
 		label.add_theme_color_override("font_outline_color", Color("#1d3536"))
 		label.add_theme_constant_override("outline_size", 5)
 		if ready and game.motion_enabled():
@@ -108,7 +119,7 @@ func show_atlas() -> void:
 	for key in ["seasons", "contracts", "collections"]:
 		var action: Button = panel.button(quick, text(key + "_header"), panel.show_page.bind(key))
 		action.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for id in Atlas.DESTINATIONS:
+	for id: String in ids:
 		var estate: Button = panel.button(panel.rows, game.district_name(id), open_district.bind(id), false, id == campaign.active)
 		hud.button_art(estate, hud.ROAD, 56)
 	var tools: HBoxContainer = HBoxContainer.new()
@@ -117,16 +128,25 @@ func show_atlas() -> void:
 		var action: Button = panel.button(tools, text(key + "_header"), panel.show_page.bind(key))
 		action.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
+func show_chapter(expanded: bool) -> void:
+	expansion_side = expanded
+	panel.show_page("atlas")
+
 func open_district(id: String) -> void:
 	destination = id
 	panel.show_page("district")
 
 func show_district() -> void:
 	var campaign: HbtCampaign = game.campaign
-	var region: Dictionary = Atlas.DESTINATIONS[destination]
+	var region := Atlas.destination(destination)
 	panel.feature(hud.ROAD, game.district_name(destination), text("region_" + destination))
 	if region.has("scene"):
 		Preview.detail(panel.rows, destination, "")
+		if Atlas.EXPANSION_CHAPTER.has(destination):
+			var names: Array[String] = []
+			for definition: HbtService in Regions.profiles(destination):
+				names.append(definition.name_en if game.economy.language == "en" else definition.name_pl)
+			panel.box(text("atlas_services"), " · ".join(names))
 		var title: String = text("district_metrics") % [campaign.completion(destination), game.money(campaign.projected_income(destination))]
 		var card: VBoxContainer = panel.box(title)
 		if campaign.districts.has(destination):
