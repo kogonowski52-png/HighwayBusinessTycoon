@@ -1,0 +1,55 @@
+name: Publish signed Android 0.9.1 APK
+
+on:
+  push:
+    branches: [android-apk-0.9.1-rc]
+    paths:
+      - .github/workflows/publish-approved-rc-apk.yml
+
+concurrency: highway-business-tycoon-0.9.1-rc-apk
+
+jobs:
+  publish:
+    if: github.repository == 'kogonowski52-png/HighwayBusinessTycoon'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      HBT_APK: HighwayBusinessTycoon-0.9.1-test.apk
+      HBT_APK_SIZE: '119124490'
+      HBT_APK_DIGEST: 86d6c758951c17dbbb5ee9bcef533288a5e47df3d4f7c44a5d98c62551092e13
+      HBT_TAG: v0.9.1-rc.1
+      HBT_SOURCE: 038fc08d8203371817c69567d8a71f33dac5bd4b
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: 038fc08d8203371817c69567d8a71f33dac5bd4b
+      - name: Download and verify the already signed APK
+        shell: bash
+        run: |
+          apk="$RUNNER_TEMP/$HBT_APK"
+          printf 'version https://git-lfs.github.com/spec/v1\noid sha256:%s\nsize %s\n' "$HBT_APK_DIGEST" "$HBT_APK_SIZE" |
+            GIT_LFS_SKIP_SMUDGE=0 git lfs smudge "$HBT_APK" > "$apk"
+          test "$(wc -c < "$apk")" = "$HBT_APK_SIZE"
+          printf '%s  %s\n' "$HBT_APK_DIGEST" "$apk" | sha256sum -c
+          unzip -tq "$apk"
+      - name: Publish the test release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="$RUNNER_TEMP/highway-business-tycoon-rc-notes.md"
+          cat > "$notes" <<'NOTES'
+          Podpisany APK testowy Highway Business Tycoon 0.9.1 na Android ARM64.
+
+          - Pakiet `pl.krystiandevelopment.highwaytycoon`
+          - Kod wersji `9001`
+          - Stały certyfikat testowy zgodny z 0.9.0 RC
+          - Przewijanie palcem, budowa jednym dotknięciem i poprawione oświetlenie
+          - SHA-256 pliku APK `86d6c758951c17dbbb5ee9bcef533288a5e47df3d4f7c44a5d98c62551092e13`
+          NOTES
+          gh release create "$HBT_TAG" "$RUNNER_TEMP/$HBT_APK" \
+            --repo "$GITHUB_REPOSITORY" --target "$HBT_SOURCE" \
+            --title 'Highway Business Tycoon 0.9.1 · Android APK' \
+            --notes-file "$notes" --prerelease --latest=false
