@@ -3,8 +3,9 @@ extends Control
 const ROAD := "res://scenes/world/roadside.tscn"
 const WORLD_LOGIC := "res://scripts/core/game_manager.gd"
 const Atlas = preload("res://data/world/atlas.gd")
-const LOGO = preload("res://assets/ui/presentation/logo.png")
-const ART = preload("res://assets/ui/presentation/station-portrait.jpg")
+const LOGO = preload("res://assets/ui/presentation/highway-wordmark.png")
+const STUDIO = preload("res://assets/ui/presentation/krystian-development.png")
+const ART = preload("res://assets/ui/presentation/rc-station-portrait.jpg")
 const Jade = preload("res://assets/ui/presentation/jade.png")
 const Paper = preload("res://assets/ui/presentation/paper.png")
 const FontHeavy = preload("res://assets/fonts/OpenSans-ExtraBold.ttf")
@@ -36,10 +37,10 @@ var profile_path := ""
 
 func _ready() -> void:
 	var save := Saving.new()
-	if not profile_path.is_empty():
+	if OS.is_debug_build() and not profile_path.is_empty():
 		save.path = profile_path
 	for arg in OS.get_cmdline_user_args():
-		if arg.begins_with("--save-path="):
+		if OS.is_debug_build() and arg.begins_with("--save-path="):
 			save.path = arg.trim_prefix("--save-path=")
 	var profile := save.restore()
 	var world: Variant = profile.get("world", {})
@@ -83,7 +84,7 @@ func build_layout() -> void:
 	logo.texture = LOGO
 	logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	logo.custom_minimum_size.y = 406
+	logo.custom_minimum_size.y = 318
 	logo.pivot_offset = Vector2(400, 210)
 	logo.modulate.a = 0.0
 	logo.create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT).tween_property(logo, "modulate:a", 1.0, .37)
@@ -132,6 +133,13 @@ func build_layout() -> void:
 	language.custom_minimum_size.x = 198
 	column.add_child(language)
 	language.pressed.connect(switch_language)
+	var studio := TextureRect.new()
+	column.add_child(studio)
+	studio.texture = STUDIO
+	studio.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	studio.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	studio.custom_minimum_size.y = 57
+	studio.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	resized.connect(layout)
 	call_deferred("layout")
 
@@ -147,7 +155,7 @@ func layout() -> void:
 	column.offset_right = -gutter - (float(get_window().size.x) - safe.end.x) * ratio.x
 	column.offset_top = 58 + safe.position.y * ratio.y
 	column.offset_bottom = -53 - (float(get_window().size.y) - safe.end.y) * ratio.y
-	logo.custom_minimum_size.y = minf(406.0, size.y * 0.23)
+	logo.custom_minimum_size.y = minf(318.0, size.y * 0.22)
 
 func button(texture: Texture2D, height: int, primary: bool) -> Button:
 	var action := Touch.new()
@@ -181,7 +189,7 @@ func fill(color: Color, edge: Color) -> StyleBoxFlat:
 func update_copy() -> void:
 	play.text = Strings.phrase(locale, "front_resume" if resume_game else "front_play")
 	language.text = Strings.phrase(locale, "front_locale")
-	column.get_node("Location").text = Strings.phrase(locale, "name") + " · " + Strings.phrase(locale, "location")
+	column.get_node("Location").text = Atlas.location_name(district, locale) + " · " + (Strings.phrase(locale, "location") if district == "north" else Atlas.DESTINATIONS[district].area)
 
 func switch_language() -> void:
 	locale = "en" if locale == "pl" else "pl"
@@ -196,7 +204,7 @@ func begin_loading() -> void:
 	load_progress = 0.0
 	load_bar.value = 0.0
 	loading.show()
-	load_caption.text = Strings.phrase(locale, "front_loading")
+	load_caption.text = Strings.phrase(locale, "front_loading") % Atlas.location_name(district, locale)
 	play.hide()
 	language.disabled = true
 
@@ -232,7 +240,7 @@ func _process(delta: float) -> void:
 func enter_game(scene: PackedScene) -> void:
 	var route := scene.instantiate()
 	route.entry_language = locale
-	if not profile_path.is_empty():
+	if OS.is_debug_build() and not profile_path.is_empty():
 		route.economy.storage.path = profile_path
 	get_tree().root.add_child(route)
 	get_tree().current_scene = route

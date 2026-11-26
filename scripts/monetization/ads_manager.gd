@@ -3,6 +3,7 @@ extends Node
 signal availability_changed
 signal rewarded(id: String)
 signal failed
+signal unconfirmed
 signal commercial_started
 
 const Config = preload("res://data/monetization/config.gd")
@@ -199,7 +200,10 @@ func closed(token: String) -> void:
 		return
 	game.campaign.premium.quiet(region().clock)
 	game.campaign.checkpoint()
+	var no_reward := not confirmed
 	reset_request()
+	if no_reward:
+		unconfirmed.emit()
 	notify()
 
 func reset_request() -> void:

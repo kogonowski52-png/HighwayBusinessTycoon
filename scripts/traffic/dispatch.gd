@@ -435,7 +435,7 @@ func release_bay(ticket: HbtVisit) -> void:
 
 func recover(ticket: HbtVisit) -> void:
 	recovered += 1
-	if "--trace-blockage" in OS.get_cmdline_user_args():
+	if OS.is_debug_build() and "--trace-blockage" in OS.get_cmdline_user_args():
 		var others := {}
 		for car: HbtVisit in live.values():
 			if car != ticket and car.location.distance_to(ticket.location) < 10.0:

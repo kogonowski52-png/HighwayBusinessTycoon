@@ -9,6 +9,10 @@ on:
         description: Existing version tag (vMAJOR.MINOR.PATCH)
         required: true
         type: string
+      publish_release:
+        description: Publish the verified APK to GitHub Releases
+        type: boolean
+        default: false
 
 concurrency: android-debug-publication
 
@@ -135,6 +139,7 @@ jobs:
           compression-level: 0
 
       - name: Publish APK to GitHub Releases
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash

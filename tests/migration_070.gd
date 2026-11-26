@@ -5,6 +5,7 @@ const Calendar = preload("res://data/world/expedition_calendar.gd")
 const AT := Calendar.START + Calendar.WEEK * 4 + 500
 const FIXTURE_RECEIPT := "fixture-only-stage7-test"
 var path: String
+var source_version := "0.7.0"
 
 func _initialize() -> void:
 	run.call_deferred()
@@ -13,6 +14,8 @@ func run() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--profile="):
 			path = arg.get_slice("=", 1)
+		elif arg.begins_with("--original="):
+			source_version = arg.get_slice("=", 1)
 	if not path.begins_with("/tmp/hbt-070-migration-"):
 		expect(false, "isolated fixture path is required")
 		result("0.7.0 migration")
@@ -22,7 +25,7 @@ func run() -> void:
 		write_original(original)
 	else:
 		reload(original)
-	result("0.7.0 migration")
+	result(source_version + " migration")
 
 func saved_at(time: int) -> HbtCampaign:
 	var world := HbtCampaign.new(HbtEconomy.new())
@@ -31,7 +34,7 @@ func saved_at(time: int) -> HbtCampaign:
 	return world
 
 func write_original(world: HbtCampaign) -> void:
-	expect(ProjectSettings.get_setting("application/config/version") == "0.7.0", "run the seed on the original release")
+	expect(ProjectSettings.get_setting("application/config/version") == source_version, "run the seed on the original release")
 	if failures > 0:
 		return
 	for region: String in Atlas.DESTINATIONS:

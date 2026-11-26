@@ -62,6 +62,9 @@ class MobileExport extends EditorExportPlugin:
 		if RegEx.create_from_string("^https://[a-zA-Z0-9.-]+(?::[0-9]+)?(/[a-zA-Z0-9/_-]*)?$").search(url) != null 				and RegEx.create_from_string("^[0-9]+-[A-Za-z0-9_-]+\\.apps\\.googleusercontent\\.com$").search(identity) != null:
 			values["highwaytycoon.backend"] = url
 			values["highwaytycoon.oauth_client"] = identity
+		var privacy := OS.get_environment("HBT_PRIVACY_URL").strip_edges()
+		if RegEx.create_from_string("^https://[a-zA-Z0-9.-]+(/[a-zA-Z0-9/_.-]*)?$").search(privacy) != null:
+			values["highwaytycoon.privacy_url"] = privacy
 		var content := ""
 		for key in values:
 			if not str(values[key]).is_empty():

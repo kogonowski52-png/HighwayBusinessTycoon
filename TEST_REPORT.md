@@ -1,5 +1,30 @@
 # Raport testów
 
+## 0.9.0 · Release Candidate
+
+Godot 4.7.2 na Linuksie x86_64. Próby zakupowe i reklamowe korzystały z kontrolowanych odpowiedzi. Okno Godota z Mesa llvmpipe rejestrowało rzeczywisty obraz i interakcję. [Audyt usterek i oceny](docs/RELEASE_AUDIT.md) · [Pomiary](docs/performance-0.9.0.md) · [Bezpieczeństwo](docs/SECURITY_RC.md)
+
+| Próba | Wynik |
+| --- | --- |
+| Import całej gry, zasoby i tłumaczenia | 2275/2275. Wczytanie skryptów, modeli, scen, shaderów, obrazów, audio i fontów. Zgodność 592 kluczy PL i EN. |
+| Ekonomia, zapis, stacja i samochody | 70/70 w gospodarce, 27/27 w stacji, 30/30 dla tras. |
+| Misje, wydarzenia i kontrakty | 202/202 kariery, 64/64 ekspansji, 93/93 regionów. Logika obsługi i jednokrotnej wypłaty z 590 misji rozdziałowych. |
+| Przejście okienkowe wszystkich map | 164/164. Realny atlas, obsługa usług, animacje, powrót do wcześniejszej lokalizacji i zarobki offline. |
+| Grafika i prezentacja | 113/113 kontroli zasobów 3D, 278/278 danych i ustawień, 81/81 przejścia prezentacji w oknie. Próby niskiego, średniego, wysokiego i Ultra. |
+| Dostępność i układ | 15/15 ustawień na trzech proporcjach z wcięciami. 11/11 dla dwóch rozmiarów tabletu i angielskiego tytułu. |
+| BOOST, reklamy i sklep | 86/86 granicy logiki. 49/49 w oknie. Potwierdzenie przyznania, odmowy i braku sieci na adapterze testowym. |
+| Kampania i monetyzacja | 55/55 kampanii bez reklam i płatności, 21/21 przebiegów z różnym użyciem reklam lub pakietów. [Balans](docs/balance-0.9.0.md) |
+| Ruch pod obciążeniem i presety | 241/241. Dodatkowe 4/4 dla symulacji 20, 50, 100 i 200 pojazdów. Cztery regionalne próby ruchu po 25 symulowanych minut bez odzyskiwania zakleszczonych tras. |
+| Zapis obu starszych wersji | Dwa zapisy utworzono oryginalnym kodem. 6/6 odczytu dla każdego z 0.7.0 i 0.8.0. Weryfikacja zachowała sześć map, waluty, postęp, menedżerów, zdarzenia, BOOST i trwałe uprawnienia. |
+| Przerwanie zapisu i procesu | Uszkodzony plik główny i częściowy zapis odzyskane z kopii. Rzeczywiste `SIGKILL` na Linuksie pozostawiło poprawny zapis oraz kopię. Ponowne uruchomienie odczytało sześć regionów. |
+| Weryfikator | 15/15 testów z kontrolowanym dostawcą Google. Lokalny HTTPS przekazał do WSGI zapytania, które otrzymały oczekiwane statusy 200, 401, 404 i 400 dla zbyt dużej treści. |
+| Podpis Android | Testowy APK ARM64 kod 9000 z certyfikatem 0.7.0 i 0.8.0. Target API 36, min. 24, wyrównanie ZIP i ELF 16 KiB. |
+| Materiały | 88 ujęć po zmianach, 15 bazowych, porównanie, 616 klatek filmu, grafika promocyjna, ikona i 12 zrzutów karty Google Play. [Galeria](screenshots/0.9.0/README.md) · [Materiały](release/play/README.md) |
+
+Pełna próba przez 900 s na Linuksie przy zmianach map co 45 s miała 107 obsłużonych klientów, 92 zakończone wyjazdy, 16 podróży, 4 restarty sceny, 129 otwarć paneli i 29 wymuszonych zapisów. Zaliczyła 21/22 warunków. Wyjazdy pozostały poniżej progu 100. Powtórka co 90 s zaliczyła 18/18 sprawdzeń i 110 zakończonych wyjazdów. [Stabilność](docs/stability-0.9.0.md)
+
+W próbach nie było dostępnego fizycznego Androida. Certyfikat i odczyt zapisów potwierdzono oddzielnie. Próby instalacji z Play, wydajność sprzętowa, faktyczne reklamy SDK, formularz UMP, testy z kontem licencyjnym i podpisany produkcyjny AAB pozostają otwarte. [Instrukcja testów w Play](docs/PLAY_CONSOLE_RC.md)
+
 ## 0.8.0 · Wydajność, stabilność i Android
 
 Godot 4.7.2 Stable, Linux x86_64, izolowane profile i rzeczywiste renderowanie Mesa w próbach okienkowych. Bazę do pomiaru stanowił osobny checkout `aec0754`. [Wydajność](docs/performance-0.8.0.md) · [Stabilność](docs/stability-0.8.0.md) · [Galeria i film](screenshots/0.8.0/README.md)

@@ -97,7 +97,7 @@ func update_clock() -> void:
 	if panel.page != "boost" or not is_instance_valid(clock_label) or not is_instance_valid(boost_bar):
 		return
 	var left: int = game.campaign.boost.remaining(game.economy.clock)
-	clock_label.text = "%s  ·  %s" % [text("boost_active"), game.clock_text(left)] if left > 0 else text("boost_off")
+	clock_label.text = "%s  ·  %s" % [text("boost_active"), game.boost_time(left)] if left > 0 else text("boost_off")
 	boost_bar.value = left
 
 func shop() -> void:
@@ -161,6 +161,9 @@ func product(id: String, icon: Texture2D) -> void:
 	var copy := "" if spec.section == "gems" else content(items) if not items.is_empty() else text("no_ads_scope" if id == "remove_ads" else "pass_scope")
 	var card := hero(icon, named, copy)
 	var premium: HbtPremiumState = game.campaign.premium
+	if game.economy.storage.read_only:
+		panel.box(text("store_save_read_only"))
+		return
 	if premium.entitlements.has(id):
 		panel.box(text("store_owned"))
 		return

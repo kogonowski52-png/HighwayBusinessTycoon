@@ -128,15 +128,15 @@ func set_look(look: Look) -> void:
 				sun.light_color = Color("#fff1d2")
 				sun.light_energy *= 1.10
 			"alpine":
-				environment.ambient_light_color = Color("#b8cde3")
-				environment.ambient_light_energy = .47
-				sun.light_color = Color("#ffe7c6")
-				sun.light_energy *= .88
+				environment.ambient_light_color = Color("#b1c9e3")
+				environment.ambient_light_energy = .44
+				sun.light_color = Color("#fff0d6")
+				sun.light_energy *= .84
 				sun.rotation_degrees = Vector3(-43, -48, 0)
 			"ocean":
-				environment.ambient_light_color = Color("#cae7df")
-				sun.light_color = Color("#fff0cb")
-				sun.light_energy *= 1.22
+				environment.ambient_light_color = Color("#c5e0e2")
+				sun.light_color = Color("#fff3da")
+				sun.light_energy *= 1.02
 	if district == "metro" and look == Look.NIGHT:
 		environment.ambient_light_energy = .33
 		sun.light_energy = .28

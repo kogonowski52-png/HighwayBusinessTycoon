@@ -267,6 +267,23 @@ func button(parent: Control, label: String, operation: Callable, disabled := fal
 
 func show_sites() -> void:
 	var store: HbtEconomy = controller.economy
+	var next_site := ""
+	for id: String in store.facilities:
+		if store.level(id) > 0:
+			continue
+		if next_site.is_empty() or store.gate_open(id):
+			next_site = id
+		if store.gate_open(id):
+			break
+	if not next_site.is_empty():
+		var quote: String = controller.money(HbtAmount.from(store.facilities[next_site].unlock_cost))
+		var detail: String = controller.t("site_next_price") % quote
+		if not store.gate_open(next_site):
+			detail += "\n" + controller.gate_text(next_site)
+		var goal := feature(theme_source.NAV.sites, controller.t("site_next") % controller.site_name(next_site), detail)
+		button(goal, controller.t("site_next_focus"), func() -> void:
+			controller.select_site(next_site)
+			hide_page(), false, true)
 	for id in store.facilities:
 		var tier := store.level(id)
 		var subtitle: String = controller.gate_text(id) if tier == 0 else controller.t("level") % [tier, store.CONFIG.max_level]

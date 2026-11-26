@@ -17,3 +17,9 @@ Natywny APK ma uprawnienia do internetu, odpytywania Play Billing i wibracji. Sc
 Właściciel określa retencję serwera oraz procedurę wycofania zgody i żądania usunięcia danych przed udostępnieniem wersji produkcyjnej. Reklamy nagradzane są dobrowolne. Płatne wyłączenie przerywników nie zmienia zgody Google. Aplikacja zachowuje podstawową rozgrywkę przy braku sieci. [Google Mobile Ads i Data Safety](https://developers.google.com/admob/android/privacy/play-data-disclosure) · [Polityka danych użytkownika Google Play](https://support.google.com/googleplay/android-developer/answer/10144311) · [Data Safety Google Play](https://support.google.com/googleplay/android-developer/answer/10787469)
 
 W `0.8.0` opcjonalna diagnostyka testowego APK może na żądanie pobrać status `/health` z ustawionego weryfikatora. Zapytanie nie wysyła tokenów ani danych profilu. Wydanie release ukrywa diagnostykę.
+
+## Aktualizacja 0.9.0
+
+Kod produkcyjnej paczki zasobów wyklucza skrypt diagnostyki testowej. Dziennik zdarzeń opt-in pozostaje lokalny. Manifest testowy ma `allowBackup=false` oraz `usesCleartextTraffic=false`. Identyfikator instalacji gry jest tworzony losowo, a zawartość konta Google rozliczeniowo mapowana do pseudonimu na serwerze. `/health` raportuje wyłącznie dostępność bazy. Ustal w Console, czy identyfikatory oraz transakcje wymagają oznaczenia jako zbierane lub udostępniane w używanej konfiguracji SDK.
+
+Uzupełnij w dwujęzycznym HTML dane administratora, kontakt, datę, informacje o hostingu i retencji. Opublikuj na publicznym HTTPS i złóż żądanie testowe kanałem usuwania danych przed aktywacją płatności. W ustawieniach gry link jest widoczny po wprowadzeniu właściwego `HBT_PRIVACY_URL`. [Polityka HTML](../release/play/privacy.html) · [Google Play](PLAY_CONSOLE_RC.md)

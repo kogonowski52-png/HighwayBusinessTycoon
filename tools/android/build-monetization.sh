@@ -23,7 +23,7 @@ case "$mode" in
     : "${GODOT_ANDROID_KEYSTORE_RELEASE_PATH:?Use the registered Play upload keystore}"
     : "${GODOT_ANDROID_KEYSTORE_RELEASE_USER:?Set the upload key alias}"
     : "${GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD:?Supply the upload key password privately}"
-    for key in HBT_ADMOB_APP_ID HBT_REWARDED_BOOST_ID HBT_REWARDED_OFFLINE_ID HBT_REWARDED_BONUS_ID HBT_PLAY_BACKEND HBT_GOOGLE_CLIENT_ID; do
+    for key in HBT_ADMOB_APP_ID HBT_REWARDED_BOOST_ID HBT_REWARDED_OFFLINE_ID HBT_REWARDED_BONUS_ID HBT_PLAY_BACKEND HBT_GOOGLE_CLIENT_ID HBT_PRIVACY_URL; do
       if [[ -z "${!key:-}" || "${!key}" = ca-app-pub-3940256099942544* ]]; then
         printf 'Provide a valid production value for %s\n' "$key" >&2
         exit 2
@@ -39,6 +39,12 @@ case "$mode" in
     fi
     [[ "$HBT_PLAY_BACKEND" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?(/[A-Za-z0-9/_-]*)?$ ]]
     [[ "$HBT_GOOGLE_CLIENT_ID" =~ ^[0-9]+-[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com$ ]]
+    [[ "$HBT_PRIVACY_URL" =~ ^https://[A-Za-z0-9.-]+(/[A-Za-z0-9/_.-]*)?$ ]]
+    if ! curl --proto '=https' --fail --silent --show-error --max-time 15 "${HBT_PLAY_BACKEND%/}/health" \
+        | python3 -c 'import json, sys; result=json.load(sys.stdin); sys.exit(result.get("status") != "ready" or result.get("mode") != "production")' 2>/dev/null; then
+      printf 'The HTTPS purchase verifier must report ready before a production export.\n' >&2
+      exit 2
+    fi
     target="Android Play"
     export_flag=--export-release
     ;;

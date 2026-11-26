@@ -1,5 +1,11 @@
 # Stan projektu
 
+## 0.9.0 · Release Candidate
+
+Kandydat z kodem 9000 i stałym testowym podpisem Androida. Zmieniono tytuł, ekran wczytywania i ikonę aplikacji. Rozbudowa pokazuje następną inwestycję. Dopracowano oświetlenie Alpine Pass i Ocean Coast. Poprawiono granice przyznawania zakupów, ponawianie weryfikacji i komunikaty BOOST.
+
+Przejście renderowane obejmuje sześć map i 41 usług zweryfikowanych również w symulacji testowej. Przeszła migracja zapisów 0.7.0 i 0.8.0. Produkcyjne AAB, prawdziwe testy AdMob i Billing, publiczna polityka i pomiary na telefonach wymagają infrastruktury i urządzeń właściciela. [Audyt i blokery](docs/RELEASE_AUDIT.md) · [Dowody i raporty](TEST_REPORT.md)
+
 ## 0.8.0 · Optymalizacja i zgodność Androida
 
 Wersja zawiera cztery profile grafiki, automatyczny wybór, ograniczanie pracy poza kadrem, pulę aut, asynchroniczne podróże i zachowane dane wszystkich lokalizacji. Testowe APK wykorzystuje ten sam certyfikat oraz mniejszy wariant ARM64. Próby płynności, cyklu życia i zakupów na fizycznym Androidzie pozostają otwarte. Weryfikator HTTPS ma gotową instalację bez uruchamiania zewnętrznej usługi. [Status wszystkich wymagań](docs/STAGE7_STATUS.md) · [Weryfikacja urządzeń](docs/ANDROID_QA.md)

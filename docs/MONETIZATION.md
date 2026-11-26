@@ -25,7 +25,7 @@ Godot 4.7.2 Stable, JDK 21, Android SDK 36 i Build Tools 36.1.0 dla szablonu, Gr
 
 ```bash
 export HBT_ANDROID_TEMPLATE=/pełna/ścieżka/android_source.zip
-tools/android/build-monetization.sh test /pełna/ścieżka/HighwayBusinessTycoon-0.8.0-test.apk
+tools/android/build-monetization.sh test /pełna/ścieżka/HighwayBusinessTycoon-0.9.0-RC.apk
 ```
 
 Środowisko eksportu musi otrzymać dotychczasowe zmienne `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER`, `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`. Plik APK można porównać z lokalnym 0.6.1 poleceniem `tools/android/verify-monetization-apk.sh NEW.apk OLD.apk` po ustawieniu `ANDROID_BUILD_TOOLS_DIR`. [Stały certyfikat](ANDROID_SIGNING.md)
@@ -39,3 +39,20 @@ tools/android/build-monetization.sh test /pełna/ścieżka/HighwayBusinessTycoon
 5. Na urządzeniach wewnętrznych użyj wyłącznie testowego presetu lub skonfigurowanych urządzeń testowych. Testowy preset automatycznie wybiera publiczny App ID `ca-app-pub-3940256099942544~3347511713`, Rewarded `ca-app-pub-3940256099942544/5224354917` dla każdego miejsca i Interstitial `ca-app-pub-3940256099942544/1033173712`.
 
 Punkty weryfikacji właściciela przed użyciem prawdziwych jednostek to polityka nagród, zgody dla rzeczywistej grupy docelowej, konfiguracja regionalna i przegląd deklaracji prywatności. [Rewarded](https://developers.google.com/admob/android/rewarded) · [Interstitial](https://developers.google.com/admob/android/interstitial) · [UMP](https://developers.google.com/admob/android/privacy) · [Polityka nagród](https://support.google.com/admob/answer/7313578)
+
+## Parametry wydania 0.9.0
+
+Zmiennych nie trzeba wpisywać do GDScriptu. `tools/android/build-monetization.sh` sprawdza wartości i stan HTTPS weryfikatora, a `addons/highway_rewarded/plugin.gd` dodaje metadane manifestu. Aktywację przerywników kontroluje opcja `HBT_INTERSTITIALS=off`.
+
+| Zmienna eksportu | Klucz manifestu |
+| --- | --- |
+| `HBT_ADMOB_APP_ID` | `com.google.android.gms.ads.APPLICATION_ID` |
+| `HBT_REWARDED_BOOST_ID` | `highwaytycoon.rewarded_boost` |
+| `HBT_REWARDED_OFFLINE_ID` | `highwaytycoon.rewarded_offline` |
+| `HBT_REWARDED_BONUS_ID` | `highwaytycoon.rewarded_bonus` |
+| `HBT_INTERSTITIAL_ID` | `highwaytycoon.interstitial` |
+| `HBT_PLAY_BACKEND` | `highwaytycoon.backend` |
+| `HBT_GOOGLE_CLIENT_ID` | `highwaytycoon.oauth_client` |
+| `HBT_PRIVACY_URL` | `highwaytycoon.privacy_url` i link w ustawieniach gry |
+
+Kandydat testowy ma oficjalne jednostki Google, a środowiska produkcyjne wymagają własnych wartości. Kandydat udostępnia techniczne statusy w panelu testowym. Preset Play wyklucza skrypt panelu oraz nie ustawia jego metadanych. Gra pokazuje pozostały czas BOOST jako MM:SS i komunikuje zamknięcie reklamy bez potwierdzonej nagrody. [Testy RC](RELEASE_AUDIT.md)

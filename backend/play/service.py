@@ -26,6 +26,8 @@ TOKEN = re.compile(r"[A-Za-z0-9_.~/+=-]{16,4096}\Z")
 INSTALL = re.compile(r"[0-9a-f]{32}\Z")
 NONCE = re.compile(r"[0-9a-f]{64}\Z")
 DAY = 86_400
+FINALIZATION_LEASE = 90
+RETRY_DELAY = 30 * 60
 LOG = logging.getLogger("hbt.play")
 
 
@@ -97,9 +99,11 @@ class Service:
                 CREATE TABLE IF NOT EXISTS nonce (
                     key TEXT PRIMARY KEY, expires INTEGER NOT NULL
                 );
+                CREATE INDEX IF NOT EXISTS nonce_expiry ON nonce(expires);
                 CREATE TABLE IF NOT EXISTS session (
                     key TEXT PRIMARY KEY, account TEXT NOT NULL, expires INTEGER NOT NULL
                 );
+                CREATE INDEX IF NOT EXISTS session_expiry ON session(expires);
                 CREATE TABLE IF NOT EXISTS receipt (
                     id TEXT PRIMARY KEY, account TEXT NOT NULL, install TEXT NOT NULL,
                     product TEXT NOT NULL, state TEXT NOT NULL, finalized INTEGER NOT NULL DEFAULT 0,
@@ -134,18 +138,22 @@ class Service:
         token = data.get("id_token")
         if not isinstance(token, str) or not 32 <= len(token) <= 8192:
             raise ApiError(401, "identity_required")
+        nonce_key = digest(nonce)
+        with self.db() as db:
+            if db.execute("SELECT 1 FROM nonce WHERE key=? AND expires>=?", (nonce_key, int(self.clock()))).fetchone() is None:
+                raise ApiError(401, "identity_required")
         try:
             identity = self.google.verify_identity(token)
         except ValueError:
             raise ApiError(401, "identity_required") from None
         subject = identity.get("sub")
-        if not isinstance(subject, str) or identity.get("nonce") != nonce:
+        if not isinstance(subject, str) or not subject or identity.get("nonce") != nonce:
             raise ApiError(401, "identity_required")
         account = hmac.new(self.secret, subject.encode(), hashlib.sha256).hexdigest()
         bearer, now = secrets.token_urlsafe(32), int(self.clock())
         with self.db() as db:
             db.execute("BEGIN IMMEDIATE")
-            deleted = db.execute("DELETE FROM nonce WHERE key=? AND expires>=?", (digest(nonce), now))
+            deleted = db.execute("DELETE FROM nonce WHERE key=? AND expires>=?", (nonce_key, now))
             if deleted.rowcount != 1:
                 raise ApiError(401, "identity_required")
             db.execute("DELETE FROM session WHERE expires < ?", (now,))
@@ -202,14 +210,18 @@ class Service:
         consumed = details.get("consumptionState") == "CONSUMPTION_STATE_CONSUMED"
         acknowledged = proof.get("acknowledgementState") == "ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED"
         consumable = product in CONSUMABLE
+        needs_finalization = not (consumed if consumable else acknowledged)
+        lease = False
         with self.db() as db:
             db.execute("BEGIN IMMEDIATE")
-            entry = db.execute("SELECT account, product, state FROM receipt WHERE id=?", (rid,)).fetchone()
+            entry = db.execute("SELECT account, product, state, finalized FROM receipt WHERE id=?", (rid,)).fetchone()
             if entry:
                 if entry["state"] == "void":
                     raise ApiError(410, "voided")
                 if entry["account"] != account or entry["product"] != product:
                     raise ApiError(409, "account_mismatch")
+                if entry["finalized"]:
+                    needs_finalization = False
             else:
                 if consumed:
                     raise ApiError(409, "consumed_without_grant")
@@ -219,16 +231,42 @@ class Service:
                     raise ApiError(409, "already_owned")
                 db.execute("INSERT INTO receipt VALUES (?, ?, ?, ?, 'purchased', 0, ?)",
                            (rid, account, install, product, int(self.clock())))
-            if not (consumed if consumable else acknowledged):
+            if needs_finalization:
                 db.execute("INSERT OR IGNORE INTO pending_finish(id,cipher) VALUES (?,?)",
                            (rid, self.queue_cipher.encrypt(token.encode())))
+                now = int(self.clock())
+                lease = self.lease_finalization(db, rid, now, FINALIZATION_LEASE)
 
-        # The durable receipt is committed before finalizing with Play. Retries can recover
-        # after a successful consume/acknowledge and a lost HTTP response.
-        if not (consumed if consumable else acknowledged):
-            self.google.finalize(token, product, consumable)
+        # Commit a durable intent before talking to Play. A staged receipt cannot grant anything.
+        if needs_finalization:
+            if not lease:
+                raise ApiError(503, "temporarily_unavailable")
+            try:
+                self.google.finalize(token, product, consumable)
+            except Exception:
+                # Network and Publisher errors leave an encrypted retry but no client entitlement.
+                LOG.warning("Purchase finalization deferred")
+                raise
         self.complete(rid)
         return self.sync(account, install)
+
+    @staticmethod
+    def lease_finalization(db: sqlite3.Connection, rid: str, now: int, seconds: int) -> bool:
+        changed = db.execute("UPDATE pending_finish SET next_try=? WHERE id=? AND next_try<=?",
+                             (now + seconds, rid, now)).rowcount
+        return changed == 1
+
+    def prune_auth(self) -> None:
+        now = int(self.clock())
+        with self.db() as db:
+            db.execute("DELETE FROM nonce WHERE expires<?", (now,))
+            db.execute("DELETE FROM session WHERE expires<?", (now,))
+
+    def monitor(self) -> dict:
+        with self.db() as db:
+            queue = db.execute("SELECT COUNT(*), MIN(receipt.created) FROM pending_finish JOIN receipt USING(id)").fetchone()
+        age = max(0, int(self.clock()) - queue[1]) if queue[1] is not None else 0
+        return {"pending_finalization": queue[0], "oldest_pending_seconds": age}
 
     def complete(self, rid: str) -> None:
         with self.db() as db:
@@ -236,6 +274,7 @@ class Service:
             db.execute("DELETE FROM pending_finish WHERE id=?", (rid,))
 
     def retry_finalization(self) -> int:
+        self.prune_auth()
         now = int(self.clock())
         with self.db() as db:
             items = db.execute("""
@@ -245,10 +284,12 @@ class Service:
                 ORDER BY pending_finish.next_try LIMIT 140
             """, (now,)).fetchall()
         count = 0
+        deferred = 0
         for item in items:
             product, rid = item["product"], item["id"]
             with self.db() as db:
-                db.execute("UPDATE pending_finish SET next_try=? WHERE id=?", (now + 30 * 60, rid))
+                if not self.lease_finalization(db, rid, now, RETRY_DELAY):
+                    continue
             try:
                 token = self.queue_cipher.decrypt(item["cipher"]).decode()
                 proof = self.google.get(token)
@@ -263,12 +304,14 @@ class Service:
                 count += 1
             except Exception:
                 # Retry metadata stays in the database. Client libraries may include the token in exceptions.
-                continue
+                deferred += 1
+        if deferred:
+            LOG.warning("Deferred finalizations in maintenance: %d", deferred)
         return count
 
     def sync(self, account: str, install: str) -> dict:
         with self.db() as db:
-            rows = db.execute("SELECT id, install, product FROM receipt WHERE account=? AND state='purchased' ORDER BY created, id",
+            rows = db.execute("SELECT id, install, product FROM receipt WHERE account=? AND state='purchased' AND finalized=1 ORDER BY created, id",
                               (account,)).fetchall()
         return {"account": account,
                 "entitlements": sorted({r["product"] for r in rows if r["product"] not in CONSUMABLE}),
@@ -294,7 +337,9 @@ class Service:
         try:
             path = env.get("PATH_INFO", "")
             if env.get("REQUEST_METHOD") == "GET" and path == "/health":
-                body = {"status": "ready"}
+                with self.db() as db:
+                    db.execute("SELECT id FROM receipt LIMIT 1").fetchone()
+                body = {"status": "ready", "mode": "sandbox" if self.allow_test else "production"}
             elif env.get("REQUEST_METHOD") != "POST":
                 raise ApiError(404, "unknown_route")
             else:
@@ -354,17 +399,19 @@ if __name__ == "__main__":
     from wsgiref.simple_server import make_server
 
     args = argparse.ArgumentParser()
-    args.add_argument("action", choices=["serve", "reconcile", "retry"])
+    args.add_argument("action", choices=["serve", "reconcile", "retry", "monitor"])
     args.add_argument("--port", type=int, default=8074)
     args.add_argument("--days", type=int, default=14)
     command = args.parse_args()
     service = from_environment()
-    if command.action in ("reconcile", "retry"):
+    if command.action in ("reconcile", "retry", "monitor"):
         try:
             if command.action == "reconcile":
                 print(f"Voided receipts reconciled: {service.reconcile(command.days)}")
-            else:
+            elif command.action == "retry":
                 print(f"Receipts finalized: {service.retry_finalization()}")
+            else:
+                print(json.dumps(service.monitor(), separators=(",", ":")))
         except Exception as error:
             LOG.error("Verifier maintenance unavailable (%s)", type(error).__name__)
             raise SystemExit(1) from None

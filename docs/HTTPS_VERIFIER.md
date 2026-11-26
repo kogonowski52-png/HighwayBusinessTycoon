@@ -1,6 +1,6 @@
 # Wdrożenie weryfikatora zakupów przez HTTPS
 
-Wersja 0.8.0 zawiera konfigurację dla pojedynczego serwera Debian lub Ubuntu z systemd, Caddy 2.10+, Pythonem 3.11+ i SQLite w trybie WAL. Backend udostępnia wyłącznie `GET /health` oraz cztery trasy weryfikacji. SQLite zapisuje paragony z unikalnym hashem tokena, a zadania w tle ponawiają finalizację i uwzględniają zwroty. Konto usługi Play, domena i działający adres produkcyjny pozostają do skonfigurowania przez właściciela. [Kod wdrożenia](../backend/play/deploy/) · [Produkty i zabezpieczenia](PLAY_BILLING.md)
+Wersja 0.9.0 zawiera konfigurację dla pojedynczego serwera Debian lub Ubuntu z systemd, Caddy 2.10+, Pythonem 3.11+ i SQLite w trybie WAL. Backend udostępnia wyłącznie `GET /health` oraz cztery trasy weryfikacji. SQLite zapisuje paragony z unikalnym hashem tokena, a zadania w tle ponawiają finalizację i uwzględniają zwroty. Konto usługi Play, domena i działający adres produkcyjny pozostają do skonfigurowania przez właściciela. [Kod wdrożenia](../backend/play/deploy/) · [Produkty i zabezpieczenia](PLAY_BILLING.md)
 
 ## Wymagania i orientacyjny koszt
 
@@ -31,7 +31,7 @@ sudo systemctl reload caddy
 curl -fsS https://billing.example.net/health
 ```
 
-`{"status":"ready"}` oznacza działające połączenie TLS z usługą. Poprawność tożsamości Play i Google Publisher trzeba potwierdzić transakcją licencyjną na właściwym torze. Podaj właścicielski adres HTTPS do `HBT_PLAY_BACKEND` w eksporcie testowym. Aby udostępnić prawdziwe płatności, użyj osobnego środowiska z `HBT_PLAY_TEST=0` oraz kluczem upload i tożsamością przypisanymi do produkcyjnego pakietu. [Kroki Google Play](PLAY_BILLING.md)
+`status: ready` oznacza działające połączenie TLS z usługą. Pole `mode` ma wartość `sandbox` dla konta licencyjnego albo `production` dla produkcji. Poprawność tożsamości Play i Google Publisher trzeba potwierdzić transakcją licencyjną na właściwym torze. Podaj właścicielski adres HTTPS do `HBT_PLAY_BACKEND` w eksporcie testowym. Aby udostępnić prawdziwe płatności, użyj osobnego środowiska z `HBT_PLAY_TEST=0` oraz kluczem upload i tożsamością przypisanymi do produkcyjnego pakietu. [Kroki Google Play](PLAY_BILLING.md)
 
 ## Utrzymanie i odzyskiwanie
 
@@ -39,3 +39,15 @@ curl -fsS https://billing.example.net/health
 - Obserwuj `hbt-play.service`, `hbt-play-maintenance.service` i mechanizm odnowienia certyfikatu. Używaj liczników statusów HTTP i krótkiego dziennika błędów. Nagłówki `Authorization`, tokeny, treści żądań i prywatne pliki pozostają poza logami.
 - Przećwicz odtwarzanie na oddzielnym serwerze testowym. Przy odtwarzaniu produkcyjnym zatrzymaj usługę i timer, zachowaj kopię aktualnej bazy z jej WAL, a następnie podstaw zweryfikowany snapshot pod `HBT_PLAY_DB` z prawami `0600` i użytkownikiem `hbt-play`. Usuń z aktywnej ścieżki stare pliki WAL/SHM dopiero po ich zabezpieczeniu. Wznów usługę z tym samym sekretem konta i uruchom uzgodnienie zwrotów.
 - Pliki instalacyjne zabezpieczają lokalną usługę i HTTP. Potwierdzenie zakupów oraz zwrotów na prawdziwym koncie wymaga testu z Play Console. Zewnętrzny hosting nie został aktywowany.
+
+## Sprawdzenie po aktualizacji do 0.9.0
+
+Przed aktualizacją zrób sprawdzoną kopię bazy. Wersja tworzy indeksy wygasania logowania w bieżącym schemacie. Zakupy zapisane jako oczekujące na potwierdzenie lub konsumpcję stają się dostępne w `/v1/sync` dopiero po finalizacji. W przypadku niejednoznacznej odpowiedzi Publisher proces ponawia weryfikację i korzysta z istniejącego stanu na koncie użytkownika.
+
+```bash
+curl --fail --silent --show-error https://billing.example.net/health
+sudo journalctl -u hbt-play -u hbt-play-maintenance --since '24 hours ago'
+sudo systemctl status hbt-play-maintenance.timer
+```
+
+W konsoli utrzymania można wykonać `python service.py monitor` z tym samym bezpiecznym plikiem ustawień i uprawnieniami co usługa. Polecenie drukuje tylko rozmiar kolejki finalizacji i wiek najstarszego elementu. Ustaw alert na brak odpowiedzi 200 z `/health` oraz rosnącą kolejkę. Zewnętrzny punkt `/health` weryfikuje, czy można czytać bazę. Pełny test poświadczeń wymaga transakcji na torze licencyjnym. Ustaw limity częstotliwości na publicznych trasach w warstwie ochrony hostingu, z kontrolą obciążenia `/v1/challenge` i `/v1/session`. Domyślna konfiguracja Caddy ogranicza treść do 16 KB.

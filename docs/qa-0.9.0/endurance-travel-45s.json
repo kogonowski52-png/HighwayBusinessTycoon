@@ -1,0 +1,81 @@
+{
+	"display": "headless",
+	"samples": [
+		{
+			"boost_left": 123,
+			"departures": 19,
+			"elapsed_game_seconds": 177,
+			"elapsed_wall_seconds": 180,
+			"heap_bytes": 103995510,
+			"manual_checkpoints": 6,
+			"map_changes": 4,
+			"nodes": 614,
+			"region": "ocean",
+			"save_sequence": 33,
+			"scene_restarts": 0,
+			"served": 23,
+			"views_opened": 26
+		},
+		{
+			"boost_left": 0,
+			"departures": 38,
+			"elapsed_game_seconds": 353,
+			"elapsed_wall_seconds": 360,
+			"heap_bytes": 104911196,
+			"manual_checkpoints": 12,
+			"map_changes": 7,
+			"nodes": 876,
+			"region": "desert",
+			"save_sequence": 58,
+			"scene_restarts": 1,
+			"served": 44,
+			"views_opened": 52
+		},
+		{
+			"boost_left": 0,
+			"departures": 55,
+			"elapsed_game_seconds": 530,
+			"elapsed_wall_seconds": 540,
+			"heap_bytes": 104168450,
+			"manual_checkpoints": 18,
+			"map_changes": 10,
+			"nodes": 614,
+			"region": "ocean",
+			"save_sequence": 82,
+			"scene_restarts": 2,
+			"served": 63,
+			"views_opened": 77
+		},
+		{
+			"boost_left": 0,
+			"departures": 75,
+			"elapsed_game_seconds": 707,
+			"elapsed_wall_seconds": 720,
+			"heap_bytes": 104636896,
+			"manual_checkpoints": 24,
+			"map_changes": 13,
+			"nodes": 855,
+			"region": "desert",
+			"save_sequence": 107,
+			"scene_restarts": 3,
+			"served": 88,
+			"views_opened": 103
+		},
+		{
+			"boost_left": 0,
+			"departures": 92,
+			"elapsed_game_seconds": 885,
+			"elapsed_wall_seconds": 900,
+			"heap_bytes": 104659870,
+			"manual_checkpoints": 29,
+			"map_changes": 16,
+			"nodes": 642,
+			"region": "ocean",
+			"save_sequence": 131,
+			"scene_restarts": 4,
+			"served": 107,
+			"views_opened": 129
+		}
+	],
+	"target_wall_seconds": 900
+}

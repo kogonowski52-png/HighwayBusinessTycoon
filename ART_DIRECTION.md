@@ -122,3 +122,7 @@ Wspólny szkielet odtwarza stanie, chodzenie, bieg, gest obsługi, tankowanie, s
 - Krople i mgiełkę najlepiej widać przy niższym kadrze myjni. Limit 30 FPS zmniejsza skalę renderu 3D i upraszcza emitery oraz oświetlenie, dlatego nocne ujęcia dokumentują pełny tryb graficzny.
 
 Zrzuty z Godota i zestawienia modeli znajdują się w [galerii](docs/art-gallery/README.md).
+
+## 0.9.0 Release Candidate
+
+Tytuł i ikona pokazują tę samą stację, charakterystyczne zadaszenie i autorski samochód Vela. Kamera marketingowa w Godot zapewnia światło i proporcje rzeczywistej gry. Znak studia i logotyp wpisują się w ciemny petrol i odcienie kremowe. Oryginalne sześć układów map pozostało podstawą rozgrywki. Zmieniono piasek i światło Ocean Coast oraz przejścia tonalne na śniegu Alpine Pass. Wyłączono animację tafli wody w niskim profilu. [Kadry przed i po](screenshots/0.9.0/porownanie.jpg) · [Wizualna ocena QA](docs/RELEASE_AUDIT.md)

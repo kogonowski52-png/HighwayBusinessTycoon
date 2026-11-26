@@ -4,6 +4,7 @@ render_mode cull_disabled, specular_schlick_ggx;
 uniform vec4 shallows : source_color = vec4(0.27, 0.68, 0.64, 1.0);
 uniform vec4 channel : source_color = vec4(0.17, 0.51, 0.65, 1.0);
 uniform bool sea = false;
+global uniform float hbt_ambient_motion;
 varying vec2 world;
 
 void vertex() {
@@ -11,7 +12,7 @@ void vertex() {
 }
 
 void fragment() {
-	float t = TIME * (sea ? 0.68 : 0.45);
+	float t = TIME * hbt_ambient_motion * (sea ? 0.68 : 0.45);
 	float ripple = sin(world.x * 1.25 + world.y * 0.48 + t)
 		* cos(world.x * 0.55 - world.y * 0.73 + t * 0.8);
 	float flow = sin(world.x * 0.21 + world.y * 0.53 + t * 1.52) * 0.5 + 0.5;

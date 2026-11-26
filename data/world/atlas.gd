@@ -1,7 +1,7 @@
 extends RefCounted
 
 const DESTINATIONS := {
-	"north": {"pl": "Stacja Północ", "en": "North Station", "area": "Trasa 17", "position": Vector2(.30, .29),
+	"north": {"pl": "Stacja Północ", "en": "Northpoint Station", "area": "Trasa 17", "position": Vector2(.30, .29),
 		"color": "#7ea17a", "scene": "res://scenes/world/roadside.tscn", "cost": 0, "fuel": 0, "rep": 0},
 	"desert": {"pl": "Desert Highway", "en": "Desert Highway", "area": "Copper Mile", "position": Vector2(.33, .74),
 		"color": "#d79058", "scene": "res://scenes/world/desert_highway.tscn", "from": "north", "cost": 670, "fuel": 3, "rep": 6},

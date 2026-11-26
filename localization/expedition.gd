@@ -45,7 +45,7 @@ const COPY := {
 		"This district is marked on the atlas. Access opens once its world and businesses are complete."],
 	"district_metrics": ["Rozwój %d%% · szacunek offline %s/h", "%d%% built · estimated offline %s/h"],
 	"district_rank": ["Poziom %d · usługi %d/%d · prestiż %d", "Rank %d · businesses %d/%d · prestige %d"],
-	"district_require": ["Stacja Północ · paliwa na poz. %d, reputacja %d i %s na inwestycję.", "North Station · fuel level %d, reputation %d and %s to invest."],
+	"district_require": ["Stacja Północ · paliwo na poz. %d, reputacja %d i %s na inwestycję.", "Northpoint Station · fuel level %d, reputation %d and %s to invest."],
 	"district_open": ["Otwórz za %s", "Open for %s"],
 	"district_travel": ["Wyrusz", "Travel"],
 	"district_stay": ["Wróć do rozgrywki", "Back to this district"],

@@ -1,5 +1,7 @@
 # Highway Business Tycoon
 
+**0.9.0 Release Candidate** · wersja testowa ARM64 z kodem 9000. Wydanie dopracowuje pierwszy kontakt z grą, czytelność map, BOOST i weryfikację zakupów. Zachowuje sześć lokalizacji, 41 usług, 590 misji i dotychczasowy zapis. [Audyt](docs/RELEASE_AUDIT.md) · [Galeria i film](screenshots/0.9.0/README.md) · [Karta Google Play](release/play/README.md) · [Instrukcja wydania](docs/PLAY_CONSOLE_RC.md)
+
 **0.8.0** rozwija wydajność kampanii i przygotowanie Androida. Obejmuje cztery profile grafiki, asynchroniczne podróże, optymalizację ruchu, wariant APK ARM64 i diagnostykę testową. [Stan etapu 7](docs/STAGE7_STATUS.md) · [Pomiary](docs/performance-0.8.0.md) · [Galeria](screenshots/0.8.0/README.md)
 
 **0.7.0** wprowadza globalny BOOST ×2, natywną integrację testową Androida, sklep premium i przepustki sezonowe. Grywalna kampania pozostaje dostępna bez sieci. [Stan etapu 6](docs/STAGE6_STATUS.md) · [APK i konfiguracja](docs/MONETIZATION.md) · [Galeria](screenshots/0.7.0/README.md)
@@ -111,3 +113,15 @@ godot --headless --path . --export-debug Android builds/highway-business-tycoon.
 Dodatkowy wariant eksportu z reklamą nagradzaną jest opisany w [instrukcji modułu Android](docs/ANDROID_REWARDED.md).
 
 Wymagania kolejnych etapów opisują [PROJECT_STATUS.md](PROJECT_STATUS.md) i [ROADMAP.md](ROADMAP.md).
+
+## Odtwarzanie dowodów RC
+
+```bash
+godot --headless --path . --script tests/release_inventory.gd
+godot --headless --path . --script tests/campaign_balance.gd -- --release-horizons --report=/tmp/hbt-campaign-090.json
+godot --path . --script tests/release_brand_view.gd -- --capture-dir=/tmp/hbt-brand-090
+godot --path . --script tests/release_tablet_view.gd -- --capture-dir=/tmp/hbt-tablet-090
+python tools/release/brand.py /tmp/hbt-brand-090
+```
+
+Kompozycja znaku i grafiki wymaga Pillow. Lista materiałów Play opisuje ujęcia telefonu, tabletów i pliki do publikacji. [Materiały Play](release/play/README.md) · [Odbiór na Androidzie](docs/PLAY_CONSOLE_RC.md)

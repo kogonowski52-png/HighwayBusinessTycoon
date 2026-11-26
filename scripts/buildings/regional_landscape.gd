@@ -8,8 +8,8 @@ const FOLIAGE = preload("res://assets/materials/regional_foliage.gdshader")
 const WATER = preload("res://assets/materials/regional_water.gdshader")
 const SURFACES := {
 	"valley": ["#6d8557", "#a1ad70", "#586160", "#7f8271"],
-	"alpine": ["#a2b4bd", "#dde6e7", "#545b65", "#7b858a"],
-	"ocean": ["#c3a87d", "#edd6a6", "#59696d", "#8d9290"],
+	"alpine": ["#94a7b3", "#d8e2e7", "#545b65", "#7b858a"],
+	"ocean": ["#b8a47f", "#dbc39e", "#59696d", "#8d9290"],
 	"metro": ["#6f8075", "#a3aa85", "#4c5963", "#747e7f"],
 }
 
@@ -265,7 +265,7 @@ func ocean() -> void:
 		trees.append(Vector2(-45 + i * 4.4, rng.randf_range(-25.2, -19.1)))
 	foliage(trees)
 	Art.plane(self, Vector3(0, -.081, 57.15), Vector2(221, 68), water_material(true))
-	Art.plane(self, Vector3(0, -.075, 21.2), Vector2(200, 3.04), surface("#e0bf8d", "#f1daaa"))
+	Art.plane(self, Vector3(0, -.075, 21.2), Vector2(200, 3.04), surface("#b99d79", "#e5c9a3"))
 	Art.plane(self, Vector3(0, -.057, 20.09), Vector2(120, .60), surface("#a79e83", "#d0c4a5"))
 	for x in [-22.0, 18.0]:
 		Art.place(self, "regions", "ocean_pier", Vector3(x, -.046, 22.38), -.10)

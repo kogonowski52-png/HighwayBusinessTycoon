@@ -111,6 +111,15 @@ func decimal() -> String:
 		result += "%06d" % _limbs[i]
 	return result
 
+func grouped(language: String) -> String:
+	var digits := decimal()
+	var separator := " " if language == "pl" else ","
+	var first := (digits.length() - 1) % 3 + 1
+	var display := digits.left(first)
+	for index in range(first, digits.length(), 3):
+		display += separator + digits.substr(index, 3)
+	return display
+
 @warning_ignore("integer_division")
 func compact(language := "en") -> String:
 	var source := decimal()

@@ -1,5 +1,12 @@
 # Historia zmian
 
+## 0.9.0 · Release Candidate
+
+- Weryfikator wydaje zakupy dopiero po potwierdzeniu lub konsumpcji. Równoległe próby i niejednoznaczne odpowiedzi odtwarzają właściwy stan. Klient odkłada błędy przejściowe i usuwa z kolejki nierozliczalne paragony.
+- BOOST ma odliczanie MM:SS i komunikat zamknięcia reklamy bez nagrody. Karta następnej inwestycji pokazuje koszt, warunki oraz przycisk skupienia kamery.
+- Ekran wejściowy, ikony Androida i znak Krystian Development wykorzystują własny kierunek graficzny. Ujednolicono nazwę regionu w EN, pełne kwoty w PL i EN oraz jasne partie plaży i śniegu. Niski profil ogranicza animację wody.
+- Produkcyjny eksport filtruje diagnostykę deweloperską i sprawdza docelowy HTTPS. Publikacja APK przez GitHub Releases wymaga ręcznego wyboru. Kod Androida 9000 zachowuje stały podpis. [Szczegóły wydania](docs/RELEASE_AUDIT.md)
+
 ## 0.8.0 · Wydajność i Android
 
 - Cztery profile grafiki, dobór automatyczny i oszczędzanie baterii. Stan detali wizualnych jest oddzielony od częstotliwości gospodarki.

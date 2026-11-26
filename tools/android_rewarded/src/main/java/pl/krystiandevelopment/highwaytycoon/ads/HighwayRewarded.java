@@ -122,6 +122,7 @@ public final class HighwayRewarded extends GodotPlugin {
         return diagnosticsEnabled() && billingConfigured() ? store.diagnosticStatus() : "unconfigured";
     }
 
+    @UsedByGodot public String privacyPolicyUrl() { return config("privacy_url"); }
     @UsedByGodot public String purchaseEndpoint() { return config("backend"); }
     @UsedByGodot public boolean billingConfigured() { return "true".equals(config("billing")); }
     @UsedByGodot public boolean identityConfigured() { return !config("oauth_client").isEmpty(); }

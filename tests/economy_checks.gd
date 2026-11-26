@@ -36,6 +36,8 @@ func arithmetic() -> void:
 	expect(HbtAmount.from("1234").minus(HbtAmount.from(1235)).empty(), "amount cannot go negative")
 	expect(HbtAmount.from("1e9").empty() and HbtAmount.from("-3").empty(), "decline non-decimal inputs")
 	expect(HbtAmount.from("1000001").compact("pl") == "1M" and HbtAmount.from("1200901").compact("pl") == "1,2M", "localized compact amount")
+	var large := HbtAmount.from("8765432109876543210")
+	expect(large.grouped("pl") == "8 765 432 109 876 543 210" and large.grouped("en") == "8,765,432,109,876,543,210", "localized precision for large financial values")
 
 func commercial_rules() -> void:
 	var store := HbtEconomy.new()

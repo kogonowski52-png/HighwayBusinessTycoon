@@ -380,6 +380,9 @@ func privacy() -> void:
 	panel.feature(hud.HELP, game.t("privacy_header"))
 	panel.box(game.t("privacy_save"), game.t("privacy_save_body"))
 	panel.box(game.t("privacy_services"), game.t("store_privacy"))
+	var policy: String = game.purchases.privacy_url()
+	if not policy.is_empty():
+		panel.button(panel.rows, game.t("privacy_read_online"), func() -> void: OS.shell_open(policy))
 	panel.button(panel.rows, game.t("settings_header"), panel.show_page.bind("settings"))
 
 func licenses() -> void:

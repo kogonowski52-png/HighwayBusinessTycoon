@@ -8,6 +8,7 @@ const UTC := Config.SEASON_EPOCH + 300
 func run() -> void:
 	clock_checks()
 	campaign_checks()
+	boost_in_each_district()
 	save_path = "/tmp/hbt-premium-check-%s.cfg" % OS.get_process_id()
 	game = mount(UTC)
 	current_scene = game
@@ -18,6 +19,8 @@ func run() -> void:
 	check_rewards(provider)
 	check_programs(provider)
 	check_billing()
+	check_purchase_queue()
+	check_catalogue()
 	check_final_season_grace()
 	game.free()
 	await process_frame
@@ -96,6 +99,31 @@ func watch(provider: Fixture, id: String, context: Dictionary = {}) -> bool:
 		provider.finish(true, true)
 	return began
 
+func boost_in_each_district() -> void:
+	var path := "/tmp/hbt-boost-estates-%d.cfg" % OS.get_process_id()
+	var estate := HbtEconomy.new()
+	estate.storage.path = path
+	var world := HbtCampaign.new(estate)
+	world.restore(UTC)
+	expect(world.boost.extend_confirmed(UTC), "one campaign-wide BOOST starts on North")
+	for region: String in CampaignRules.DESTINATIONS:
+		if region != "north":
+			var travelled := world.travel(region) == OK
+			expect(travelled, "campaign travels with active BOOST to " + region)
+			if not travelled:
+				break
+		estate = world.current()
+		estate.credit("cash", HbtAmount.from(1_000_000_000))
+		estate.credit("reputation", HbtAmount.from(160))
+		estate.buy_levels("fuel", 10)
+		for site: String in estate.facilities:
+			if site != "fuel" and estate.unlock(site):
+				estate.buy_levels(site, 10)
+		var base := estate.payout("fuel", 100, -1, false)
+		expect(estate.district == region and estate.global_boost == world.boost and estate.payout("fuel", 100, -1).compare(base.times(2)) == 0,
+			"exactly double service income in " + region)
+	clean_save(path)
+
 func check_rewards(provider: Fixture) -> void:
 	var e: HbtEconomy = game.economy
 	var ads: Node = game.ads
@@ -106,10 +134,13 @@ func check_rewards(provider: Fixture) -> void:
 	provider.loads = true
 	ads.prepare("boost")
 	expect(ads.request("boost"), "explicit ad placement starts")
+	var notices: Array[bool] = []
+	ads.unconfirmed.connect(func() -> void: notices.append(true))
 	ads.receive("invalid-callback")
 	provider.finish(false)
-	expect(world.boost.remaining(UTC) == 0, "cancelled ad and unrelated token do not grant")
+	expect(world.boost.remaining(UTC) == 0 and notices.size() == 1, "cancelled ad and unrelated token do not grant; cancellation is reported")
 	expect(watch(provider, "boost") and world.boost.remaining(UTC) == 300, "SDK earnings callback gives five minutes once")
+	expect(notices.size() == 1, "completed video has no cancellation notice")
 	for i in 5:
 		expect(watch(provider, "boost"), "another completed video")
 	expect(not watch(provider, "boost") and world.boost.remaining(UTC) == 1800, "the seventh ad is never shown")
@@ -206,6 +237,56 @@ func check_billing() -> void:
 		"security boundary ignores mismatched account payload")
 	expect(game.purchases.apply_verified({"account": id, "entitlements": [], "grants": []}) and not p.entitlements.has("remove_ads"),
 		"verified refund revokes interstitial exemption")
+
+func check_purchase_queue() -> void:
+	var purchases: Node = game.purchases
+	purchases.queued = {"invalid": "starter_pack", "pending": "gems_550", "next": "gems_100"}
+	purchases.request_kind = "receipt"
+	purchases.verifying = "invalid"
+	purchases.response(HTTPRequest.RESULT_SUCCESS, 409, [], '{"error":"account_mismatch"}'.to_utf8_buffer())
+	expect(not purchases.queued.has("invalid") and purchases.queued.size() == 2, "terminal receipt does not block the following purchase")
+	purchases.request_kind = "receipt"
+	purchases.verifying = "pending"
+	purchases.response(HTTPRequest.RESULT_SUCCESS, 503, [], '{"error":"google_unavailable"}'.to_utf8_buffer())
+	expect(purchases.queued.keys() == ["next", "pending"] and purchases.retry_at > game.economy.clock,
+		"retryable receipt keeps a delayed retry after the next purchase")
+	purchases.request_kind = "receipt"
+	purchases.verifying = "next"
+	purchases.response(HTTPRequest.RESULT_SUCCESS, 422, [], '{"error":"unverified"}'.to_utf8_buffer())
+	expect(purchases.queued.keys() == ["pending", "next"], "a token not yet visible to Publisher can be retried")
+	purchases.queued.clear()
+
+func check_catalogue() -> void:
+	var estate: HbtEconomy = game.economy
+	var premium: HbtPremiumState = game.campaign.premium
+	var account := "a".repeat(64)
+	var ids := Config.PRODUCTS.keys()
+	for season in Config.SEASONS:
+		ids.append(season.sku)
+	var expected_gems := estate.amount("diamond")
+	var grants: Array[Dictionary] = []
+	var entitlements: Array[String] = []
+	var existing := premium.grants.size()
+	for id: String in ids:
+		var item := Config.product(id)
+		expected_gems = expected_gems.plus(HbtAmount.from(item.item.get("diamond", 0)))
+		grants.append({"id": id.sha256_text(), "product": id})
+		if item.kind == "entitlement":
+			entitlements.append(id)
+	premium.play_account = account
+	var snapshot := {"account": account, "entitlements": entitlements, "grants": grants}
+	expect(game.purchases.apply_verified(snapshot) and game.purchases.apply_verified(snapshot)
+		and premium.grants.size() == existing + ids.size() and estate.amount("diamond").compare(expected_gems) == 0,
+		"each catalogue product enters the client ledger once, including all season SKUs")
+	expect(premium.entitlements.size() == entitlements.size() and estate.cards.has(Config.STARTER_CARD)
+		and game.campaign.ledger.cosmetics.has(Config.STARTER_DECOR), "verified starter items and non-consumables restore")
+	game.economy.storage.read_only = true
+	var previous := estate.amount("diamond")
+	var new_grant := {"account": account, "entitlements": entitlements,
+		"grants": [{"id": "read-only-grant".sha256_text(), "product": "gems_100"}]}
+	expect(not game.purchases.apply_verified(new_grant) and estate.amount("diamond").compare(previous) == 0,
+		"incompatible save never consumes a local grant")
+	game.economy.storage.read_only = false
 
 func check_final_season_grace() -> void:
 	var last := Config.season_profile(Config.SEASONS.size() - 1)

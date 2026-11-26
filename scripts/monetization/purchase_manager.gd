@@ -43,6 +43,12 @@ func configured() -> bool:
 func verified_checkout() -> bool:
 	return configured() and bridge.identityConfigured() and str(bridge.purchaseEndpoint()).begins_with("https://")
 
+func privacy_url() -> String:
+	if not is_instance_valid(bridge) or not bridge.has_method("privacyPolicyUrl"):
+		return ""
+	var url: String = bridge.privacyPolicyUrl()
+	return url if url.begins_with("https://") else ""
+
 func busy() -> bool:
 	return waiting_identity or checkout or not request_kind.is_empty()
 
@@ -71,7 +77,7 @@ func restore_purchases() -> void:
 		send("sync", {"install": state().install_id})
 
 func buy(id: String) -> void:
-	if not verified_checkout() or busy() or game.ads.busy() or not catalogue.has(id) or state().entitlements.has(id) or not eligible(id):
+	if game.economy.storage.read_only or not verified_checkout() or busy() or game.ads.busy() or not catalogue.has(id) or state().entitlements.has(id) or not eligible(id):
 		return
 	if state().play_session.is_empty():
 		restore_purchases()
@@ -158,13 +164,25 @@ func response(result: int, code: int, _headers: PackedStringArray, body: PackedB
 	request_kind = ""
 	var values := HbtEconomy.safe_dict(JSON.parse_string(body.get_string_from_utf8()))
 	if result != HTTPRequest.RESULT_SUCCESS or code != 200:
+		var reason := str(values.get("error", ""))
 		if code == 401:
 			state().play_session = ""
 			state().play_account = ""
-		elif kind == "receipt" and code in [400, 410, 422]:
+		var terminal := kind == "receipt" and (code in [400, 410] or (code == 422 \
+			and reason in ["invalid_product", "invalid_quantity", "test_purchase"]) or (code == 409 \
+			and reason in ["account_mismatch", "already_owned", "consumed_without_grant"]))
+		if terminal:
 			queued.erase(verifying)
-		retry_at = game.economy.clock + 30
-		update("store_pending" if values.get("error") == "pending" else "store_account_issue" if code in [401, 409] else "store_network")
+			verifying = ""
+		elif kind == "receipt" and queued.has(verifying):
+			# A delayed Publisher response must not pin the first token at the head of the queue.
+			var product: String = queued[verifying]
+			queued.erase(verifying)
+			queued[verifying] = product
+		retry_at = game.economy.clock if terminal else game.economy.clock + 30
+		update("store_pending" if reason == "pending" else "store_account_issue" if code in [401, 409] else "store_network")
+		if terminal:
+			process_queue()
 		return
 	match kind:
 		"challenge":

@@ -1,10 +1,11 @@
 import json
 import tempfile
 import unittest
+from copy import deepcopy
 from io import BytesIO
 from pathlib import Path
 
-from service import ApiError, CONSUMABLE, Service, digest
+from service import ApiError, CONSUMABLE, FINALIZATION_LEASE, PRODUCTS, Service, digest
 
 TOKEN = "verified_purchase_receipt_123456"
 ACCOUNT = "a" * 64
@@ -19,6 +20,7 @@ class PublisherFixture:
         self.statements = []
         self.revoked = []
         self.finalization_fault = False
+        self.reject_before_finalization = False
 
     def verify_identity(self, token):
         return {"nonce": token, "sub": "synthetic-user-123"}
@@ -27,6 +29,8 @@ class PublisherFixture:
         return self.documents[token]
 
     def finalize(self, token, product, consume):
+        if self.reject_before_finalization:
+            raise ConnectionError("Publisher unavailable before confirmation")
         self.statements.append((token, product, consume))
         if consume:
             self.documents[token]["productLineItem"][0]["productOfferDetails"]["consumptionState"] = "CONSUMPTION_STATE_CONSUMED"
@@ -99,10 +103,46 @@ class StoreTests(unittest.TestCase):
         with self.store.db() as connection:
             stored = connection.execute("SELECT cipher FROM pending_finish").fetchone()[0]
             self.assertNotIn(TOKEN.encode(), stored)
+        self.assertEqual(self.store.sync(ACCOUNT, INSTALL)["grants"], [])
+        self.assertEqual(self.store.retry_finalization(), 0)
         self.google.finalization_fault = False
+        self.store.clock = lambda: UTC + FINALIZATION_LEASE + 1
         self.assertEqual(self.store.retry_finalization(), 1)
         self.assertEqual(len(self.store.sync(ACCOUNT, INSTALL)["grants"]), 1)
         self.assertEqual(len(self.google.statements), 1)
+
+    def test_no_entitlement_before_play_acknowledges(self):
+        self.google.proof("remove_ads")
+        self.google.reject_before_finalization = True
+        with self.assertRaises(ConnectionError):
+            self.deliver("remove_ads")
+        self.assertEqual(self.store.sync(ACCOUNT, INSTALL)["entitlements"], [])
+        self.assertEqual(self.store.monitor()["pending_finalization"], 1)
+        self.google.reject_before_finalization = False
+        with self.assertRaisesRegex(ApiError, "temporarily_unavailable"):
+            self.deliver("remove_ads")
+        self.store.clock = lambda: UTC + FINALIZATION_LEASE + 1
+        self.assertEqual(self.store.retry_finalization(), 1)
+        self.assertEqual(self.store.sync(ACCOUNT, OTHER)["entitlements"], ["remove_ads"])
+        self.assertEqual(self.store.monitor()["pending_finalization"], 0)
+
+    def test_every_sku_once_and_refundable(self):
+        for i, item in enumerate(sorted(PRODUCTS)):
+            with self.subTest(sku=item):
+                token = f"catalog_sales_fixture_{i:03d}"
+                self.google.proof(item)
+                self.google.documents[token] = self.google.documents.pop(TOKEN)
+                request = {"token": token, "install": INSTALL, "product": item}
+                confirmed = self.store.receipt(ACCOUNT, request)
+                self.assertEqual(confirmed, self.store.receipt(ACCOUNT, request))
+                self.assertIn({"id": digest(token), "product": item}, confirmed["grants"])
+                self.assertEqual(item in confirmed["entitlements"], item not in CONSUMABLE)
+                self.assertEqual(self.google.statements[-1], (token, item, item in CONSUMABLE))
+                self.google.revoked = [{"purchaseToken": token}]
+                self.assertEqual(self.store.reconcile(14), 1)
+                self.assertNotIn(item, self.store.sync(ACCOUNT, OTHER)["entitlements"])
+                with self.assertRaisesRegex(ApiError, "voided"):
+                    self.store.receipt(ACCOUNT, request)
 
     def test_void_before_purchase_is_a_tombstone(self):
         self.google.revoked.append({"purchaseToken": TOKEN})
@@ -121,6 +161,30 @@ class StoreTests(unittest.TestCase):
         with self.assertRaisesRegex(ApiError, "identity_required"):
             self.store.authorized("Bearer " + "X" * 43)
 
+    def test_invalid_nonce_is_rejected_before_identity_call(self):
+        def reject_identity_call(_token):
+            self.fail("An unknown sign-in challenge must not reach the identity provider")
+
+        self.google.verify_identity = reject_identity_call
+        with self.assertRaisesRegex(ApiError, "identity_required"):
+            self.store.login({"id_token": "f" * 64, "nonce": "f" * 64})
+
+    def test_stale_google_proof_cannot_repeat_finalization(self):
+        self.google.proof("gems_100")
+        original_get = self.google.get
+
+        def previous_proof(token):
+            stale = deepcopy(original_get(token))
+            self.google.get = original_get
+            self.deliver("gems_100")
+            return stale
+
+        self.google.get = previous_proof
+        result = self.deliver("gems_100")
+        self.assertEqual(self.google.statements, [(TOKEN, "gems_100", True)])
+        self.assertEqual(len(result["grants"]), 1)
+        self.assertEqual(self.store.monitor()["pending_finalization"], 0)
+
     def test_http_enforces_account_and_body_limit(self):
         statuses = []
         body = json.dumps({"install": INSTALL}).encode()
@@ -128,6 +192,15 @@ class StoreTests(unittest.TestCase):
             "CONTENT_LENGTH": len(body), "wsgi.input": BytesIO(body)}, lambda state, headers: statuses.append(state))
         self.assertTrue(statuses[0].startswith("401"))
         self.assertNotIn(b"session", b"".join(result))
+
+    def test_health_distinguishes_sandbox(self):
+        for allow_test, mode in ((False, "production"), (True, "sandbox")):
+            self.store.allow_test = allow_test
+            statuses = []
+            data = self.store.wsgi({"PATH_INFO": "/health", "REQUEST_METHOD": "GET"},
+                                   lambda state, _headers: statuses.append(state))
+            self.assertEqual(json.loads(b"".join(data)), {"status": "ready", "mode": mode})
+            self.assertEqual(statuses, ["200 OK"])
 
     def test_unknown_consumed_item_is_not_reissued(self):
         item = sorted(CONSUMABLE)[0]

@@ -20,7 +20,7 @@ base64 < HighwayBusinessTycoon-test-signing.p12 | tr -d '\n' | \
 gh secret set ANDROID_TEST_KEYSTORE_PASSWORD --repo kogonowski52-png/HighwayBusinessTycoon
 ```
 
-Drugie polecenie wczytuje hasło ze standardowego wejścia lub w trybie interaktywnym. Workflow weryfikuje odcisk, używa klucza w katalogu tymczasowym runnera i usuwa tę kopię po eksporcie. Gdy brakuje sekretu lub odcisk jest inny, publikacja zatrzymuje się. Po konfiguracji uruchom workflow dla odpowiedniego tagu.
+Drugie polecenie wczytuje hasło ze standardowego wejścia lub w trybie interaktywnym. Workflow weryfikuje odcisk, używa klucza w katalogu tymczasowym runnera i usuwa tę kopię po eksporcie. Gdy brakuje sekretu lub odcisk jest inny, publikacja zatrzymuje się. Po konfiguracji uruchom workflow dla odpowiedniego tagu. Pobierz APK z artefaktów. Wybranie pola `publish_release` przy ręcznym uruchomieniu publikuje APK w GitHub Releases.
 
 Próba publikacji `v0.6.0` zatrzymała się na braku pary sekretów. Dostęp z Cloud do API zarządzania sekretami został odrzucony. Sprawdzony APK i zapasowy szyfrowany magazyn przygotowano w prywatnym katalogu pobierania. Ustawienie sekretów w repozytorium oraz przeniesienie kopii do sejfu właściciela pozostają otwarte. [Przebieg GitHub Actions](https://github.com/kogonowski52-png/HighwayBusinessTycoon/actions/runs/45664015493)
 
@@ -61,3 +61,7 @@ adb shell -T "run-as pl.krystiandevelopment.highwaytycoon sh -c 'cat > files/roa
 ```
 
 Próba aktualizacji na urządzeniu wymaga fizycznego Androida lub emulatora. Lokalna kontrola porównuje podpisy dwóch gotowych plików i kod wersji, a osobny test Godota sprawdza odczyt autentycznych zapisów 0.5.0 i 0.6.0.
+
+## Kandydat 0.9.0
+
+Wariant `HighwayBusinessTycoon-0.9.0-RC.apk` ma kod `9000`. Weryfikator odczytał identyczny certyfikat testowy i Application ID z 0.8.0 oraz wyrównanie ZIP i ELF 16 KiB. Do AAB potrzebne są `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`, `GODOT_ANDROID_KEYSTORE_RELEASE_USER` i `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD` dla certyfikatu upload z Play Console. Zdefiniuj też publiczne parametry kompilacji z instrukcji monetyzacji. Kandydat ma oddzielny artefakt testowy oraz przygotowany preset produkcyjny. SHA-256 pliku ARM64 to `6ec6ff02c4fd725c959940d78452702af331874c910fa355e7193398e320ff67`. [Konfiguracja](MONETIZATION.md) · [Google Play](PLAY_CONSOLE_RC.md)

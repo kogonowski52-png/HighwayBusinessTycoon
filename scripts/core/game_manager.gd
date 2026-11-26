@@ -12,7 +12,7 @@ const RegionalRoutes = preload("res://data/world/regional_routes.gd")
 const RegionalLandscape = preload("res://scripts/buildings/regional_landscape.gd")
 const RegionalCampus = preload("res://scripts/buildings/regional_campus.gd")
 const RegionalStation = preload("res://scripts/buildings/regional_station.gd")
-const Diagnostics = preload("res://scripts/core/runtime_diagnostics.gd")
+const Diagnostics := "res://scripts/core/runtime_diagnostics.gd"
 const WorldStream = preload("res://scripts/core/world_stream.gd")
 const RenderBudget = preload("res://scripts/core/render_budget.gd")
 const Weather = preload("res://scripts/art/expedition_weather.gd")
@@ -91,7 +91,7 @@ var wall_override := -1
 var seed_override := -1
 var hud_time := 0.0
 var autosave := 0.0
-var diagnostics: Diagnostics
+var diagnostics: CanvasLayer
 var render_budget := RenderBudget.new()
 var render_quality := -1
 var live_levels: Dictionary = {}
@@ -111,7 +111,7 @@ var guided_step := 0
 func _ready() -> void:
 	if campaign == null:
 		for argument in OS.get_cmdline_user_args():
-			if argument.begins_with("--save-path="):
+			if OS.is_debug_build() and argument.begins_with("--save-path="):
 				economy.storage.path = argument.trim_prefix("--save-path=")
 		campaign = HbtCampaign.new(economy)
 		campaign.restore(wall_override)
@@ -177,6 +177,7 @@ func _ready() -> void:
 	ads.bind(self)
 	ads.rewarded.connect(ad_rewarded)
 	ads.failed.connect(func() -> void: show_message(t("bonus_unavailable")))
+	ads.unconfirmed.connect(func() -> void: show_message(t("boost_unconfirmed")))
 	add_child(purchases)
 	purchases.bind(self)
 	purchases.changed.connect(operations.refresh)
@@ -185,7 +186,7 @@ func _ready() -> void:
 	add_child(world_offers)
 	world_offers.bind(self)
 	if debug_tools_available():
-		diagnostics = Diagnostics.new()
+		diagnostics = load(Diagnostics).new()
 		diagnostics.game = self
 		add_child(diagnostics)
 	ads.availability_changed.connect(operations.refresh)
@@ -867,10 +868,13 @@ func gate_text(id: String) -> String:
 	return t("needs_gate") % [site_name(profile.prerequisite), profile.prerequisite_level, profile.reputation_gate]
 
 func money(value: HbtAmount, full := false) -> String:
-	return t("money") % (value.decimal() if full else value.compact(economy.language))
+	return t("money") % (value.grouped(economy.language) if full else value.compact(economy.language))
 
 func flow_text() -> String:
 	return t("per_minute") % money(economy.income_per_minute())
+
+func boost_time(seconds: int) -> String:
+	return "%02d:%02d" % [floori(seconds / 60.0), seconds % 60]
 
 @warning_ignore("integer_division")
 func clock_text(seconds: int) -> String:
@@ -880,7 +884,7 @@ func refresh() -> void:
 	if not is_instance_valid(hud.cash):
 		return
 	var left := campaign.boost.remaining(economy.clock)
-	hud.set_boost(left, RevenueConfig.CAP_SECONDS, clock_text(left), t("boost_active"), motion_enabled())
+	hud.set_boost(left, RevenueConfig.CAP_SECONDS, boost_time(left), t("boost_active"), motion_enabled())
 	if operations.page in ["boost", "reward_offer"] and operations.modal_open():
 		operations.refresh()
 		operations.premium.update_clock()

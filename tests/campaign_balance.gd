@@ -49,7 +49,10 @@ func simulate(seed: int) -> void:
 	campaign.restore(WALL)
 	begin_session(true)
 	var last_gross := HbtAmount.new()
-	for horizon in HORIZONS:
+	var horizons := HORIZONS
+	if "--release-horizons" in OS.get_cmdline_user_args():
+		horizons = [300, 900, 1800, 7200, 86400, 259200, 604800, 1209600, 2592000]
+	for horizon in horizons:
 		if horizon <= 7200:
 			active_until(horizon)
 		else:

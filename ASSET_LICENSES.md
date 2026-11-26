@@ -1,5 +1,9 @@
 # Licencje zasobów
 
+## Zasoby 0.9.0 RC
+
+Ikonę, grafikę promocyjną i zdjęcie tła wykonano na własnym modelu stacji i samochodu Vela w Godot. Kompozycja i znaki graficzne powstają w skrypcie projektu z użyciem wcześniej licencjonowanego Open Sans. Kadry i film zachowują własne modele, tekstury i miks. [Scena przechwytująca](tests/release_brand_view.gd) · [Źródło kompozycji](tools/release/brand.py) · [Licencja Open Sans](assets/fonts/LICENSE-Open-Sans.txt)
+
 ## Zasoby 0.7.0
 
 Błyskawica, monety, kryształy, skrzynie, flaga sezonu, brama, helikopter i wirnik są autorskimi modelami generowanymi w Blenderze. W tym samym źródle powstają portrety i rigi Sana Ito, Reese Morgan i Rhea Foster oraz dźwięk BOOST. Modele drogowe korzystają z dotychczasowych zasobów projektu i dodanych elementów nagrody. [Źródło](tools/art/monetization_art.py)
