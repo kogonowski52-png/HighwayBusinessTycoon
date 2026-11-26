@@ -20,7 +20,7 @@ static func instances(parent: Node3D, mesh: Mesh, poses: Array[Transform3D], mat
 	for group: Array[Transform3D] in cells.values():
 		add_batch(parent, mesh, group, material, shadow)
 
-static func compact(parent: Node3D, require_visible := true) -> void:
+static func compact(parent: Node3D, require_visible := true, opaque_shader: Shader = null) -> void:
 	var groups := {}
 	if unit_box == null:
 		unit_box = BoxMesh.new()
@@ -28,7 +28,7 @@ static func compact(parent: Node3D, require_visible := true) -> void:
 	var inverse := parent.global_transform.affine_inverse()
 	for found: Node in parent.find_children("*", "MeshInstance3D", true, false):
 		var part := found as MeshInstance3D
-		if (require_visible and not part.is_visible_in_tree()) or not batchable(part):
+		if (require_visible and not part.is_visible_in_tree()) or not batchable(part, opaque_shader):
 			continue
 		var local := inverse * part.global_transform
 		var override := part.material_override
@@ -51,13 +51,14 @@ static func compact(parent: Node3D, require_visible := true) -> void:
 			part.hide()
 			part.queue_free()
 
-static func batchable(part: MeshInstance3D) -> bool:
+static func batchable(part: MeshInstance3D, opaque_shader: Shader = null) -> bool:
 	if part.mesh == null or part.get_child_count() > 0 or part.skin != null or part.material_overlay != null \
 			or part.visibility_range_begin != 0.0 or part.visibility_range_end != 0.0 or part.layers != 1:
 		return false
 	if part.material_override != null:
 		# All contact stamps use the same tint and blend. Their world transforms and UV remain independent.
-		return opaque(part.material_override) or (part.material_override is ShaderMaterial and part.material_override.shader == CONTACT)
+		return opaque(part.material_override) or (part.material_override is ShaderMaterial and
+			part.material_override.shader in [CONTACT, opaque_shader])
 	for surface in part.mesh.get_surface_count():
 		if part.get_surface_override_material(surface) != null or not opaque(part.mesh.surface_get_material(surface)):
 			return false

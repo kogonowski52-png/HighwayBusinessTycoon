@@ -1,4 +1,5 @@
 """Bake an original seamless aggregate and ground variation map."""
+from math import cos, sin, tau
 from pathlib import Path
 from random import Random
 
@@ -37,6 +38,7 @@ def main():
     texture.putdata(pixels)
     target = Path(__file__).resolve().parents[2] / "assets/textures/paving_noise.png"
     texture.save(target, optimize=True)
+    water_field().save(target.with_name("regional_ripples.png"), optimize=True)
 
     ui = target.parents[1] / "ui"
     panel(ui / "panel_ivory.png", "#fffaf0", "#f7e6c9", "#c9aa85", 27)
@@ -44,6 +46,21 @@ def main():
     panel(ui / "button_honey.png", "#ffe5a6", "#efb75f", "#b48443", 17)
     panel(ui / "panel_petrol.png", "#34595c", "#213b40", "#1b3437", 27)
     panel(ui / "button_cream.png", "#fff9df", "#eed8a8", "#bf9e72", 20)
+
+
+def water_field():
+    pixels = []
+    size = 128
+    for row in range(size):
+        v = tau * row / size
+        for col in range(size):
+            u = tau * col / size
+            crest = sin(6 * u + 2 * v) * cos(2 * u - 3 * v)
+            current = sin(u + 2 * v + .31 * sin(2 * u - v))
+            pixels.append((round((crest + 1) * 127.5), round((current + 1) * 127.5), 0))
+    texture = Image.new("RGB", (size, size))
+    texture.putdata(pixels)
+    return texture
 
 
 def pavement_damage():

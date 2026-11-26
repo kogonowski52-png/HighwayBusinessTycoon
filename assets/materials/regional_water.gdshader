@@ -4,6 +4,7 @@ render_mode cull_disabled, specular_schlick_ggx;
 uniform vec4 shallows : source_color = vec4(0.27, 0.68, 0.64, 1.0);
 uniform vec4 channel : source_color = vec4(0.17, 0.51, 0.65, 1.0);
 uniform bool sea = false;
+uniform sampler2D wave_field : repeat_enable, filter_linear_mipmap;
 global uniform float hbt_ambient_motion;
 varying vec2 world;
 
@@ -13,9 +14,9 @@ void vertex() {
 
 void fragment() {
 	float t = TIME * hbt_ambient_motion * (sea ? 0.68 : 0.45);
-	float ripple = sin(world.x * 1.25 + world.y * 0.48 + t)
-		* cos(world.x * 0.55 - world.y * 0.73 + t * 0.8);
-	float flow = sin(world.x * 0.21 + world.y * 0.53 + t * 1.52) * 0.5 + 0.5;
+	vec2 ripples = texture(wave_field, world * vec2(.038, .043) + t * vec2(.057, -.023)).rg;
+	float ripple = ripples.x * 2.0 - 1.0;
+	float flow = ripples.y;
 	float depth = sea ? clamp((world.y - 23.0) * 0.09, 0.0, 1.0) : clamp(1.0 - abs(world.x + 30.0) * 0.24, 0.0, 1.0);
 	float foam = smoothstep(0.80, 0.98, ripple) * (sea ? (1.0 - depth) : 0.39) * flow;
 	ALBEDO = mix(shallows.rgb, channel.rgb, depth * 0.81);

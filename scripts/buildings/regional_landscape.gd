@@ -15,6 +15,7 @@ const SURFACES := {
 
 var routes: RefCounted
 var pavement: ShaderMaterial
+var ground_materials: Dictionary = {}
 var paint: Array[Transform3D] = []
 var rng := RandomNumberGenerator.new()
 
@@ -43,16 +44,20 @@ func _ready() -> void:
 	var strip := BoxMesh.new()
 	strip.size = Vector3.ONE
 	instances(strip, paint, Kit.material(Color("#e9daba")), false)
-	Batch.compact(self)
+	Batch.compact(self, true, GROUND)
 
 
 func surface(a: String, b: String, wear := 0.0) -> ShaderMaterial:
+	var key := [a, b, wear]
+	if ground_materials.has(key):
+		return ground_materials[key]
 	var mat := ShaderMaterial.new()
 	mat.shader = GROUND
 	mat.set_shader_parameter("aggregate", preload("res://assets/textures/paving_noise.png"))
 	mat.set_shader_parameter("base", Color(a))
 	mat.set_shader_parameter("accent", Color(b))
 	mat.set_shader_parameter("trail", wear)
+	ground_materials[key] = mat
 	return mat
 
 func roadway(lane: String, width: float, paint_edges: bool) -> void:
@@ -179,6 +184,7 @@ func street_signs(z: float) -> void:
 func water_material(ocean_water: bool) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = WATER
+	mat.set_shader_parameter("wave_field", preload("res://assets/textures/regional_ripples.png"))
 	mat.set_shader_parameter("sea", ocean_water)
 	if not ocean_water:
 		mat.set_shader_parameter("shallows", Color("#7fab93"))
