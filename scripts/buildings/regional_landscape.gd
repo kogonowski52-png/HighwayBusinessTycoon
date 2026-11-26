@@ -49,6 +49,7 @@ func _ready() -> void:
 func surface(a: String, b: String, wear := 0.0) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = GROUND
+	mat.set_shader_parameter("aggregate", preload("res://assets/textures/paving_noise.png"))
 	mat.set_shader_parameter("base", Color(a))
 	mat.set_shader_parameter("accent", Color(b))
 	mat.set_shader_parameter("trail", wear)
@@ -159,7 +160,8 @@ func foliage(points: Array[Vector2]) -> void:
 		placements.append(plant(Vector3(point.x, -.064, point.y), q, rng.randf_range(-PI, PI)))
 	var leaf := ShaderMaterial.new()
 	leaf.shader = FOLIAGE
-	instances(Art.extract_mesh("regions", routes.district + "_foliage"), placements, leaf)
+	Batch.instances(self, Art.extract_mesh("regions", routes.district + "_foliage"), placements, leaf,
+		GeometryInstance3D.SHADOW_CASTING_SETTING_ON, 16.0)
 	for i in range(0, points.size(), 3):
 		Art.contact(self, Vector3(points[i].x, -.052, points[i].y), 3.45, 2.80)
 

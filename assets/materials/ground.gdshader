@@ -44,8 +44,8 @@ void fragment() {
 	}
 	if (wear_level > 0.0) {
 		float repair = texture(paving_noise, world_point * vec2(0.090, 0.118) + vec2(0.173, 0.421)).b;
-		float grime = smoothstep(0.58, 0.80, detail.g) * 0.092;
-		base *= 1.0 - wear_level * (repair * (0.18 + 0.20 * sweep) + grime);
+		float grime = smoothstep(0.48, 0.78, detail.g) * 0.13;
+		base *= 1.0 - wear_level * (repair * (0.31 + 0.18 * sweep) + grime);
 	}
 	if (verge > 0.0) {
 		vec2 margin = plot.zw - abs(world_point - plot.xy);

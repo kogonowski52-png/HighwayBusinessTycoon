@@ -17,7 +17,7 @@ func restore(data: Dictionary, old_feedback := true) -> void:
 	quality_auto = data.get("quality_auto", data.is_empty() and OS.has_feature("mobile")) == true
 	fps = 30 if int(data.get("fps", 60)) == 30 else 60
 	var climate: Variant = data.get("weather", "auto")
-	weather = climate if climate in ["auto", "clear", "rain", "snow", "wind", "haze"] else "auto"
+	weather = climate if climate in ["auto", "clear", "cloud", "rain", "snow", "wind", "haze"] else "auto"
 	auto_day = data.get("auto_day", false) == true
 	var mixer: Variant = data.get("volumes", {})
 	for channel in CHANNELS:

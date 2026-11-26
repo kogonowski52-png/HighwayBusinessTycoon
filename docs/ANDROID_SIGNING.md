@@ -1,5 +1,13 @@
 # Podpisywanie testowych wydań Androida
 
+## Testowy APK 0.9.3
+
+HighwayBusinessTycoon-0.9.3-test.apk ma kod 9003, nazwę wersji 0.9.3, identyfikator `pl.krystiandevelopment.highwaytycoon` i ABI ARM64. Weryfikator porównał plik z podpisanym 0.9.2. Certyfikat jest zgodny, a obie biblioteki natywne i archiwum zachowują wyrównanie 16 KiB.
+
+Rozmiar wynosi 126 256 615 bajtów. SHA-256 APK to `4b15a73bdc4b4bd10648a44b15d2aa67b29cfdef3fde875cb13a6d24f7c67e8f`. [Wydanie na GitHub](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.3-rc.1) · [Migracja zapisu](../TEST_REPORT.md)
+
+## Zgodność certyfikatu
+
 Pakiet zachowuje identyfikator `pl.krystiandevelopment.highwaytycoon`. Wersje 0.6.0, 0.6.1, 0.7.0 i 0.8.0 mają odpowiednio kody 6000, 6001, 7000 i 8000. Wersje używają wzoru `major × 1 000 000 + minor × 1 000 + patch`, przy składowych od 0 do 999. Weryfikator odrzuca APK z kodem niezgodnym z wersją, błędnym identyfikatorem lub innym certyfikatem. Publikacje są wykonywane kolejno, a workflow odrzuca wersję starszą od opublikowanej.
 
 | Kompilacja | Kod | SHA-256 certyfikatu |

@@ -143,6 +143,7 @@ const COPY := {
 	"weather_auto": ["Pogoda wydarzenia i regionu", "Event and district weather"],
 	"weather_clear": ["Przejrzyście", "Clear"],
 	"weather_haze": ["Lekka mgła", "Light haze"],
+	"weather_cloud": ["Pochmurno", "Overcast"],
 	"weather_rain": ["Deszcz", "Rain"],
 	"weather_wind": ["Pustynny wiatr", "Desert wind"],
 	"weather_snow": ["Śnieg", "Snow"],

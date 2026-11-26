@@ -58,10 +58,21 @@ CATALOG = (
     Vehicle("cargo", "Cargo", "trailer", 7.62, .99, 1.03, 2.47, .428, 1.96, 3.47, 2.00, "50897d", "a789ae", "liner"),
     Vehicle("horizon", "Horizon", "coach", 6.55, .93, 1.00, 2.22, .401, 4.14, 3.03, -2.92, "5a79a0", "ba835e", "coach"),
     Vehicle("pulse", "Pulse", "ev", 3.55, .77, .72, 1.28, .323, 2.37, 1.12, -1.29, "8ebcb6", "e1c9cc", "pixel"),
+    Vehicle("cove", "Cove", "city", 2.94, .68, .76, 1.22, .305, 1.80, .75, -1.06, "e3a159", "68a491", "moon"),
+    Vehicle("sable", "Sable", "sedan", 4.03, .79, .74, 1.11, .322, 2.39, .70, -1.37, "725c8c", "bf644e", "duotone"),
+    Vehicle("brook", "Brook", "wagon", 4.04, .78, .81, 1.44, .354, 2.48, .86, -1.68, "637f60", "cc9a66", "utility"),
+    Vehicle("ridgeback", "Ridgeback", "suv", 4.20, .88, 1.07, 1.78, .433, 2.56, 1.09, -1.55, "c68844", "6c8d9f", "expedition"),
+    Vehicle("courier", "Courier", "van", 4.16, .83, .97, 1.94, .349, 2.45, 1.53, -1.82, "5b9b82", "d98861", "reefer"),
+    Vehicle("sundown", "Sundown", "van", 5.04, .91, .98, 2.12, .355, 2.97, 1.96, -2.14, "c87a59", "698d9b", "camper"),
+    Vehicle("arrow", "Arrow", "sport", 3.96, .89, .59, .93, .297, 2.48, .48, -1.10, "d36147", "75a7a4", "blade"),
+    Vehicle("solstice", "Solstice", "ev", 4.12, .78, .73, 1.21, .341, 2.64, 1.35, -1.54, "465e83", "65b4a5", "pixel"),
+    Vehicle("switchback", "Switchback", "coach", 5.46, .88, 1.07, 2.15, .382, 3.42, 2.44, -2.39, "ce7a48", "5d91a1", "shuttle"),
+    Vehicle("petrel", "Petrel", "trailer", 7.66, .99, 1.07, 2.43, .431, 1.96, 3.48, 2.07, "dc9d54", "509888", "tanker"),
 )
 
 PASSENGERS = ["sprint", "loop", "meridian", "crest", "trail", "coast", "pine", "summit",
-              "kestrel", "vela", "regency", "orion", "pulse", "post"]
+              "kestrel", "vela", "regency", "orion", "pulse", "post", "cove",
+              "sable", "brook", "ridgeback", "courier", "sundown", "arrow", "solstice"]
 
 
 def body(model, half_width, bottom, shoulder, length, axles, tire, kind, center=0.0):
@@ -339,7 +350,8 @@ def create_car_model(car):
         head.box((0, lights_y + .021, front_z + .030), (w * 1.36, .037, .053),
                  "d2fff1", .012, "Ceramic")
         brake.box((0, tail_y + .008, back_z - .015), (w * 1.33, .028, .027), TAIL, .007)
-    bake_occlusion(base.mesh("Chassis"), .32, .25)
+    vehicle_finish(base, car)
+    bake_occlusion(base.mesh("Chassis"), .37, .30)
     brake.mesh("BrakeLamps")
     left.mesh("IndicatorLeft")
     right.mesh("IndicatorRight")
@@ -381,6 +393,9 @@ def pickup_bed(model, car):
 def make_trailer(model, car):
     w = car.half_width
     model.box((0, .61, -1.36), (w * 1.77, .231, 4.58), TRIM, .064, "Metal")
+    if car.detail == "tanker":
+        tank_finish(model)
+        return
     model.custom_box((0, 1.57, -1.45), (w * 1.90, 1.65, 4.57),
                      "c2cfbb", .20, .087, "Paint")
     model.custom_box((0, 2.41, -1.45), (w * 1.85, .139, 4.52),
@@ -400,6 +415,72 @@ def make_trailer(model, car):
     model.box((0, 0.83, -1.36), (w * 1.79, .105, .40), CHROME, .03, "Metal")
 
 
+def tank_finish(model):
+    profile = [(-3.65,.37),(-3.48,.67),(-3.21,.82),(.15,.82),(.48,.65),(.65,.35)]
+    model.pipe([(0,1.58,z) for z,_ in profile], [r for _,r in profile], "bcc8c0", "Metal", 16)
+    for z in [-3.19,-1.91,-.64,.35]:
+        model.pipe([(0,1.58,z-.039),(0,1.58,z+.039)], .831 if z<.20 else .758, TRIM, "Metal", 16)
+    for z in [-2.66,-.63]:
+        model.pipe([(0,2.32,z),(0,2.50,z)],.219,CHROME,"Metal",12)
+        model.pipe([(0,2.49,z),(0,2.55,z)],.134,"d9ae60","Metal",10)
+    for side in [-1,1]:
+        model.box((side*.819,1.52,-1.38),(.062,.23,3.80),PAINT,.028,"CoachPaint")
+        model.pipe([(side*.56,2.28,-3.25),(side*.56,2.45,-3.17),(side*.56,2.45,.16),
+                    (side*.56,2.31,.26)],.026,CHROME,"Metal",7)
+    for row in range(7):
+        model.box((.44,1.05+row*.194,-3.53),(.46,.047,.11),CHROME,.015,"Metal")
+
+
+def vehicle_finish(model, car):
+    w,z=car.half_width,car.length*.5
+    tall = car.kind in ("van","coach","tractor","trailer")
+    for side in [-1,1]:
+        # A shaped sill and a subtle hand-applied bright line lift the silhouette at phone size.
+        x=side*w
+        y=car.shoulder-.145
+        model.pipe([(x*.86,y-.045,-z*.84),(x*.987,y,-z*.56),(x*1.001,y,z*.30),
+                    (x*.97,y+.028,z*.60),(x*.82,y+.015,z*.85)], .021 if not tall else .035,
+                   "c2ba92" if car.kind in ("luxury","coach","wagon") else "48606a","Metal",7)
+        for k in range(2 if not tall else 3):
+            model.box((x*.994,car.tire*.94,-.24+k*.14),(.029,.024,.094),"a8b5a6",.006,"Metal")
+
+    if car.detail in ("moon","duotone") or car.key=="solstice":
+        roof_length=max(.62, car.cabin_front-car.cabin_rear-.87)
+        middle=(car.cabin_front+car.cabin_rear)*.5-.053
+        model.custom_box((0,car.roof+.024,middle),(w*1.07,.054,roof_length),
+                         "466c7c" if car.key=="solstice" else "e1c78b",.19,.019,"Tint")
+    if car.detail in ("utility","expedition"):
+        for side in [-1,1]:
+            x=side*w*.82
+            model.pipe([(x,.42,-z*.52),(x*1.16,.46,-z*.36),(x*1.16,.46,z*.36),
+                        (x,.42,z*.53)],.058,TRIM,"Metal",8)
+        model.custom_box((0,car.roof+.165,-.36),(w*1.33,.20,1.22),
+                         "d0ad68" if car.detail=="expedition" else "8a9b73",.17,.061,"Paint")
+        if car.detail=="expedition":
+            model.pipe([(-w*.53,.51,z+.13),(-w*.48,.68,z+.19),(w*.48,.68,z+.19),(w*.53,.51,z+.13)], .048,CHROME,"Metal",10)
+    if car.detail in ("camper","reefer","shuttle"):
+        mid=-.70 if car.kind == "van" else -.46
+        model.custom_box((0,car.roof+.135,mid),(w*1.58,.28,2.08 if car.detail=="camper" else 1.08),
+                         "dbc8a9",.26,.087,"Paint")
+        for i in range(4):
+            model.box(((i-1.5)*.18,car.roof+.283,mid),(.046,.035,.48),"718f92",.012,"Metal")
+        for side in [-1,1]:
+            x=side*w*.975
+            model.box((x,car.shoulder+.17,-.36),(.049,.081,car.length*.63),"e2a763",.021,"Paint")
+            if car.detail=="camper":
+                model.pipe([(x,car.roof-.31,-z+.29),(x,car.roof-.31,.02)],.071,CREAM_ROOF,"Paint",10)
+    if car.key == "arrow":
+        model.custom_box((0,car.shoulder+.065,-1.47),(w*1.61,.11,.57),"335465",.12,.039,"Tint")
+        for side in [-1,1]:
+            model.box((side*w*.855,.455,-.86),(.153,.122,.38),TRIM,.037,"Rubber",side*.13)
+            model.pipe([(side*w*.76,.52,-1.39),(side*w*.89,.64,-1.57),(side*w*.80,.69,-1.76)],
+                       .045,PAINT,"CoachPaint",8)
+        model.custom_box((0,.705,-1.71),(w*1.87,.10,.34),TRIM,.11,.030,"Metal")
+
+
+CREAM_ROOF = "e8cf9c"
+
+
 def wheel(style):
     model = Model()
     spokes = {"street": 6, "utility": 5, "heavy": 8}[style]
@@ -407,17 +488,19 @@ def wheel(style):
     side_positions = [-width, -width * .93, -width * .76, -width * .53,
                       width * .53, width * .76, width * .93, width]
     radii = [.71, .88, .977, 1, 1, .977, .88, .71]
-    model.pipe([(x, 0, 0) for x in side_positions], radii, RUBBER, "Rubber", 24)
+    model.pipe([(x, 0, 0) for x in side_positions], radii, RUBBER, "Rubber", 20)
     for side in [-1, 1]:
         face = width * side
-        model.pipe([(face * .93, 0, 0), (face * 1.08, 0, 0)], [.707, .667], CHROME, "Metal", 22)
-        model.pipe([(face * 1.077, 0, 0), (face * 1.107, 0, 0)], .574, TRIM, "Metal", 22)
+        model.pipe([(face * .93, 0, 0), (face * 1.08, 0, 0)], [.707, .667], CHROME, "Metal", 18)
+        model.pipe([(face * 1.077, 0, 0), (face * 1.107, 0, 0)], .574, TRIM, "Metal", 18)
         model.pipe([(face * 1.11, 0, 0), (face * 1.24, 0, 0)], [.23, .195], CHROME, "Metal", 12)
         for i in range(spokes):
             angle = i * tau / spokes
             model.pipe([(face * 1.126, cos(angle) * .23, sin(angle) * .23),
                         (face * 1.103, cos(angle + .12) * .58, sin(angle + .12) * .58)],
-                       .069 if style == "heavy" else .078, CHROME, "Metal", 7)
+                       .063 if style == "heavy" else .069, CHROME, "Metal", 6)
+            at = (cos(angle)*.145, sin(angle)*.145)
+            model.pipe([(face*1.225,*at),(face*1.267,*at)],.030,"8ba3a1","Metal",6)
     model.mesh("Wheel")
 
 

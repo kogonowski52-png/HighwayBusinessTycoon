@@ -1,5 +1,22 @@
 # Raport testów
 
+## 0.9.3 · Premium Graphics 2.0
+
+Godot 4.7.2, Blender 4.3.2, Linux x86_64, Compatibility i Mesa llvmpipe. Próby uruchamiały istniejące sceny, obiekty i panele gry. Kadry studyjne pokazują aktualne modele silnika. [Galeria, porównania i film](screenshots/0.9.3/README.md) · [Pomiary przed i po](docs/PERFORMANCE_093.md)
+
+| Próba | Wynik |
+| --- | --- |
+| Stacja Północ i flota | 174/174 w oknie Godota. Pięć konstrukcji zadaszenia, położenia modułów, aktywna woda, piana, szczotki, naprawa pojazdu, światła, koła i 30 modeli. |
+| Podróże i praca usług | 164/164 w oknie Godota i 93/93 headless. Przyciski atlasu otwierają sześć map. Sprawdzono wizyty, rozwój, działalność Metro City i jednokrotny odbiór offline po powrocie. |
+| Gospodarka i progresja | 70/70 ekonomii, zapisu i offline. 27/27 obsługi stacji, 30/30 tras i rezerwacji, 202/202 kariery i 64/64 wydarzeń, kontraktów i rozliczeń między regionami. |
+| Interakcje i integracje | 63/63 dotyku, budowy i gestów w oknie. Panele obsłużyły gesty ScreenTouch i ScreenDrag, a przewijanie przesunęło każdą z 13 list z nadmiarem treści. Przeszło też 60/60 prób bez renderera, 58/58 sklepu i pierwszego dotknięcia reklamy, 89/89 monetyzacji i BOOST oraz 15/15 weryfikatora. Zdarzenia SDK pochodzą z kontrolowanych odpowiedzi adaptera. |
+| Zasoby i budżety | 2531/2531 inwentaryzacji i kluczy językowych, 241/241 testów profili, cyklu życia i ruchu pod obciążeniem. Zapis 41 miniatur z aktualnych modeli. |
+| Migracja od 9002 | Oryginalny checkout dad4e74 utworzył plik zapisu w 7/7 warunkach. Wczytanie w 0.9.3 i powrót z kopii zapasowej spełniły 6/6. Próba obejmowała sześć zapisanych regionów, aktywny BOOST, uprawnienie i ustawienia. |
+| Galeria i film | 85 kadrów z 0.9.3 oraz porównania z 0.9.2. Scena nagrania rozliczyła jednego klienta stacji i kupiła poziom 5. Movie Maker zapisał 168 klatek w 486 × 864, 20 FPS, 8,4 s. |
+| Android | APK 9003, ARM64, compile SDK 36. Zweryfikowano podpis 0.9.2, identyfikator pakietu, SDK w pliku oraz wyrównanie ELF i ZIP do 16 KiB. [Podpis i SHA-256](docs/ANDROID_SIGNING.md#testowy-apk-093) |
+
+Końcowa próba sześciu lokalizacji zakończyła się bez ostrzeżeń na wyjściu. Oddzielny skrypt pomiaru wydajności po zapisaniu danych zgłosił 12 instancji i 3 zasoby przy zamykaniu procesu. Pomiar wskazuje element do dalszej diagnostyki pamięci. Przebieg dotyku, instalacja w miejscu, natywna reklama i płynność na fizycznym Androidzie wymagają próby urządzenia. W Cloud nie ma KVM ani podłączonego Androida.
+
 ## 0.9.2 · Pierwsze dotknięcie i sklep premium
 
 Próba wydania 0.9.1 potwierdziła mechanizm zgłoszony z telefonu. Pierwsze naciśnięcie zleciło ładowanie i nie otworzyło reklamy. Callback oznaczył jednostkę jako gotową, a drugie naciśnięcie otworzyło jedną reklamę. Przy odtworzeniu użyto odpowiedzi adaptera SDK w Godocie. [Szczegóły i zależności](docs/ANDROID_COMMERCE_092.md)

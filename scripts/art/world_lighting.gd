@@ -29,6 +29,7 @@ var reduced := false
 var quality := 2
 var current := Look.DAY
 var district := "north"
+var condition := "clear"
 
 func _ready() -> void:
 	var world := WorldEnvironment.new()
@@ -147,6 +148,11 @@ func set_look(look: Look) -> void:
 		sun.light_energy *= .90
 	environment.adjustment_contrast = 1.055 if daylight else 1.02
 	environment.adjustment_saturation = 1.10 if daylight else 1.03
+	if condition in ["cloud", "rain", "snow"]:
+		sun.light_energy *= .78 if condition == "snow" else .61
+		sun.light_color = sun.light_color.lerp(Color("#cadbeb"), .43)
+		environment.ambient_light_color = environment.ambient_light_color.lerp(Color("#c4d6e5"), .35)
+		environment.adjustment_saturation *= .96
 	RenderingServer.global_shader_parameter_set(&"hbt_ambient_motion", 0.0 if reduced else 1.0)
 	environment.glow_enabled = supports_glow and not reduced and look in [Look.EVENING, Look.NIGHT]
 	for index in range(practical_lights.size()):
@@ -156,6 +162,11 @@ func set_look(look: Look) -> void:
 	for decal in floor_glows:
 		decal.visible = intensity > 0.0
 		(decal.material_override as ShaderMaterial).set_shader_parameter("intensity", 0.58 * intensity)
+
+func set_condition(value: String) -> void:
+	if value != condition:
+		condition = value
+		set_look(current)
 
 func set_reduced(enabled: bool) -> void:
 	set_quality(0 if enabled else 2)

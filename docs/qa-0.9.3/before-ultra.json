@@ -1,0 +1,33 @@
+{
+	"driver": "llvmpipe (LLVM 19.1.7, 256 bits)",
+	"frames": 18,
+	"renderer": "gl_compatibility",
+	"return_passes": [],
+	"size": [
+		486,
+		864
+	],
+	"startup": {
+		"first_title_ms": 149.53,
+		"title_to_world_ms": 2694.753
+	},
+	"travel_ms": {},
+	"viewports": [
+		{
+			"district": "north",
+			"draws": 719,
+			"fps": 2.35148479281721,
+			"heap_bytes": 83313794,
+			"median_ms": 427.086,
+			"msaa": 2,
+			"nodes": 844,
+			"objects": 720,
+			"p95_ms": 475.629,
+			"primitives": 161598,
+			"quality": 3,
+			"rss_kib": 868212,
+			"scale": 1.0,
+			"vram_bytes": 77791175.0
+		}
+	]
+}

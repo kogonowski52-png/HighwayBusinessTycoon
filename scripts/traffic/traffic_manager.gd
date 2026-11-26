@@ -7,9 +7,11 @@ const Routes = preload("res://data/economy/routes.gd")
 const ViewVolume = preload("res://scripts/art/view_volume.gd")
 const POOL_LIMIT := 24
 const Regions = preload("res://data/world/regions.gd")
-const DESERT_STREET := ["range", "mesa", "vela", "atlas", "kestrel", "cargo", "parcel", "regency"]
+const DESERT_STREET := ["range", "mesa", "vela", "atlas", "kestrel", "cargo", "parcel", "regency",
+	"sundown", "ridgeback", "petrel", "arrow"]
 const STREET := ["regency", "cargo", "trail", "horizon", "pulse", "mesa", "parcel", "vela", "atlas",
-	"crest", "summit", "coast", "loop", "range", "orion", "post", "sprint", "pine", "meridian", "kestrel"]
+	"crest", "summit", "coast", "loop", "range", "orion", "post", "sprint", "pine", "meridian", "kestrel",
+	"cove", "sable", "brook", "ridgeback", "courier", "sundown", "arrow", "solstice", "switchback", "petrel"]
 
 var dispatch: HbtDispatch
 var district := "north"

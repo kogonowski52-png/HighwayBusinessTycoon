@@ -1,5 +1,7 @@
 # Highway Business Tycoon
 
+**0.9.3 · Premium Graphics 2.0** rozwija architekturę sześciu lokalizacji, wprowadza częściowe wnętrza na Stacji Północ i zwiększa flotę do 30 modeli. Podpisane APK ARM64 ma kod 9003. [APK w GitHub Releases](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.3-rc.1) · [Porównania i film](screenshots/0.9.3/README.md) · [Raport grafiki](docs/PREMIUM_GRAPHICS_2.md)
+
 **0.9.2** ładuje reklamy w tle i otwiera je po pierwszym dotknięciu. Sklep ma dziewięć ilustrowanych sekcji i pokazuje rzeczywisty stan Google Play. Podpisany APK na Android ARM64 ma kod 9002. [APK w GitHub Releases](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.2-rc.1) · [Galeria](screenshots/0.9.2/README.md) · [Raport](docs/ANDROID_COMMERCE_092.md)
 
 **0.9.0 Release Candidate** · wersja testowa ARM64 z kodem 9000. Wydanie dopracowuje pierwszy kontakt z grą, czytelność map, BOOST i weryfikację zakupów. Zachowuje sześć lokalizacji, 41 usług, 590 misji i dotychczasowy zapis. [Audyt](docs/RELEASE_AUDIT.md) · [Galeria i film](screenshots/0.9.0/README.md) · [Karta Google Play](release/play/README.md) · [Instrukcja wydania](docs/PLAY_CONSOLE_RC.md)
@@ -20,7 +22,7 @@ Rozpoczynasz ze 120 zł i klientem przy dystrybutorze. Samouczek prowadzi przez 
 
 W **Rozbudowie** wybierasz usługę i sprawdzasz warunki otwarcia. W karcie **Etapy** kupisz 1, 10, 25 lub maksymalną liczbę ze 100 poziomów usługi. **Pracownicy** prowadzą do zatrudniania, szkoleń i awansów. W **Menedżerach** sprawdzisz 15 portretów, przypisanie, doświadczenie i następny bonus. **Misje** obejmują karierę, 11 rozdziałów, wydarzenia oraz 50 odznak. W **Sklepie** wymieniasz środki zdobyte w grze i aktywujesz zebrane kupony. Ikona kalendarza otwiera 30-dniowy cykl nagród. Ikona statystyk pokazuje wpływy, stan kas, aktywne premie i limit offline.
 
-Przeciągnij mapę jednym palcem i zmień przybliżenie dwoma. W oknie komputera obsługują to przeciągnięcie myszą i kółko. Znaczniki nad budynkami przybliżają usługę albo otwierają jej ulepszenia. Ustawienia obejmują trzy kanały dźwięku, wibracje, PL i EN, trzy poziomy grafiki, limit 30 lub 60 FPS oraz oszczędzanie baterii.
+Przeciągnij mapę jednym palcem i zmień przybliżenie dwoma. W oknie komputera obsługują to przeciągnięcie myszą i kółko. Znaczniki nad budynkami przybliżają usługę albo otwierają jej ulepszenia. Ustawienia obejmują trzy kanały dźwięku, wibracje, PL i EN, cztery profile grafiki i dobór automatyczny, limit 30 lub 60 FPS oraz oszczędzanie baterii.
 
 Stan zapisuje się automatycznie i przy wyjściu. Nowe profile naliczają dochód offline przez maksymalnie dwie godziny. Limit można rozbudować do dwunastu godzin. Profile z edycji z limitem ośmiu godzin zachowują go przy migracji. Gotówka, diamenty, reputacja i punkty wydarzeń są zapisywane jako dokładne liczby dziesiętne.
 
@@ -73,12 +75,15 @@ godot --headless --path . --script tests/stability_run.gd -- --report=/tmp/hbt-0
 godot --path . --script tests/monetization_window.gd -- --capture-dir=/tmp/hbt-070-gallery
 godot --path . --script tests/commerce_window.gd -- --capture-dir=/tmp/hbt-092-shop
 godot --path . --write-movie /tmp/hbt-092-ad.avi --fixed-fps 20 --script tests/commerce_window.gd -- --record
+godot --path . --write-movie /tmp/hbt-093.avi --fixed-fps 20 --script tests/premium_graphics_recording.gd
 godot --path . --write-movie /tmp/hbt-070-boost.avi --fixed-fps 30 --script tests/monetization_recording.gd
 ```
 
 ## Modele i galeria
 
 Modele GLB są częścią repozytorium. Blender jest potrzebny do ponownego wygenerowania geometrii z autorskich skryptów.
+
+Raport Premium Graphics 2.0 opisuje zmienione modele, geometrię etapów i sposób odtworzenia porównań na tej samej kamerze. [Modele i technika](docs/PREMIUM_GRAPHICS_2.md) · [Pomiary](docs/PERFORMANCE_093.md)
 
 Galeria 0.3.2 zawiera test trzech pełnych modeli stacji oraz ujęcia przebudowy. Do ponownego porównania wariantów w oknie użyj `godot --path . --script tests/art_gallery.gd -- --suite=stations --capture-dir=/pełna/ścieżka`. [Galeria przebudowy](screenshots/0.3.2/README.md)
 

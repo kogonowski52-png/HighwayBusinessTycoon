@@ -1,0 +1,119 @@
+{
+	"driver": "llvmpipe (LLVM 19.1.7, 256 bits)",
+	"frames": 36,
+	"renderer": "gl_compatibility",
+	"return_passes": [],
+	"size": [
+		486,
+		864
+	],
+	"startup": {
+		"first_title_ms": 151.17,
+		"title_to_world_ms": 3498.672
+	},
+	"travel_ms": {
+		"alpine": 699.18,
+		"desert": 1489.44,
+		"metro": 876.763,
+		"ocean": 773.818,
+		"valley": 1240.829
+	},
+	"viewports": [
+		{
+			"district": "north",
+			"draws": 720,
+			"fps": 8.12457684495599,
+			"heap_bytes": 83361242,
+			"median_ms": 104.412,
+			"msaa": 0,
+			"nodes": 846,
+			"objects": 721,
+			"p95_ms": 254.002,
+			"primitives": 89502,
+			"quality": 1,
+			"rss_kib": 696364,
+			"scale": 0.879999995231628,
+			"vram_bytes": 63941103.0
+		},
+		{
+			"district": "desert",
+			"draws": 562,
+			"fps": 9.77375388710337,
+			"heap_bytes": 86085474,
+			"median_ms": 90.27,
+			"msaa": 0,
+			"nodes": 870,
+			"objects": 562,
+			"p95_ms": 199.362,
+			"primitives": 53294,
+			"quality": 1,
+			"rss_kib": 715128,
+			"scale": 0.879999995231628,
+			"vram_bytes": 60679195.0
+		},
+		{
+			"district": "valley",
+			"draws": 379,
+			"fps": 16.4909842414903,
+			"heap_bytes": 86567010,
+			"median_ms": 57.404,
+			"msaa": 0,
+			"nodes": 611,
+			"objects": 382,
+			"p95_ms": 100.9,
+			"primitives": 39429,
+			"quality": 1,
+			"rss_kib": 736544,
+			"scale": 0.879999995231628,
+			"vram_bytes": 62994295.0
+		},
+		{
+			"district": "alpine",
+			"draws": 325,
+			"fps": 18.3810483222443,
+			"heap_bytes": 87761620,
+			"median_ms": 51.795,
+			"msaa": 0,
+			"nodes": 644,
+			"objects": 329,
+			"p95_ms": 73.647,
+			"primitives": 37292,
+			"quality": 1,
+			"rss_kib": 741212,
+			"scale": 0.879999995231628,
+			"vram_bytes": 62515831.0
+		},
+		{
+			"district": "ocean",
+			"draws": 355,
+			"fps": 19.3884871163503,
+			"heap_bytes": 89347965,
+			"median_ms": 51.167,
+			"msaa": 0,
+			"nodes": 637,
+			"objects": 359,
+			"p95_ms": 60.848,
+			"primitives": 39569,
+			"quality": 1,
+			"rss_kib": 753716,
+			"scale": 0.879999995231628,
+			"vram_bytes": 63621595.0
+		},
+		{
+			"district": "metro",
+			"draws": 546,
+			"fps": 13.4864899087339,
+			"heap_bytes": 92965320,
+			"median_ms": 72.517,
+			"msaa": 0,
+			"nodes": 919,
+			"objects": 551,
+			"p95_ms": 120.756,
+			"primitives": 70806,
+			"quality": 1,
+			"rss_kib": 802628,
+			"scale": 0.879999995231628,
+			"vram_bytes": 67754799.0
+		}
+	]
+}

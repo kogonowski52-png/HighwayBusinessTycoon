@@ -9,6 +9,13 @@ static var meshes: Dictionary = {}
 static var decals: Dictionary = {}
 static var quad: PlaneMesh
 
+static func surface_shader(key: String, shader: Shader) -> ShaderMaterial:
+	if not decals.has(key):
+		var material := ShaderMaterial.new()
+		material.shader = shader
+		decals[key] = material
+	return decals[key]
+
 static func scene(family: String, key: String) -> PackedScene:
 	var path := "res://assets/models/%s/%s.glb" % [family, key]
 	if not scenes.has(path):

@@ -1,8 +1,9 @@
 """Eight original uniforms and a shared low-cost articulated skeleton."""
 from dataclasses import dataclass
+from math import cos, sin, tau
 
 import bpy
-from kit import Model, bake_occlusion, clear_objects, export, orientation
+from kit import Model, bake_occlusion, clear_objects, export, orientation, ring_faces
 
 
 @dataclass(frozen=True)
@@ -21,13 +22,13 @@ class Outfit:
 
 
 ROLES = [
-    Outfit("customer", "de9c74", "694632", "e1b76f", "f2d9a4", "647b56"),
+    Outfit("customer", "de9c74", "694632", "d8a259", "f2d9a4", "647b56", hair_style="bob"),
     Outfit("driver", "b87956", "493d2f", "c66d47", "efd096", "36556a", "354d50"),
-    Outfit("cashier", "b47857", "47332a", "6ea99a", "d2e0be", "4c6259", apron="346e64"),
+    Outfit("cashier", "b47857", "47332a", "6ea99a", "d2e0be", "4c6259", apron="346e64", hair_style="bun", accessory="earrings"),
     Outfit("mechanic", "d09975", "69442d", "446b74", "e6bb68", "344b54", "305260", reflective=True),
     Outfit("attendant", "7f503b", "343034", "327c6d", "ead18c", "374f56", "dfac65", reflective=True),
     Outfit("wash_worker", "ddb194", "78543b", "739fa9", "e2cfab", "354f58", "e7bb7b", apron="3a7f82"),
-    Outfit("server", "a16950", "4b362c", "f1e0ba", "8a5440", "526860", apron="b7644c"),
+    Outfit("server", "a16950", "4b362c", "f1e0ba", "8a5440", "526860", apron="b7644c", hair_style="curl"),
     Outfit("manager", "deab88", "716054", "746b83", "f2deb1", "465363"),
 ]
 
@@ -88,6 +89,39 @@ def create_rig():
     return rig
 
 
+def body_profile(model, levels, tint, bone, count=16):
+    points = []
+    for y, width, depth, front in levels:
+        for i in range(count):
+            a = i * tau / count
+            points.append((cos(a)*width, y, front + sin(a)*depth))
+    faces, flags = ring_faces(count, len(levels), caps=True)
+    model.add(points, faces, tint, smooth=flags, bone=bone)
+
+
+def field_uniform(model, role):
+    ink = "38505a" if role.key != "server" else "7a5346"
+    if role.key in ("cashier", "server", "wash_worker", "attendant", "mechanic", "driver", "cleaner"):
+        # Two-color ID badge, reusable piping and closure details bonded to the torso.
+        model.box((.126,1.353,.166),(.123,.090,.038), ink, .023,"Paint",bone="spine")
+        model.box((.139,1.356,.189),(.060,.034,.008),"e6c987",.005,"Paint",bone="spine")
+        model.orb((.093,1.352,.193),(.015,.019,.009),"dba981",8,5,bone="spine")
+        for side in [-1,1]:
+            model.pipe([(side*.121,1.445,.090),(side*.198,1.416,.134),
+                        (side*.235,1.369,.107)],.013,role.inset,bone="spine",sides=6)
+    if role.key == "mechanic":
+        for j in range(3):
+            at = -.169+j*.043
+            model.pipe([(at,1.103,.190),(at,1.212+.019*(j%2),.189)],.015,"abb8a9","Metal",7,bone="spine")
+        model.box((-.121,1.122,.181),(.156,.104,.052),"ad7549",.014,bone="spine")
+    if role.key in ("manager", "driver", "customer"):
+        shade = "e3ae68" if role.key == "customer" else role.inset
+        model.pipe([(-.125,1.476,.058),(-.068,1.380,.168),(0,1.337,.190),
+                    (.068,1.380,.168),(.125,1.476,.058)],.025,shade,bone="spine",sides=7)
+        model.box((0,1.29,.193),(.077,.111,.029),ink,.014,"Paint",bone="spine")
+        model.box((0,1.29,.211),(.053,.067,.006),"bed7c6",.007,"Paint",bone="spine")
+
+
 def actor(role):
     model = Model()
     shirt, lining = role.top, role.inset
@@ -97,8 +131,11 @@ def actor(role):
 
     model.orb((0, .998, 0), (.222, .154, .119), pants, 13, 8, bone="pelvis")
     model.box((0, 1.012, .006), (.408, .091, .23), shoes, .045, "Rubber", bone="pelvis")
-    model.orb((0, 1.264, .005), (.264, .275, .153), shirt, 16, 10, bone="spine", irregular=.036)
-    model.orb((0, 1.397, -.014), (.249, .131, .147), shirt, 12, 8, bone="spine")
+    volume = 1.07 if role.key in ("mechanic","driver","manager") else .91 if role.apron else 1.0
+    body_profile(model, [(y,x*volume,z,front) for y,x,z,front in [
+        (1.00,.186,.119,-.006),(1.051,.198,.132,.005),(1.13,.205,.125,.007),
+        (1.25,.221,.150,.004),(1.373,.252,.146,-.005),(1.43,.225,.123,-.009),
+        (1.490,.122,.075,.013)]],shirt,"spine")
     model.orb((0, 1.481, .015), (.096, .101, .093), skin, 12, 8, bone="head")
     for side in [-1, 1]:
         model.box((side * .093, 1.458, .103), (.111, .085, .084), lining, .032, "Paint",
@@ -139,9 +176,10 @@ def actor(role):
         model.box((-.13, 1.27, .185), (.13, .108, .065), shirt, .018, bone="spine")
         model.box((-.13, 1.301, .221), (.114, .031, .023), lining, .009, "Paint", bone="spine")
 
-    model.orb((0, 1.689, .023), (.199, .218, .165), skin, 18, 13,
-              bone="head", irregular=.028)
-    model.orb((0, 1.608, .083), (.139, .095, .102), skin, 13, 8, bone="head")
+    jaw = .15 if role.apron or role.hair_style in ("bob","bun") else .174
+    body_profile(model, [(1.51,.082,.080,.053),(1.55,jaw*.86,.111,.059),
+        (1.611,jaw,.128,.058),(1.683,.193,.155,.039),(1.737,.200,.143,.028),
+        (1.795,.193,.126,.013),(1.867,.166,.113,.004),(1.907,.071,.061,.0)], skin,"head",20)
     model.orb((0, 1.689, .178), (.053, .047, .058), skin, 12, 8, bone="head")
     model.pipe([(-.054, 1.616, .176), (-.026, 1.607, .189), (.023, 1.606, .190), (.058, 1.621, .172)],
                .011, "845047" if role.skin != "7f503b" else "603f31", bone="head", sides=7)
@@ -202,6 +240,7 @@ def actor(role):
     if role.key == "mechanic" or role.accessory == "beard":
         model.orb((0, 1.58, .089), (.134, .066, .101), hair, 13, 8, bone="head")
 
+    field_uniform(model, role)
     for suffix, side in (("l", 1), ("r", -1)):
         arm, elbow, hand = (f"{part}_{suffix}" for part in ("arm", "elbow", "hand"))
         leg, knee, foot = (f"{part}_{suffix}" for part in ("leg", "knee", "foot"))
@@ -229,6 +268,9 @@ def actor(role):
         model.box((side * .153, .120, .076), (.193, .194, .289), shoes, .075, "Rubber", bone=foot)
         model.box((side * .153, .042, .075), (.202, .075, .302), "c0ae90", .031, "Rubber", bone=foot)
         model.box((side * .153, .146, .186), (.129, .084, .109), shirt, .034, "Paint", bone=foot)
+        for i in range(3):
+            model.box((side*.153,.190-i*.008,.127+i*.033),(.101-i*.011,.014,.015),
+                      lining,.004,"Paint",bone=foot)
     # Enlarge the face and cap around the existing head pivot, so clips and props remain compatible.
     for part in model.parts:
         if part.bone == "head":

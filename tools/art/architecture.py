@@ -429,11 +429,6 @@ def wash():
     model.box((0, 2.82, 2.83), (3.70, 0.45, 0.17), SEA, 0.13, "Paint")
     strip(model, (0, 2.571, 2.92), (3.06, 0.055, 0.047), AQUA)
     for side in [-1, 1]:
-        x = side * 1.65
-        model.pipe([(x, 0.46, -0.54), (x, 2.18, -0.54)], 0.29, COOL, "Metal")
-        for k in range(8):
-            model.custom_box((x, 0.58 + k * 0.207, -0.54), (0.83, 0.122, 0.84),
-                             "499786" if k % 2 else "80b7a7", 0.36, 0.032, "Rubber")
         bollard(model, side * 2.58, 3.02, 0.72)
         strip(model, (side * 2.08, 1.33, 2.705), (.041, .91, .041), AQUA)
         for k in range(7):
@@ -689,13 +684,19 @@ MODELS = {
 }
 
 
-def generate(root):
+def generate(root, selection=None):
     from station_designs import MODELS as STATION_MODELS
+    from premium_facades import ANNEXES, canopy_trim, north_annex, north_detail, roadside_extra, spinner
 
     folder = root / "assets/models/architecture"
-    for name, make in (MODELS | STATION_MODELS).items():
+    annexes = {f"annex_{service}_{stage}": lambda service=service, stage=stage: north_annex(service, stage)
+              for service in ANNEXES for stage in range(2, 6)}
+    for name, make in (MODELS | STATION_MODELS | {"wash_brush": spinner} | annexes).items():
+        if selection and name not in selection:
+            continue
         clear_objects()
         model = make()
+        canopy_trim(roadside_extra(name, north_detail(name, model)), name)
         glass = Model()
         glass.parts = [part for part in model.parts if part.finish == "Glass"]
         model.parts = [part for part in model.parts if part.finish != "Glass"]

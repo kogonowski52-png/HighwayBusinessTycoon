@@ -124,10 +124,13 @@ MODELS = {
 }
 
 
-def generate(root):
+def generate(root, selection=None):
+    from premium_facades import roadside_extra
     folder = root / "assets/models/architecture"
     for key, make in MODELS.items():
+        if selection and key not in selection:
+            continue
         clear_objects()
-        mesh = make().mesh(key)
+        mesh = roadside_extra(key, make()).mesh(key)
         bake_occlusion(mesh, .73)
         export(folder / f"{key}.glb")

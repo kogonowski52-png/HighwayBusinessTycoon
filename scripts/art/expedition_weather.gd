@@ -44,9 +44,10 @@ func apply(site: HbtEconomy, event: Dictionary, quality: int, choice: String) ->
 			condition = "haze"
 	var changed := condition != weather or effect.mesh == null
 	weather = condition
+	lighting.set_condition(condition)
 	var fog: Environment = lighting.environment
-	fog.fog_enabled = condition != "clear"
-	fog.fog_density = .0085 if condition == "haze" else .0030 if district == "alpine" else .0048
+	fog.fog_enabled = condition not in ["clear", "cloud"]
+	fog.fog_density = .0057 if condition == "haze" else .0025 if district == "alpine" else .0033
 	fog.fog_light_color = Color("#efbf93") if desert else Color("#c7d8e5")
 	site.conditions = {}
 	match condition:
@@ -70,15 +71,15 @@ func configure_particles(condition: String) -> void:
 	pigment.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	match condition:
 		"rain":
-			body.size = Vector3(.025, .47, .025)
-			pigment.albedo_color = Color("#a7cede")
+			body.size = Vector3(.016, .41, .016)
+			pigment.albedo_color = Color("#a7c3d7")
 			effect.direction = Vector3(.25, -1, .09)
 			effect.gravity = Vector3(.32, -8, 0)
 			effect.initial_velocity_min = 4.6
 			effect.initial_velocity_max = 6.8
 		"snow":
-			body.size = Vector3(.069, .069, .069)
-			pigment.albedo_color = Color("#e7f0e9")
+			body.size = Vector3(.078, .055, .070)
+			pigment.albedo_color = Color("#f0f5ee")
 			effect.direction = Vector3(.26, -1.0, .2)
 			effect.gravity = Vector3(.2, -1.60, .1)
 			effect.initial_velocity_min = 1.3

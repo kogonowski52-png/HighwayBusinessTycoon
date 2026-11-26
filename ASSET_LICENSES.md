@@ -1,5 +1,13 @@
 # Licencje zasobów
 
+## Zasoby 0.9.3
+
+Geometria budynków, pojazdów, postaci i roślinności, materiały, tekstury nawierzchni, ikony oraz kadry w 0.9.3 są własnością projektu. Powstały z autorskich generatorów Blender i wcześniejszych zasobów Highway Business Tycoon. [Architektura](tools/art/premium_facades.py) · [Roślinność](tools/art/premium_botany.py) · [Flota](tools/art/vehicles.py) · [Postacie](tools/art/characters.py) · [Kadry kart z Godota](tools/art/render_business_cards.gd)
+
+Sprawdzono dostęp do katalogów Poly Pizza, Kenney, Quaternius i Poly Haven. Ich strony zwróciły HTTP 403 w Cloud. Dostępny był publiczny kod projektu Poly Haven w GitHub. W wydaniu wykorzystano modele i tekstury projektu, bez włączania zewnętrznych pakietów. Film wykorzystuje muzykę i efekty gry. Plansze porównawcze wykorzystują DejaVu Sans z systemu Linux do podpisów poza grą. [Font i licencja](https://dejavu-fonts.github.io/License.html)
+
+## Zasoby 0.9.2
+
 Ilustracje kart sklepu i cieniowane tła w 0.9.2 są zasobami autorskimi. Skrypt tools/art/premium_offer_art.py składa je z renderów modeli tej gry i nowych elementów rysowanych proceduralnie. [Zasoby](assets/ui/premium/offers)
 
 ## Zasoby 0.9.1

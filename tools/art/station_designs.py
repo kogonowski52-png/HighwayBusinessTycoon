@@ -93,7 +93,7 @@ def rehab():
     for x in [-2.33, 2.32]:
         leg(model, x, -.61, 3.10, industrial=True)
         brace(model, x, -.61, 3.08, 1.84)
-    front = shell(model, 6.38, 2.54, rise, "a6b3a0", TEAL, .18, -.05)
+    front = shell(model, 6.38, 2.54, rise, "a9ccb4", "26796f", .225, -.05)
     model.pipe(front, .074, "879c91", "Metal", 9)
     for i in range(9):
         t = -.88 + i * .22
@@ -120,7 +120,7 @@ def service():
     for x in [-3.10, 3.13]:
         leg(model, x, -.56, 3.43, lean=x * -.018)
         brace(model, x, -.56, 3.31, 2.03)
-    front = shell(model, 8.20, 3.35, rise, "91aa9e", TEAL, .24)
+    front = shell(model, 8.20, 3.35, rise, "4d9d8b", "286560", .29)
     model.pipe(front, .077, "e3bb7b", "Paint", 9)
     for x in [-2.21, -.74, .74, 2.21]:
         strip(model, (x, 3.32, .26), (1.17, .039, .17))
@@ -137,7 +137,7 @@ def cantilever():
         x = side * 3.59
         leg(model, x, -.66, 3.70, lean=-side * .17)
         brace(model, x - side * .08, -.66, 3.69, 2.44)
-    front = shell(model, 9.82, 3.94, rise, ENAMEL, DARK, .27)
+    front = shell(model, 9.82, 3.94, rise, "e9c08c", "2b615c", .36)
     model.pipe(front, .089, SEA, "Paint", 10)
     model.pipe([(x, y - .19, z + .03) for x, y, z in front], .034, "ffba73", "Light", 8)
     for x in [-3, -1.5, 0, 1.5, 3]:
@@ -174,7 +174,7 @@ def ridge():
         leg(model, x, -.72, height, lean=-side * .26)
         model.pipe([(x - side * .18, height - .82, -.72), (x - side * .42, height - .18, .12),
                     (x - side * .62, height + .09, 1.60)], .091, ZINC, "Metal", 12)
-    edge = shell(model, 10.38, 4.20, rise, ENAMEL, TEAL, .30)
+    edge = shell(model, 10.38, 4.20, rise, "369987", "234450", .36)
     model.pipe(edge, .107, "f9eed4", "Paint", 10)
     model.pipe([(x, y - .207, z + .009) for x, y, z in edge], .053, COPPER, "Paint", 9)
     model.pipe([(x, y - .247, z + .012) for x, y, z in edge[3:-3]], .025, "fbd099", "Light", 7)

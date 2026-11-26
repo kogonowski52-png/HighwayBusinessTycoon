@@ -25,6 +25,10 @@ def wallet():
         model.box((x, y + .025, z), (.28, .182, .77), CREAM, .031)
         for h in [-.043, .014]:
             model.box((x + .39, y + h, z + .37), (.27, .015, .01), MINT, .006)
+    for i in range(3):
+        y = .101 + i * .079
+        model.pipe([(.57,y,.28),(.57,y+.065,.28)],.212,GOLD,"Paint",16)
+    model.pipe([(.57,.317,.28),(.57,.328,.28)],.157,"ffe5a7","Metal",16)
     return model
 
 
@@ -63,6 +67,8 @@ def sites():
     for x in [-.18, .27]:
         model.box((x, .39, .256), (.31, .38, .067), "79aaa8", .047, "Tint")
         model.box((x, .38, .294), (.02, .30, .009), MINT, .004)
+    from premium_facades import sawlight
+    sawlight(model,.15,.955,-.08,.75,.46,.25,"458e80",3)
     return model
 
 
@@ -77,6 +83,9 @@ def people():
         if scale == 1:
             model.orb((x, .755, z + .125), (.238, .044, .166), GOLD, 17, 9, "Paint")
             model.box((x, .389, z + .212), (.155, .112, .036), CREAM, .032)
+        for side in [-1,1]:
+            model.orb((x+side*.079*scale,.647*scale,z+.188*scale),
+                      (.020*scale,.024*scale,.013*scale),COAL,8,5)
     return model
 
 
@@ -206,11 +215,16 @@ def render(name, make):
 
 
 if __name__ == "__main__":
-    for key, make in dict(cash=wallet, fuel=fuel, road=road, sites=sites, staff=people, goals=goals, finance=finance,
-                          diamond=diamond, reputation=reput, event=ticket, upgrade=upgrade).items():
-        render(key, make)
+    picks = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+    icons = dict(cash=wallet, fuel=fuel, road=road, sites=sites, staff=people, goals=goals, finance=finance,
+                 diamond=diamond, reputation=reput, event=ticket, upgrade=upgrade)
+    for key, make in icons.items():
+        if not picks or key in picks:
+            render(key, make)
 
+    from premium_facades import canopy_trim
     from station_designs import worn, rehab, service, cantilever, ridge
 
     for number, make in enumerate((worn, rehab, service, cantilever, ridge), start=1):
-        render(f"stage_{number}", make)
+        if not picks or "stages" in picks:
+            render(f"stage_{number}", lambda: canopy_trim(make(), "canopy_" + make.__name__))

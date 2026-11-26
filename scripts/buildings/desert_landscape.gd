@@ -49,6 +49,7 @@ func surface(at: Vector3, size: Vector2, mat: Material) -> void:
 func finish(base: String, highlight: String, tracks := 0.0) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = GROUND
+	mat.set_shader_parameter("aggregate", preload("res://assets/textures/paving_noise.png"))
 	mat.set_shader_parameter("base", Color(base))
 	mat.set_shader_parameter("accent", Color(highlight))
 	mat.set_shader_parameter("trail", tracks)

@@ -339,7 +339,8 @@ func show_climate() -> void:
 	var active: String = game.weather.weather
 	panel.feature(hud.ROAD, text("climate_header"), text("climate_current") % text("weather_" + active))
 	var site: HbtEconomy = game.economy
-	for preset in (["auto", "clear", "haze", "rain", "wind"] if game.is_desert() else ["auto", "clear", "haze", "rain", "snow"]):
+	var weather_presets := ["auto", "clear", "cloud", "haze", "rain", "wind" if game.is_desert() else "snow"]
+	for preset in weather_presets:
 		panel.button(panel.rows, text("weather_" + preset), game.choose_weather.bind(preset), false, preset == site.preferences.weather)
 	panel.button(panel.rows, text("auto_day_on" if site.preferences.auto_day else "auto_day_off"),
 		game.toggle_auto_day, false, site.preferences.auto_day)

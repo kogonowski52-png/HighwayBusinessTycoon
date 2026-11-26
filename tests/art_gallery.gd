@@ -180,6 +180,7 @@ func play_scene() -> void:
 	game.tick_game(0.1)
 	check(wash.phase == HbtVisit.Phase.WORKING and game.effects.water.emitting and game.effects.foam.emitting,
 		"operational wash emits water and foam")
+	check(not is_zero_approx(game.venue_activity.brushes[0].rotation.y), "contact brushes turn during the live wash")
 	game.aim_camera(Campus.WASH_AT + Vector3(0, 1.12, 1.70), Vector3(-2.7, 3.4, 7.6), 10.5)
 	if not captures.is_empty():
 		await create_timer(0.37).timeout
@@ -192,6 +193,10 @@ func play_scene() -> void:
 		for site in Campus.ROOFS:
 			store.levels[site] = tier
 		game.campus.update_sites(store)
+		if stage > 0:
+			for site in Campus.ANNEXES:
+				check(game.campus.annexes[site].scene_file_path.ends_with("annex_%s_%d.glb" % [site, stage + 1]),
+					"named annex matches the unlocked visual tier for " + site)
 		for site in Campus.ROOFS:
 			var group: MultiMesh = game.campus.roof_batches[stage]
 			var slot: int = game.campus.roof_slots[stage].get(site, -1)
@@ -210,6 +215,8 @@ func play_scene() -> void:
 	game.aim_camera(Vector3(8.6, 0.0, -4.6), Vector3(14.0, 40.0, 33.0), 87.0)
 	await capture("16-pelny-kompleks.png")
 	await service_studies(dispatch)
+	if not captures.is_empty():
+		await interior_studies()
 	game.set_look(Lighting.Look.NIGHT)
 	game.lighting.set_reduced(true)
 	var lights := 0
@@ -217,6 +224,34 @@ func play_scene() -> void:
 		lights += int(lamp.visible)
 	check(lights == 3, "reduced quality keeps local lights budgeted")
 	game.free()
+
+func interior_studies() -> void:
+	game.tutorial.visible = false
+	for study in [
+		["wnetrze-sklepu", game.station.MARKET_AT + Vector3(.65, 1.32, .55), Vector3(2.18, .81, 7.1), 8.28],
+		["wnetrze-myjni", Campus.WASH_AT + Vector3(.03, 1.48, .62), Vector3(-1.91, .87, 6.1), 7.41],
+		["wnetrze-restauracji", Campus.KITCHEN_AT + Vector3(-.35, 1.26, .70), Vector3(3.17, .81, 7.6), 8.52],
+	]:
+		game.aim_camera(study[1], study[2], study[3])
+		await capture(study[0] + ".png")
+	game.aim_camera(Vector3(0, .24, -.31), Vector3(14.0, 29.0, 32.0), 31.5)
+	game.set_look(Lighting.Look.DAWN)
+	await capture("swiatlo-poranek.png")
+	game.set_look(Lighting.Look.DAY)
+	game.choose_weather("cloud")
+	await capture("swiatlo-pochmurno.png")
+	game.choose_weather("rain")
+	await create_timer(.3).timeout
+	await capture("swiatlo-deszcz.png")
+	game.choose_weather("clear")
+	set_window(Vector2i(756, 1344))
+	game.hud.visible = true
+	game.skip_tutorial()
+	game.frame_camera()
+	game.open_page("sites")
+	await create_timer(.35).timeout
+	await capture("rozbudowa-ikony-modeli.png")
+	game.operations.hide_page()
 
 func service_studies(dispatch: HbtDispatch) -> void:
 	var repair := dispatch.try_admit("local", "workshop")
@@ -235,6 +270,10 @@ func service_studies(dispatch: HbtDispatch) -> void:
 	if not captures.is_empty():
 		await create_timer(0.45).timeout
 	await capture("17-warsztat-pracuje.png")
+	if not captures.is_empty():
+		game.tutorial.visible = false
+		game.aim_camera(Campus.WORKSHOP_AT + Vector3(1.03, 1.33, 1.14), Vector3(.23, .44, 3.07), 6.45)
+		await capture("wnetrze-warsztatu.png")
 
 	var shopper := dispatch.try_admit("local", "market")
 	if shopper != null:
@@ -268,20 +307,21 @@ func vehicle_studies() -> void:
 		"indicator has an off-phase")
 	await capture("11-samochody-detal.png")
 
-	studio(Vector2i(1280, 1280), Vector3(0, 0.23, 0.28), Vector3(0, 22, 10.3), 28.25)
 	var roster := Catalog.roster()
-	check(roster.size() == 20, "20 authored vehicle geometries")
-	for index in range(roster.size()):
-		var x := (index % 4 - 1.5) * 6.03
-		var z := (floori(index / 4.0) - 2.0) * 5.35
-		var id: String = roster[index]
-		var model := car(id, Vector3(x, 0.095, z), -0.58 if index % 2 == 0 else 0.64, 0)
-		model.scale *= minf(1.0, 4.35 / float(model.record.length))
-		label_at(Vector3(x, 0.103, z + 2.38), str(model.record.name).to_upper(), 0.53)
-		check(model.wheels.size() == model.record.axles.size() * 2 and model.headlamps != null
-			and model.brake_lamps != null and model.left_lamps != null and model.right_lamps != null,
-			"axles and lamp set for " + id)
-	await capture("12-flota-20-modeli.png")
+	check(roster.size() == 30, "30 authored vehicle geometries")
+	for section in 3:
+		studio(Vector2i(1280, 854), Vector3(0, 0.20, 0.65), Vector3(0, 21, 13), 29.0)
+		for index in 10:
+			var x := (index % 5 - 2.0) * 5.47
+			var z := -3.48 if index < 5 else 2.46
+			var id: String = roster[section * 10 + index]
+			var model := car(id, Vector3(x, 0.095, z), -0.58 if index % 2 == 0 else 0.64, 0)
+			model.scale *= minf(1.0, 4.35 / float(model.record.length))
+			label_at(Vector3(x, 0.103, z + 2.38), str(model.record.name).to_upper(), 0.45)
+			check(model.wheels.size() == model.record.axles.size() * 2 and model.headlamps != null
+				and model.brake_lamps != null and model.left_lamps != null and model.right_lamps != null,
+				"axles and lamp set for " + id)
+		await capture("12-flota-%d.png" % (section + 1))
 	art_set.free()
 	art_set = null
 
@@ -312,6 +352,14 @@ func character_studies() -> void:
 			actor.animation.pause()
 		label_at(Vector3(x, 0.12, z + 1.26), study[1], 0.31)
 	await capture("13-postacie.png")
+	for role: String in ["cashier", "mechanic", "attendant"]:
+		studio(Vector2i(756, 860), Vector3(0, 1.1, 0.02), Vector3(1.47, 1.42, 4.69), 2.30)
+		var model := Actor.new()
+		model.role = role
+		art_set.add_child(model)
+		model.pose_at("repair" if role == "mechanic" else "cash" if role == "cashier" else "service", .47)
+		model.animation.pause()
+		await capture("13-rysy-%s.png" % role)
 	art_set.free()
 	art_set = null
 

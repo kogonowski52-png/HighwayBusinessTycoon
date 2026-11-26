@@ -6,13 +6,13 @@ const CONTACT = preload("res://assets/materials/contact.gdshader")
 static var unit_box: BoxMesh
 
 static func instances(parent: Node3D, mesh: Mesh, poses: Array[Transform3D], material: Material = null,
-		shadow := GeometryInstance3D.SHADOW_CASTING_SETTING_ON) -> void:
-	if poses.size() <= 18:
+		shadow := GeometryInstance3D.SHADOW_CASTING_SETTING_ON, cell_width := CELL) -> void:
+	if poses.size() <= 18 and is_equal_approx(cell_width, CELL):
 		add_batch(parent, mesh, poses, material, shadow)
 		return
 	var cells := {}
 	for pose in poses:
-		var key := cell_at(pose.origin)
+		var key := cell_at(pose.origin, cell_width)
 		if not cells.has(key):
 			var group: Array[Transform3D] = []
 			cells[key] = group
@@ -67,8 +67,8 @@ static func opaque(material: Material) -> bool:
 	return material is BaseMaterial3D and material.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED \
 		and material.billboard_mode == BaseMaterial3D.BILLBOARD_DISABLED and material.next_pass == null
 
-static func cell_at(at: Vector3) -> Vector2i:
-	return Vector2i(floori(at.x / CELL), floori(at.z / CELL))
+static func cell_at(at: Vector3, cell_width := CELL) -> Vector2i:
+	return Vector2i(floori(at.x / cell_width), floori(at.z / cell_width))
 
 static func add_batch(parent: Node3D, mesh: Mesh, poses: Array[Transform3D], material: Material,
 		shadow: GeometryInstance3D.ShadowCastingSetting) -> void:

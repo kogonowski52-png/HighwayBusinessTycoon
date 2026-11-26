@@ -1,7 +1,7 @@
 extends RefCounted
 ## Automatic quality is opt-in on existing profiles and never changes the stored manual choice.
 
-const SCALES := [0.74, 0.88, 1.0, 1.0]
+const SCALES := [0.74, 0.88, 1.0, 1.10]
 const LOD_PIXELS := [2.4, 1.45, 1.0, .65]
 const SAMPLES := [Viewport.MSAA_DISABLED, Viewport.MSAA_DISABLED, Viewport.MSAA_2X, Viewport.MSAA_4X]
 const LABELS := ["quality_low", "quality_mid", "quality_high", "quality_ultra"]

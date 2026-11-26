@@ -356,7 +356,7 @@ def expansion(region, service, stage):
 def mountain(seed, snowy):
     rng = random.Random(seed)
     m = Model()
-    segments = 16
+    segments = 22 if snowy else 16
     rim = [(.85+rng.random()*.27) for _ in range(segments)]
     points = []
     heights = [0,.65,2.75,4.35,5.18,5.64]
@@ -365,56 +365,44 @@ def mountain(seed, snowy):
     for r, h in enumerate(heights):
         for i, shift in enumerate(rim):
             a = i*tau/segments
-            points.append((6.4*radii[r]*shift*cos(a)+r*.12,h+rng.uniform(-.18,.20)*(r<5),
-                           4.4*radii[r]*shift*sin(a)+r*.11))
-            band = (("77828b","7f9096","8297a1","bacbd3","e8f4f7","f3faf9") if snowy else
-                    ("7b8b65","87996d","93a476","9eae7c","aaba82","a9b47a"))
-            colors.append(band[r])
+            if snowy:
+                slope = cos(a*3 + seed*.19) + .33*sin(a*7 + r*.63)
+                shoulder = sin(a + seed)*r*.20
+                reach = radii[r] * (shift + slope*.105)
+                height = h + (.11+slope*.32)*sin(r*pi/5) + rng.uniform(-.14,.14)*int(0 < r < 5)
+                points.append((6.4*reach*cos(a)+shoulder, height, 4.4*reach*sin(a)-r*.13))
+                strata = ("768b9d","91a6b2","aebfcb","cedbe3","f0f5f3","f9fbf5")
+                colors.append(strata[min(5, max(0, r + int(0 < r < 4 and slope > .52)))])
+            else:
+                points.append((6.4*radii[r]*shift*cos(a)+r*.12,h+rng.uniform(-.18,.20)*(r<5),
+                               4.4*radii[r]*shift*sin(a)+r*.11))
+                colors.append(("7b8b65","87996d","93a476","9eae7c","aaba82","a9b47a")[r])
     faces = []
     for layer in range(len(heights)-1):
         for i in range(segments):
             a,b=layer*segments+i,layer*segments+(i+1)%segments
             faces.extend([(a,a+segments,b+segments),(a,b+segments,b)])
     faces.append(tuple(reversed(range(segments*(len(heights)-1),len(points)))))
-    m.add(points, faces, colors[0], "Ceramic", not snowy, vertex_colors=colors)
+    m.add(points, faces, colors[0], "Ceramic", True, vertex_colors=colors)
     return m
 
 
 def vegetation(region):
-    m=Model()
+    from premium_botany import conifer_outline, deciduous, palms
+
     if region == "ocean":
-        m.pipe([(0,0,0),(.10,.68,0),(.29,1.54,.05),(.28,2.71,.16),(.12,3.70,.26)],
-               .125,"a68161","Ceramic",10)
-        for i in range(11):
-            angle=(i/11)*tau
-            h=3.69+.12*(i%3)
-            length=1.27+.42*(i%2)
-            origin=(.12,h,.25)
-            vertices=[origin]
-            for distance, y, width in [(.31,.23,.26),(.71,.19,.36),(1.0,-.21,.19),(1.19,-.58,0)]:
-                for side in (-1,1):
-                    vertices.append((.12+cos(angle)*distance*length+side*sin(angle)*width,h+y,
-                                     .25+sin(angle)*distance*length-side*cos(angle)*width))
-            faces=[(0,1,2),(1,3,4,2),(3,5,6,4),(5,7,8,6)]
-            m.add(vertices,faces + [tuple(reversed(face)) for face in faces],
-                  ("629673","83b37a","47a88e")[i%3],"Paint",True)
-            m.orb((.12+sin(angle)*.14,3.66,.26+cos(angle)*.15),(.154,.18,.139),"ae8961",8,5)
-    elif region == "alpine":
-        m.pipe([(0,0,0),(0,3.36,0)],.13,"6e6055","Ceramic",8)
-        for i in range(4):
-            height=1.0+i*.55
-            size=1.0-i*.19
-            m.orb((0,height,.0),(size,.71,size*.92),"48756f",12,6,irregular=.11)
-            m.orb((.04,height+.31,.01),(size*.81,.49,size*.83),"dcece9",12,6,irregular=.13)
-    elif region == "metro":
-        m.pipe([(0,0,0),(.03,1.70,.03),(.11,2.54,.17)],.12,"857363","Ceramic",9)
-        for i,x in enumerate((-.53,.0,.49)):
-            m.orb((x,2.22+(i%2)*.40,.07),(.68,.86,.63),"709c87",12,7,irregular=.12)
-    else:
-        m.pipe([(0,0,0),(.06,1.43,.04),(0,2.88,.13)],.16,"856d56","Ceramic",9)
-        for x,y,z,r in [(-.75,2.18,.17,.86),(.66,2.16,-.12,.92),(-.11,2.81,.33,.99),(.24,3.19,-.16,.72)]:
-            m.pipe([(.05,.94,.04),(x*.46,y-.66,z*.3),(x,y,z)],.065,"7a6951","Ceramic",7)
-            m.orb((x,y,z),(r,.79*r,r*.86),"78a66d" if x<0 else "88af77",12,7,irregular=.19)
+        return palms()
+    if region == "alpine":
+        m = Model()
+        conifer_outline(m, 0, 0, snow=True)
+        return m
+    if region == "valley":
+        return deciduous()
+    m = Model()
+    from premium_botany import canopy
+    m.pipe([(0,0,0),(.03,1.70,.03),(.11,2.54,.17)],.12,"857363","Ceramic",9)
+    for i,x in enumerate((-.53,.0,.49)):
+        canopy(m,(x,2.22+(i%2)*.40,.07),(.68,.86,.63),("4c756d","618f77","7aaa82","a3b993"),i,12)
     return m
 
 
@@ -446,14 +434,20 @@ def write(region, key, model, bake=True):
     export(output_root() / "assets/models/regions" / f"{region}_{key}.glb")
 
 
-for region, businesses in BUILDERS.items():
-    write(region,"fuel",station(region))
-    write(region,"foliage",vegetation(region))
-    if region in ("valley","alpine"):
-        for seed in (25,74):
-            write(region,f"ridge_{seed}",mountain(seed,region=="alpine"))
-    for service, key in businesses.items():
-        write(region,service,venue(region,key))
-    for service in ["fuel", *businesses]:
-        for stage in range(1,5):
-            write(region,f"{service}_{stage}",expansion(region,service,stage))
+if __name__ == "__main__":
+    import sys
+
+    from premium_facades import regional_detail
+
+    for region, businesses in BUILDERS.items():
+        write(region,"fuel",regional_detail(region,"fuel",station(region)))
+        write(region,"foliage",vegetation(region))
+        for service, key in businesses.items():
+            write(region,service,regional_detail(region,service,venue(region,key)))
+        detail_only = "--facades-only" in sys.argv
+        if not detail_only and region in ("valley","alpine"):
+            for seed in (25,74):
+                write(region,f"ridge_{seed}",mountain(seed,region=="alpine"))
+        for service in ["fuel", *businesses]:
+            for stage in ([3] if detail_only else range(1,5)):
+                write(region,f"{service}_{stage}",regional_detail(region,service,expansion(region,service,stage),stage))

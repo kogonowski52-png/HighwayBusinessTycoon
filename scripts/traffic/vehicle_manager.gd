@@ -102,8 +102,11 @@ func apply_paint(chassis: MeshInstance3D, swatch: Color) -> void:
 				var finish := StandardMaterial3D.new()
 				finish.albedo_color = swatch
 				finish.vertex_color_use_as_albedo = true
-				finish.roughness = 0.28
-				finish.metallic = 0.18
+				finish.roughness = 0.25
+				finish.metallic = 0.16
+				finish.clearcoat_enabled = true
+				finish.clearcoat = .36
+				finish.clearcoat_roughness = .27
 				paints[swatch] = finish
 			chassis.set_surface_override_material(surface, paints[swatch])
 

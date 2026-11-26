@@ -3,6 +3,7 @@ from math import cos, pi, sin, tau
 import random
 
 from kit import Model, bake_occlusion, clear_objects, export, ring_faces
+from premium_botany import deciduous, shrub
 
 METAL = "586e6a"
 DARK = "29464a"
@@ -33,44 +34,15 @@ def pine():
 
 
 def broadleaf():
-    model = Model()
-    model.pipe([(0, -.037, 0), (.03, .23, .07), (.12, .71, .12), (.07, 1.33, .11), (-.09, 2.43, -.11)],
-               [.31, .239, .185, .158, .064], BEAM, sides=14)
-    for n in range(4):
-        angle = n * tau / 4 + .31
-        dx, dz = cos(angle), sin(angle)
-        model.pipe([(.09, .29, .09), (dx * .34, .08, dz * .35), (dx * .59, -.015, dz * .57)],
-                   [.108, .087, .014], "84664f", sides=7)
-    leaves = [
-        (-.98, 2.40, .27, 1.04, .69, .91, "517d47"), (.78, 2.57, .28, .97, .71, .85, "73965a"),
-        (-.62, 3.02, -.49, .98, .86, .93, "739650"), (.28, 3.55, -.12, 1.10, .81, .88, "9daa5f"),
-        (-.39, 3.28, .56, .91, .71, .78, "779850"), (.66, 3.10, -.56, .84, .62, .75, "628852"),
-        (.67, 2.82, .63, .73, .51, .67, "85a660"), (-.54, 2.65, .87, .71, .57, .63, "668f49"),
-    ]
-    for x, y, z, w, h, d, color in leaves:
-        model.orb((x, y, z), (w, h, d), color, 16, 9, irregular=.093)
-        model.pipe([(.07, 1.36, .12), (x * .42, y * .75, z * .55), (x * .78, y * .89, z * .90), (x, y, z)],
-                   [.094, .072, .051, .028], "917257", sides=7)
-    return model
+    return deciduous()
 
 
 def golden_tree():
-    model = Model()
-    model.parts = broadleaf().parts
-    from kit import rgba
-    swaps = ["ba824d", "cf9552", "cb9158", "e9b76f", "df9d51", "c78649", "d9a06b", "c98d56"]
-    for i, tint in enumerate(swaps):
-        model.parts[5 + i * 2].color = rgba(tint)
-    return model
+    return deciduous(autumn=True)
 
 
 def hedge():
-    model = Model()
-    for j, (x, y, z, scale) in enumerate([(-.42, .27, .04, .56), (.22, .36, -.09, .64),
-                                        (.64, .22, .08, .43), (-.20, .43, -.19, .48)]):
-        model.orb((x, y, z), (scale, scale * .8, scale * .81),
-                  ("4f8159", "6d9257", "95a65a", "73945b")[j], 12, 7, irregular=.16)
-    return model
+    return shrub()
 
 
 def stone():
@@ -312,8 +284,10 @@ MODELS = dict(pine=pine, broadleaf=broadleaf, golden_tree=golden_tree, hedge=hed
               lamp=lamp, rail=rail, billboard=billboard, pole=utility_pole, route_sign=route_sign)
 
 
-def generate(root):
+def generate(root, selection=None):
     for name, make in MODELS.items():
+        if selection and name not in selection:
+            continue
         clear_objects()
         mesh = make().mesh(name.capitalize())
         if name in ("broadleaf", "golden_tree", "air_service", "water_tower", "service_yard", "overlook"):

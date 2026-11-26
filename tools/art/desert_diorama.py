@@ -363,16 +363,21 @@ def token(kind):
     return m
 
 
-models = {
-    "copper_mile": tank(), "pump": pump(), "cafe": cafe(), "restrooms": washrooms(), "showers": washrooms(True),
-    "truck": service_depot(), "motel": motel(), "drive_through": drive_through(), "vip_park": shelter("vip_park"),
-    "truck_park": shelter("truck_park"), "charge": shelter("charge"), "charger": charger(),
-    "buttress": buttress(), "saguaro": saguaro(), "agave": agave(), "pylon": pylon(),
-    **{f"upgrade_{item}": expansion(item) for item in ["storage", "porch", "solar", "beacon"]},
-    **{f"event_{item}": token(item) for item in ["snow","holiday","sport","truck","summer","green"]},
-}
-for name, model in models.items():
-    clear_objects()
-    obj = model.mesh(name.title().replace("_", ""))
-    bake_occlusion(obj, radius=1.08, strength=.50)
-    export(output_root() / "assets/models/desert" / f"{name}.glb")
+if __name__ == "__main__":
+    from premium_facades import desert_detail
+
+    models = {
+        "copper_mile": tank(), "pump": pump(), "cafe": cafe(), "restrooms": washrooms(), "showers": washrooms(True),
+        "truck": service_depot(), "motel": motel(), "drive_through": drive_through(), "vip_park": shelter("vip_park"),
+        "truck_park": shelter("truck_park"), "charge": shelter("charge"), "charger": charger(),
+        "buttress": buttress(), "saguaro": saguaro(), "agave": agave(), "pylon": pylon(),
+        **{f"upgrade_{item}": expansion(item) for item in ["storage", "porch", "solar", "beacon"]},
+        **{f"event_{item}": token(item) for item in ["snow","holiday","sport","truck","summer","green"]},
+    }
+    for name, model in models.items():
+        if "--facades-only" in sys.argv and (name.startswith(("upgrade_", "event_")) or name in ("buttress","saguaro","agave","pylon","charger")):
+            continue
+        clear_objects()
+        obj = desert_detail(name, model).mesh(name.title().replace("_", ""))
+        bake_occlusion(obj, radius=1.08, strength=.50)
+        export(output_root() / "assets/models/desert" / f"{name}.glb")

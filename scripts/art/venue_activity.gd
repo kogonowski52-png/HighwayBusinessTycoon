@@ -14,6 +14,7 @@ const STOCK_AT := Vector3(-4.00, 0.04, -6.65)
 
 var door: Node3D
 var spray: Node3D
+var brushes: Array[Node3D] = []
 var door_progress := 0.0
 var elapsed := -1.0
 var van: Node3D
@@ -23,6 +24,9 @@ var stack: Node3D
 func _ready() -> void:
 	door = Art.place(self, "architecture", "workshop_shutter", Campus.WORKSHOP_AT)
 	door.hide()
+	for side in [-1, 1]:
+		brushes.append(Art.place(self, "architecture", "wash_brush",
+			Campus.WASH_AT + Vector3(1.71 * side, 1.34, -.54)))
 	spray = Node3D.new()
 	add_child(spray)
 	var beam := Kit.cylinder(spray, Vector3.ZERO, 0.053, 0.053, 2.08, Color("#89a49b"), 12)
@@ -44,6 +48,13 @@ func service_activity(dispatch: HbtDispatch, delta: float) -> void:
 	spray.visible = wash != null and wash.phase == HbtVisit.Phase.WORKING
 	if spray.visible:
 		spray.position = wash.location + Vector3(0, 1.84, sin(wash.progress() * TAU) * 0.61)
+	for index in brushes.size():
+		var tool := brushes[index]
+		var side := float(index * 2 - 1)
+		var shift := sin(wash.progress() * PI) if spray.visible else 0.0
+		tool.position.x = lerpf(tool.position.x, Campus.WASH_AT.x + side * (1.71 - shift * .28), minf(delta * 6.0, 1.0))
+		if spray.visible:
+			tool.rotate_y(side * delta * 7.0)
 
 func on_shop_sale(total: int, night: bool) -> void:
 	if posmod(total, 5) != 1 or elapsed >= 0.0:

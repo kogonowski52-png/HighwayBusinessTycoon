@@ -1,5 +1,11 @@
 # Stan projektu
 
+## 0.9.3 · Premium Graphics 2.0
+
+Stacja Północ ma pięć konstrukcji zadaszenia, osobne zaplecza rozbudowy sklepu, warsztatu, myjni i restauracji oraz cztery widoczne częściowe wnętrza. Szczotki myjni reagują na wizytę, a warsztat ma wyposażenie i efekty naprawy. Po ocenie Północy poprawiono architekturę 41 usług i otoczenie sześciu regionów. Flota ma 30 modeli, a 41 ilustracji w Rozbudowie pochodzi z aktualnych scen 3D. [Zakres zmian i ograniczenia](docs/PREMIUM_GRAPHICS_2.md) · [Porównania i nagranie](screenshots/0.9.3/README.md)
+
+Ultra skaluje render 3D do 110% i zachowuje MSAA 4×. Sprawdzono odczyt autentycznego zapisu 0.9.2 oraz podstawowe mechanizmy i podróże między wszystkimi mapami. APK 9003 ma dotychczasowy podpis testowy. Wydajność i działanie natywnego SDK na telefonie wymagają odbioru na Androidzie. [Testy](TEST_REPORT.md) · [Pomiary i koszt detali](docs/PERFORMANCE_093.md)
+
 ## 0.9.2 · Reklamy od pierwszego dotknięcia i sklep
 
 AdMob ładuje jednostki w tle po UMP. Pierwsze dotknięcie wyświetla gotową reklamę albo podejmuje jedną próbę oczekiwania do 12 s. Anulowanie i zamknięcie panelu kończą oczekiwanie. Nagroda pozostaje przypisana do jednego potwierdzenia SDK, a BOOST rozlicza te same przedziały co wcześniej.

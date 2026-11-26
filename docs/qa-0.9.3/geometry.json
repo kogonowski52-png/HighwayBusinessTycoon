@@ -1,0 +1,1331 @@
+{
+  "assets/models/architecture/annex_market_2.glb": {
+    "before": null,
+    "after": {
+      "triangles": 764,
+      "surfaces": 3
+    }
+  },
+  "assets/models/architecture/annex_market_3.glb": {
+    "before": null,
+    "after": {
+      "triangles": 844,
+      "surfaces": 4
+    }
+  },
+  "assets/models/architecture/annex_market_4.glb": {
+    "before": null,
+    "after": {
+      "triangles": 1738,
+      "surfaces": 4
+    }
+  },
+  "assets/models/architecture/annex_market_5.glb": {
+    "before": null,
+    "after": {
+      "triangles": 3684,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/annex_restaurant_2.glb": {
+    "before": null,
+    "after": {
+      "triangles": 764,
+      "surfaces": 3
+    }
+  },
+  "assets/models/architecture/annex_restaurant_3.glb": {
+    "before": null,
+    "after": {
+      "triangles": 844,
+      "surfaces": 4
+    }
+  },
+  "assets/models/architecture/annex_restaurant_4.glb": {
+    "before": null,
+    "after": {
+      "triangles": 1738,
+      "surfaces": 4
+    }
+  },
+  "assets/models/architecture/annex_restaurant_5.glb": {
+    "before": null,
+    "after": {
+      "triangles": 3684,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/annex_wash_2.glb": {
+    "before": null,
+    "after": {
+      "triangles": 764,
+      "surfaces": 3
+    }
+  },
+  "assets/models/architecture/annex_wash_3.glb": {
+    "before": null,
+    "after": {
+      "triangles": 844,
+      "surfaces": 4
+    }
+  },
+  "assets/models/architecture/annex_wash_4.glb": {
+    "before": null,
+    "after": {
+      "triangles": 1738,
+      "surfaces": 4
+    }
+  },
+  "assets/models/architecture/annex_wash_5.glb": {
+    "before": null,
+    "after": {
+      "triangles": 3684,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/annex_workshop_2.glb": {
+    "before": null,
+    "after": {
+      "triangles": 764,
+      "surfaces": 3
+    }
+  },
+  "assets/models/architecture/annex_workshop_3.glb": {
+    "before": null,
+    "after": {
+      "triangles": 844,
+      "surfaces": 4
+    }
+  },
+  "assets/models/architecture/annex_workshop_4.glb": {
+    "before": null,
+    "after": {
+      "triangles": 1738,
+      "surfaces": 4
+    }
+  },
+  "assets/models/architecture/annex_workshop_5.glb": {
+    "before": null,
+    "after": {
+      "triangles": 3684,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/canopy_cantilever.glb": {
+    "before": {
+      "triangles": 3764,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 6924,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/canopy_rehab.glb": {
+    "before": {
+      "triangles": 3154,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 4668,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/canopy_ridge.glb": {
+    "before": {
+      "triangles": 6288,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 8810,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/canopy_service.glb": {
+    "before": {
+      "triangles": 4486,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 6280,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/canopy_worn.glb": {
+    "before": {
+      "triangles": 3906,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 4414,
+      "surfaces": 4
+    }
+  },
+  "assets/models/architecture/ev_lounge.glb": {
+    "before": {
+      "triangles": 4004,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 4884,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/freight_office.glb": {
+    "before": {
+      "triangles": 2720,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 3978,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/island.glb": {
+    "before": {
+      "triangles": 4512,
+      "surfaces": 6
+    },
+    "after": {
+      "triangles": 5072,
+      "surfaces": 6
+    }
+  },
+  "assets/models/architecture/market.glb": {
+    "before": {
+      "triangles": 35548,
+      "surfaces": 6
+    },
+    "after": {
+      "triangles": 42884,
+      "surfaces": 7
+    }
+  },
+  "assets/models/architecture/motel.glb": {
+    "before": {
+      "triangles": 18784,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 21960,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/parking.glb": {
+    "before": {
+      "triangles": 8260,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 8836,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/price_sign.glb": {
+    "before": {
+      "triangles": 1644,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 2092,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/pump_vintage.glb": {
+    "before": {
+      "triangles": 4084,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 4644,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/restaurant.glb": {
+    "before": {
+      "triangles": 8148,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 12740,
+      "surfaces": 6
+    }
+  },
+  "assets/models/architecture/tire_shop.glb": {
+    "before": {
+      "triangles": 9896,
+      "surfaces": 6
+    },
+    "after": {
+      "triangles": 11882,
+      "surfaces": 6
+    }
+  },
+  "assets/models/architecture/truck_canopy.glb": {
+    "before": {
+      "triangles": 8200,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 13154,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/wash.glb": {
+    "before": {
+      "triangles": 13472,
+      "surfaces": 6
+    },
+    "after": {
+      "triangles": 16194,
+      "surfaces": 5
+    }
+  },
+  "assets/models/architecture/wash_brush.glb": {
+    "before": null,
+    "after": {
+      "triangles": 396,
+      "surfaces": 2
+    }
+  },
+  "assets/models/architecture/workshop.glb": {
+    "before": {
+      "triangles": 13544,
+      "surfaces": 6
+    },
+    "after": {
+      "triangles": 18006,
+      "surfaces": 6
+    }
+  },
+  "assets/models/characters/ada.glb": {
+    "before": {
+      "triangles": 8504,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 8810,
+      "surfaces": 4
+    }
+  },
+  "assets/models/characters/attendant.glb": {
+    "before": {
+      "triangles": 8628,
+      "surfaces": 3
+    },
+    "after": {
+      "triangles": 9342,
+      "surfaces": 3
+    }
+  },
+  "assets/models/characters/cashier.glb": {
+    "before": {
+      "triangles": 8552,
+      "surfaces": 3
+    },
+    "after": {
+      "triangles": 9890,
+      "surfaces": 4
+    }
+  },
+  "assets/models/characters/customer.glb": {
+    "before": {
+      "triangles": 8456,
+      "surfaces": 3
+    },
+    "after": {
+      "triangles": 9612,
+      "surfaces": 3
+    }
+  },
+  "assets/models/characters/driver.glb": {
+    "before": {
+      "triangles": 8188,
+      "surfaces": 3
+    },
+    "after": {
+      "triangles": 9248,
+      "surfaces": 3
+    }
+  },
+  "assets/models/characters/iga.glb": {
+    "before": {
+      "triangles": 8164,
+      "surfaces": 3
+    },
+    "after": {
+      "triangles": 8470,
+      "surfaces": 3
+    }
+  },
+  "assets/models/characters/leon.glb": {
+    "before": {
+      "triangles": 8128,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 8434,
+      "surfaces": 4
+    }
+  },
+  "assets/models/characters/maks.glb": {
+    "before": {
+      "triangles": 8128,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 8434,
+      "surfaces": 4
+    }
+  },
+  "assets/models/characters/manager.glb": {
+    "before": {
+      "triangles": 8200,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 8852,
+      "surfaces": 4
+    }
+  },
+  "assets/models/characters/mechanic.glb": {
+    "before": {
+      "triangles": 8882,
+      "surfaces": 3
+    },
+    "after": {
+      "triangles": 9808,
+      "surfaces": 4
+    }
+  },
+  "assets/models/characters/mira.glb": {
+    "before": {
+      "triangles": 7788,
+      "surfaces": 3
+    },
+    "after": {
+      "triangles": 8094,
+      "surfaces": 3
+    }
+  },
+  "assets/models/characters/server.glb": {
+    "before": {
+      "triangles": 8552,
+      "surfaces": 3
+    },
+    "after": {
+      "triangles": 10176,
+      "surfaces": 3
+    }
+  },
+  "assets/models/characters/wash_worker.glb": {
+    "before": {
+      "triangles": 8876,
+      "surfaces": 3
+    },
+    "after": {
+      "triangles": 9590,
+      "surfaces": 3
+    }
+  },
+  "assets/models/desert/cafe.glb": {
+    "before": {
+      "triangles": 5452,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 5962,
+      "surfaces": 5
+    }
+  },
+  "assets/models/desert/charge.glb": {
+    "before": {
+      "triangles": 4360,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 5240,
+      "surfaces": 5
+    }
+  },
+  "assets/models/desert/copper_mile.glb": {
+    "before": {
+      "triangles": 5120,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 8736,
+      "surfaces": 5
+    }
+  },
+  "assets/models/desert/drive_through.glb": {
+    "before": {
+      "triangles": 3612,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 4978,
+      "surfaces": 4
+    }
+  },
+  "assets/models/desert/motel.glb": {
+    "before": {
+      "triangles": 14636,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 16698,
+      "surfaces": 4
+    }
+  },
+  "assets/models/desert/pump.glb": {
+    "before": {
+      "triangles": 980,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 1148,
+      "surfaces": 6
+    }
+  },
+  "assets/models/desert/restrooms.glb": {
+    "before": {
+      "triangles": 2148,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 4134,
+      "surfaces": 5
+    }
+  },
+  "assets/models/desert/showers.glb": {
+    "before": {
+      "triangles": 2176,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 4162,
+      "surfaces": 5
+    }
+  },
+  "assets/models/desert/truck.glb": {
+    "before": {
+      "triangles": 5788,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 10736,
+      "surfaces": 5
+    }
+  },
+  "assets/models/desert/truck_park.glb": {
+    "before": {
+      "triangles": 2820,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 3700,
+      "surfaces": 5
+    }
+  },
+  "assets/models/desert/vip_park.glb": {
+    "before": {
+      "triangles": 2820,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 3700,
+      "surfaces": 5
+    }
+  },
+  "assets/models/landscape/broadleaf.glb": {
+    "before": {
+      "triangles": 2752,
+      "surfaces": 1
+    },
+    "after": {
+      "triangles": 2332,
+      "surfaces": 1
+    }
+  },
+  "assets/models/landscape/golden_tree.glb": {
+    "before": {
+      "triangles": 2752,
+      "surfaces": 1
+    },
+    "after": {
+      "triangles": 2332,
+      "surfaces": 1
+    }
+  },
+  "assets/models/landscape/hedge.glb": {
+    "before": {
+      "triangles": 576,
+      "surfaces": 1
+    },
+    "after": {
+      "triangles": 922,
+      "surfaces": 1
+    }
+  },
+  "assets/models/regions/alpine_foliage.glb": {
+    "before": {
+      "triangles": 988,
+      "surfaces": 1
+    },
+    "after": {
+      "triangles": 1244,
+      "surfaces": 1
+    }
+  },
+  "assets/models/regions/alpine_fuel.glb": {
+    "before": {
+      "triangles": 9764,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 13402,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/alpine_fuel_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/alpine_motel.glb": {
+    "before": {
+      "triangles": 15240,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 15732,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/alpine_motel_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/alpine_parking.glb": {
+    "before": {
+      "triangles": 2064,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 2380,
+      "surfaces": 4
+    }
+  },
+  "assets/models/regions/alpine_parking_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/alpine_restaurant.glb": {
+    "before": {
+      "triangles": 9780,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 10272,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/alpine_restaurant_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/alpine_ridge_25.glb": {
+    "before": {
+      "triangles": 174,
+      "surfaces": 1
+    },
+    "after": {
+      "triangles": 240,
+      "surfaces": 1
+    }
+  },
+  "assets/models/regions/alpine_ridge_74.glb": {
+    "before": {
+      "triangles": 174,
+      "surfaces": 1
+    },
+    "after": {
+      "triangles": 240,
+      "surfaces": 1
+    }
+  },
+  "assets/models/regions/metro_charge.glb": {
+    "before": {
+      "triangles": 3092,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 3796,
+      "surfaces": 6
+    }
+  },
+  "assets/models/regions/metro_charge_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/metro_dealership.glb": {
+    "before": {
+      "triangles": 5644,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 8470,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/metro_dealership_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/metro_foliage.glb": {
+    "before": {
+      "triangles": 482,
+      "surfaces": 1
+    },
+    "after": {
+      "triangles": 542,
+      "surfaces": 1
+    }
+  },
+  "assets/models/regions/metro_fuel.glb": {
+    "before": {
+      "triangles": 9864,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 13100,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/metro_fuel_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/metro_logistics.glb": {
+    "before": {
+      "triangles": 12416,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 18022,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/metro_logistics_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/metro_mall.glb": {
+    "before": {
+      "triangles": 7188,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 10014,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/metro_mall_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/metro_truck_park.glb": {
+    "before": {
+      "triangles": 2024,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 2728,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/metro_truck_park_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/metro_warehouse.glb": {
+    "before": {
+      "triangles": 12416,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 18022,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/metro_warehouse_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/ocean_foliage.glb": {
+    "before": {
+      "triangles": 877,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 1954,
+      "surfaces": 1
+    }
+  },
+  "assets/models/regions/ocean_fuel.glb": {
+    "before": {
+      "triangles": 9444,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 12680,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/ocean_fuel_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/ocean_motel.glb": {
+    "before": {
+      "triangles": 8612,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 11226,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/ocean_motel_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/ocean_restaurant.glb": {
+    "before": {
+      "triangles": 6020,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 8634,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/ocean_restaurant_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/ocean_vip_park.glb": {
+    "before": {
+      "triangles": 2024,
+      "surfaces": 4
+    },
+    "after": {
+      "triangles": 2340,
+      "surfaces": 4
+    }
+  },
+  "assets/models/regions/ocean_vip_park_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/ocean_wash.glb": {
+    "before": {
+      "triangles": 3224,
+      "surfaces": 3
+    },
+    "after": {
+      "triangles": 6922,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/ocean_wash_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/valley_foliage.glb": {
+    "before": {
+      "triangles": 778,
+      "surfaces": 1
+    },
+    "after": {
+      "triangles": 2332,
+      "surfaces": 1
+    }
+  },
+  "assets/models/regions/valley_fuel.glb": {
+    "before": {
+      "triangles": 9764,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 13402,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/valley_fuel_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/valley_market.glb": {
+    "before": {
+      "triangles": 10360,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 11154,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/valley_market_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/valley_restaurant.glb": {
+    "before": {
+      "triangles": 9264,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 10058,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/valley_restaurant_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/regions/valley_workshop.glb": {
+    "before": {
+      "triangles": 8920,
+      "surfaces": 5
+    },
+    "after": {
+      "triangles": 11104,
+      "surfaces": 5
+    }
+  },
+  "assets/models/regions/valley_workshop_3.glb": {
+    "before": {
+      "triangles": 3876,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 4732,
+      "surfaces": 2
+    }
+  },
+  "assets/models/vehicles/arrow.glb": {
+    "before": null,
+    "after": {
+      "triangles": 8214,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/atlas.glb": {
+    "before": {
+      "triangles": 9156,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 10128,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/brook.glb": {
+    "before": null,
+    "after": {
+      "triangles": 7434,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/cargo.glb": {
+    "before": {
+      "triangles": 14090,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 15062,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/coast.glb": {
+    "before": {
+      "triangles": 6794,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7486,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/courier.glb": {
+    "before": null,
+    "after": {
+      "triangles": 8670,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/cove.glb": {
+    "before": null,
+    "after": {
+      "triangles": 7194,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/crest.glb": {
+    "before": {
+      "triangles": 6346,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7038,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/horizon.glb": {
+    "before": {
+      "triangles": 6902,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7874,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/kestrel.glb": {
+    "before": {
+      "triangles": 6842,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7534,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/loop.glb": {
+    "before": {
+      "triangles": 6346,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7038,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/meridian.glb": {
+    "before": {
+      "triangles": 6346,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7038,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/mesa.glb": {
+    "before": {
+      "triangles": 8222,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 8914,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/orion.glb": {
+    "before": {
+      "triangles": 6550,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7242,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/parcel.glb": {
+    "before": {
+      "triangles": 7122,
+      "surfaces": 10
+    },
+    "after": {
+      "triangles": 8094,
+      "surfaces": 10
+    }
+  },
+  "assets/models/vehicles/petrel.glb": {
+    "before": null,
+    "after": {
+      "triangles": 11870,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/pine.glb": {
+    "before": {
+      "triangles": 7026,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7718,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/post.glb": {
+    "before": {
+      "triangles": 6750,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 8718,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/pulse.glb": {
+    "before": {
+      "triangles": 6066,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 6758,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/range.glb": {
+    "before": {
+      "triangles": 8102,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 8794,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/regency.glb": {
+    "before": {
+      "triangles": 6502,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7194,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/ridgeback.glb": {
+    "before": null,
+    "after": {
+      "triangles": 7510,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/sable.glb": {
+    "before": null,
+    "after": {
+      "triangles": 7194,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/solstice.glb": {
+    "before": null,
+    "after": {
+      "triangles": 6914,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/sprint.glb": {
+    "before": {
+      "triangles": 6530,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7222,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/summit.glb": {
+    "before": {
+      "triangles": 6618,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7310,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/sundown.glb": {
+    "before": null,
+    "after": {
+      "triangles": 8742,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/switchback.glb": {
+    "before": null,
+    "after": {
+      "triangles": 8870,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/trail.glb": {
+    "before": {
+      "triangles": 6514,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7206,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/vela.glb": {
+    "before": {
+      "triangles": 7262,
+      "surfaces": 9
+    },
+    "after": {
+      "triangles": 7954,
+      "surfaces": 9
+    }
+  },
+  "assets/models/vehicles/wheel_heavy.glb": {
+    "before": {
+      "triangles": 1188,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 1316,
+      "surfaces": 2
+    }
+  },
+  "assets/models/vehicles/wheel_street.glb": {
+    "before": {
+      "triangles": 1092,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 1156,
+      "surfaces": 2
+    }
+  },
+  "assets/models/vehicles/wheel_utility.glb": {
+    "before": {
+      "triangles": 1044,
+      "surfaces": 2
+    },
+    "after": {
+      "triangles": 1076,
+      "surfaces": 2
+    }
+  }
+}

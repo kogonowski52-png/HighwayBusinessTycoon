@@ -26,7 +26,7 @@ func _ready() -> void:
 	rng.seed = 174126
 	breeze.shader = WIND
 	var plain := ground(Vector3(0, -0.35, -2), Vector3(162, 0.61, 132),
-		Color("#8e9d5e"), Color("#bea67e"), 0.20)
+		Color("#6d8855"), Color("#a8ab73"), 0.26)
 	terrain_finish = plain.material_override
 	pavement()
 	extension_paving()
@@ -34,6 +34,7 @@ func _ready() -> void:
 	furniture()
 	forecourt_wear()
 	scenic_edge()
+	landscape_belt()
 	planting()
 	extension_landscaping()
 	for tint in stamps:
@@ -44,9 +45,9 @@ func _ready() -> void:
 
 
 func pavement() -> void:
-	var blacktop := Color("#56626d")
-	var worn := Color("#737a78")
-	var concrete := Color("#a5a291")
+	var blacktop := Color("#48565f")
+	var worn := Color("#6a7372")
+	var concrete := Color("#a4a28e")
 	var paving := Color("#b8a487")
 	ground(Vector3(23.15, -0.023, 5.53), Vector3(25.85, 0.049, 3.38), blacktop, worn, 0.11)
 	ground(Vector3(32.13, -0.028, -4.01), Vector3(30.78, 0.048, 15.17), concrete, worn, 0.11)
@@ -274,7 +275,7 @@ func planting() -> void:
 			transforms.append(transform_at(at, rng.randf_range(-PI, PI), factor))
 			var size := factor * (2.2 if species == "hedge" else 5.0)
 			contact_transforms.append(Transform3D(Basis.from_scale(Vector3(size, 1.0, size * 0.77)), at + Vector3(0, 0.016, 0)))
-		batch(Art.extract_mesh("landscape", species), transforms)
+		batch(Art.extract_mesh("landscape", species), transforms, tree_finish())
 
 	var grass: Array[Transform3D] = []
 	var stones: Array[Transform3D] = []
@@ -309,6 +310,32 @@ func planting() -> void:
 func outside_extension(placement: Transform3D) -> bool:
 	var at := placement.origin
 	return not (at.x < -27.2 and at.z > -11.0 and at.z < 5.0)
+
+func tree_finish() -> ShaderMaterial:
+	return Art.surface_shader("north_crown", preload("res://assets/materials/regional_foliage.gdshader"))
+
+func landscape_belt() -> void:
+	# Asymmetric woodland follows the edges of the yard, clear of the highway and service routes.
+	var foliage := tree_finish()
+	var birches: Array[Transform3D] = []
+	var pines: Array[Transform3D] = []
+	var scrub: Array[Transform3D] = []
+	var outcrops: Array[Transform3D] = []
+	for grove in [[Vector3(-22, -.015, -31), 8.0, 5.5], [Vector3(18, -.015, -32), 9.0, 6.4],
+		[Vector3(-14, -.014, 22), 7.0, 3.0], [Vector3(18, -.014, 24), 9.6, 4.5]]:
+		for index in range(11):
+			var at: Vector3 = grove[0] + Vector3(rng.randf_range(-1, 1) * grove[1], 0, rng.randf_range(-1, 1) * grove[2])
+			var scale := rng.randf_range(.48, 1.14)
+			var group := pines if index % 3 else birches
+			group.append(transform_at(at, rng.randf_range(-PI, PI), scale))
+			scrub.append(transform_at(at + Vector3(rng.randf_range(.30, 2.8), 0, rng.randf_range(.20, 2.2)),
+				rng.randf_range(-PI, PI), rng.randf_range(.36, .78)))
+			if index % 4 == 0:
+				outcrops.append(transform_at(at + Vector3(-.8, 0, .9), rng.randf_range(-PI, PI), rng.randf_range(.61, 1.08)))
+	batch(Art.extract_mesh("landscape", "broadleaf"), birches, foliage, false)
+	batch(Art.extract_mesh("landscape", "pine"), pines, foliage, false)
+	batch(Art.extract_mesh("landscape", "hedge"), scrub, foliage, false)
+	batch(Art.extract_mesh("landscape", "stone"), outcrops, null, false)
 
 func extension_landscaping() -> void:
 	for profile in [

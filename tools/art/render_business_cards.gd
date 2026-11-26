@@ -40,13 +40,13 @@ func render_all() -> void:
 	var ambient := WorldEnvironment.new()
 	ambient.environment = Environment.new()
 	ambient.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	ambient.environment.ambient_light_color = Color("#cfe4f4")
-	ambient.environment.ambient_light_energy = .47
+	ambient.environment.ambient_light_color = Color("#c6dfed")
+	ambient.environment.ambient_light_energy = .42
 	studio.add_child(ambient)
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-48, -34, 0)
 	sun.light_color = Color("#ffe5bb")
-	sun.light_energy = .81
+	sun.light_energy = .92
 	studio.add_child(sun)
 	var lens := Camera3D.new()
 	lens.projection = Camera3D.PROJECTION_ORTHOGONAL
@@ -71,7 +71,7 @@ func render_all() -> void:
 			file.store_line('\t"%s": AABB(Vector3(%.3f, %.3f, %.3f), Vector3(%.3f, %.3f, %.3f)),' % [id, bounds.position.x, bounds.position.y,
 				bounds.position.z, bounds.size.x, bounds.size.y, bounds.size.z])
 			lens.size = maxf(1.2, bounds.size.length() * 1.045)
-			lens.position = bounds.get_center() + Vector3(9, 8.3, 12)
+			lens.position = bounds.get_center() + Vector3(9.4, 8.7, 14.5)
 			lens.look_at(bounds.get_center())
 			for _frame in 3:
 				await RenderingServer.frame_post_draw

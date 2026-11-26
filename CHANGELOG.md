@@ -1,5 +1,14 @@
 # Historia zmian
 
+## 0.9.3 · Premium Graphics 2.0
+
+- Pięć indywidualnych konstrukcji stacji i osobne moduły rozbudowy dla sklepu, warsztatu, myjni i restauracji.
+- Częściowe wnętrza Północy z wyposażeniem oraz ruch szczotek podczas mycia i iskry powiązane z naprawą.
+- Opracowane fasady, dachy i detal 41 istniejących usług. Nowe korony drzew, palmy i świerki oraz zmienione oznaki zużycia dróg.
+- Dopracowane 20 dotychczasowych pojazdów i dziesięć nowych nadwozi, zmienione modele postaci oraz przejścia wybranych cykli.
+- Pochmurna pogoda z chłodniejszym światłem, mniejsza gęstość mgły opadów, odświeżone ikony i ilustracje. Ultra skaluje render 3D do 110% przy MSAA 4×.
+- Wersja testowa Android ARM64 z kodem 9003 i tym samym certyfikatem. [Porównanie z 0.9.2](screenshots/0.9.3/README.md) · [Wyniki testów](TEST_REPORT.md)
+
 ## 0.9.2 · Reklamy i sklep premium
 
 - Wstępne ładowanie reklam po UMP, uruchomienie przy pierwszym dotknięciu i anulowalne oczekiwanie we wszystkich miejscach reklamowych.

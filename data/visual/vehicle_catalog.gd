@@ -22,6 +22,16 @@ const VEHICLES := {
 	"cargo": {"id": "cargo", "name": "Cargo", "category": "trailer", "length": 7.62, "width": 1.98, "radius": 0.428, "wheel": "heavy", "wheel_x": 0.812, "axles": [-3.03, -2.26, 1.34, 3.08], "paint": ["50897d", "a789ae"], "head_z": 3.81},
 	"horizon": {"id": "horizon", "name": "Horizon", "category": "coach", "length": 6.55, "width": 1.86, "radius": 0.401, "wheel": "heavy", "wheel_x": 0.763, "axles": [-2.07, 2.07], "paint": ["5a79a0", "ba835e"], "head_z": 3.275},
 	"pulse": {"id": "pulse", "name": "Pulse", "category": "ev", "length": 3.55, "width": 1.54, "radius": 0.323, "wheel": "street", "wheel_x": 0.67, "axles": [-1.185, 1.185], "paint": ["8ebcb6", "e1c9cc"], "head_z": 1.775},
+	"cove": {"id": "cove", "name": "Cove", "category": "city", "length": 2.94, "width": 1.36, "radius": 0.305, "wheel": "street", "wheel_x": 0.592, "axles": [-0.9, 0.9], "paint": ["e3a159", "68a491"], "head_z": 1.47},
+	"sable": {"id": "sable", "name": "Sable", "category": "sedan", "length": 4.03, "width": 1.58, "radius": 0.322, "wheel": "street", "wheel_x": 0.687, "axles": [-1.195, 1.195], "paint": ["725c8c", "bf644e"], "head_z": 2.015},
+	"brook": {"id": "brook", "name": "Brook", "category": "wagon", "length": 4.04, "width": 1.56, "radius": 0.354, "wheel": "street", "wheel_x": 0.679, "axles": [-1.24, 1.24], "paint": ["637f60", "cc9a66"], "head_z": 2.02},
+	"ridgeback": {"id": "ridgeback", "name": "Ridgeback", "category": "suv", "length": 4.2, "width": 1.76, "radius": 0.433, "wheel": "utility", "wheel_x": 0.766, "axles": [-1.28, 1.28], "paint": ["c68844", "6c8d9f"], "head_z": 2.1},
+	"courier": {"id": "courier", "name": "Courier", "category": "van", "length": 4.16, "width": 1.66, "radius": 0.349, "wheel": "utility", "wheel_x": 0.722, "axles": [-1.225, 1.225], "paint": ["5b9b82", "d98861"], "head_z": 2.08},
+	"sundown": {"id": "sundown", "name": "Sundown", "category": "van", "length": 5.04, "width": 1.82, "radius": 0.355, "wheel": "utility", "wheel_x": 0.792, "axles": [-1.485, 1.485], "paint": ["c87a59", "698d9b"], "head_z": 2.52},
+	"arrow": {"id": "arrow", "name": "Arrow", "category": "sport", "length": 3.96, "width": 1.78, "radius": 0.297, "wheel": "street", "wheel_x": 0.774, "axles": [-1.24, 1.24], "paint": ["d36147", "75a7a4"], "head_z": 1.98},
+	"solstice": {"id": "solstice", "name": "Solstice", "category": "ev", "length": 4.12, "width": 1.56, "radius": 0.341, "wheel": "street", "wheel_x": 0.679, "axles": [-1.32, 1.32], "paint": ["465e83", "65b4a5"], "head_z": 2.06},
+	"switchback": {"id": "switchback", "name": "Switchback", "category": "coach", "length": 5.46, "width": 1.76, "radius": 0.382, "wheel": "heavy", "wheel_x": 0.722, "axles": [-1.71, 1.71], "paint": ["ce7a48", "5d91a1"], "head_z": 2.73},
+	"petrel": {"id": "petrel", "name": "Petrel", "category": "trailer", "length": 7.66, "width": 1.98, "radius": 0.431, "wheel": "heavy", "wheel_x": 0.812, "axles": [-3.03, -2.26, 1.34, 3.08], "paint": ["dc9d54", "509888"], "head_z": 3.83},
 }
 
-const CUSTOMERS := ["sprint", "loop", "meridian", "crest", "trail", "coast", "pine", "summit", "kestrel", "vela", "regency", "orion", "pulse", "post"]
+const CUSTOMERS := ["sprint", "loop", "meridian", "crest", "trail", "coast", "pine", "summit", "kestrel", "vela", "regency", "orion", "pulse", "post", "cove", "sable", "brook", "ridgeback", "courier", "sundown", "arrow", "solstice"]

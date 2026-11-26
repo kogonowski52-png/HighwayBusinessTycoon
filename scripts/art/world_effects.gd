@@ -10,6 +10,7 @@ var steam: CPUParticles3D
 var foam: CPUParticles3D
 var water: CPUParticles3D
 var smoke: CPUParticles3D
+var sparks: CPUParticles3D
 var mote: CPUParticles3D
 var hose: Array[MeshInstance3D] = []
 var washing := false
@@ -30,6 +31,19 @@ func _ready() -> void:
 		Vector3(0.13, 0.02, 0))
 	smoke.scale_amount_max = 0.64
 	smoke.emitting = false
+	var filament := BoxMesh.new()
+	filament.size = Vector3(.024, .105, .027)
+	var filament_material := StandardMaterial3D.new()
+	filament_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	filament_material.vertex_color_use_as_albedo = true
+	filament.material = filament_material
+	sparks = emitter(Vector3.ZERO, Color("#ffc76a"), 9, .33, filament)
+	sparks.direction = Vector3(.28, 1, .12)
+	sparks.gravity = Vector3(0, -3.25, 0)
+	sparks.initial_velocity_min = 1.32
+	sparks.initial_velocity_max = 2.33
+	sparks.spread = 55.0
+	sparks.emitting = false
 	foam = drops(washer + Vector3(0, 0.43, 1.18), Color("#e8f5e3"), 21, 0.75,
 		Vector3(0, 0.50, 0.32), 0.08)
 	foam.gravity = Vector3(0, -1.15, 0)
@@ -55,7 +69,7 @@ func _ready() -> void:
 		segment.visible = false
 		segment.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		hose.append(segment)
-	emitters = {dust: 11, steam: 12, smoke: 10, foam: 21, water: 32, mote: 15}
+	emitters = {dust: 11, steam: 12, smoke: 10, foam: 21, water: 32, mote: 15, sparks: 9}
 
 func set_quality(tier: int) -> void:
 	reduced = tier == 0
@@ -84,10 +98,10 @@ func vapor(at: Vector3, tint: Color, count: int, lifetime: float, gravity: Vecto
 	surface.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	surface.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	surface.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
-	surface.vertex_color_use_as_albedo = true
+	surface.albedo_color = Color(tint, 0.45)
 	surface.albedo_texture = soft_disk
 	face.material = surface
-	var vapour := emitter(at, tint, count, lifetime, face)
+	var vapour := emitter(at, Color.WHITE, count, lifetime, face)
 	vapour.gravity = gravity
 	vapour.direction = Vector3(0.29, 1.0, 0.13)
 	vapour.spread = 46.0
@@ -95,7 +109,12 @@ func vapor(at: Vector3, tint: Color, count: int, lifetime: float, gravity: Vecto
 	vapour.initial_velocity_max = 0.74
 	vapour.scale_amount_min = 0.36
 	vapour.scale_amount_max = 0.85
-	vapour.color_ramp = fade()
+	var drift := Curve.new()
+	drift.add_point(Vector2(0, 0.2))
+	drift.add_point(Vector2(0.30, 0.80))
+	drift.add_point(Vector2(0.70, 1.0))
+	drift.add_point(Vector2(1, 0.05))
+	vapour.scale_amount_curve = drift
 	return vapour
 
 func drops(at: Vector3, tint: Color, count: int, lifespan: float, direction: Vector3, size: float) -> CPUParticles3D:
@@ -130,13 +149,6 @@ func emitter(at: Vector3, tint: Color, count: int, lifespan: float, shape: Mesh)
 	add_child(particles)
 	return particles
 
-func fade() -> Gradient:
-	var ramp := Gradient.new()
-	ramp.offsets = PackedFloat32Array([0.0, 0.15, 0.62, 1.0])
-	ramp.colors = PackedColorArray([Color(1, 1, 1, 0.0), Color(1, 1, 1, 0.83),
-		Color(1, 1, 1, 0.36), Color(1, 1, 1, 0.0)])
-	return ramp
-
 func set_activity(wash: HbtVisit, workshop: HbtVisit) -> void:
 	washing = wash != null
 	repairing = workshop != null
@@ -149,6 +161,9 @@ func set_activity(wash: HbtVisit, workshop: HbtVisit) -> void:
 	foam.emitting = washing and not reduced
 	steam.emitting = washing
 	smoke.emitting = repairing and not reduced
+	sparks.emitting = repairing and not reduced and fmod(workshop.progress() * 4.0, 1.0) > .63
+	if sparks.emitting:
+		sparks.position = workshop.location + Vector3(.63, .89, .52)
 	mote.emitting = not reduced
 
 func drive_on_dust(enabled: bool, at: Vector3) -> void:

@@ -54,8 +54,9 @@ static func pose(clip: String, phase: float) -> Dictionary:
 		var stride := 39.0 if clip == "run" else 24.0
 		angles["leg_l"] = Vector3(stride * wave, 0, 0)
 		angles["leg_r"] = Vector3(-stride * wave, 0, 0)
-		angles["knee_l"] = Vector3(maxf(0.0, opposite) * 43.0, 0, 0)
-		angles["knee_r"] = Vector3(maxf(0.0, -opposite) * 43.0, 0, 0)
+		var step_height := 57.0 if clip == "run" else 40.0
+		angles["knee_l"] = Vector3(smoothstep(-.28, 1.0, opposite) * step_height, 0, 0)
+		angles["knee_r"] = Vector3(smoothstep(-.28, 1.0, -opposite) * step_height, 0, 0)
 		angles["foot_l"] = Vector3(-maxf(0.0, opposite) * 11.0, 0, 0)
 		angles["foot_r"] = Vector3(-maxf(0.0, -opposite) * 11.0, 0, 0)
 		angles["bounce"] = (1.0 - cos(phase * 2.0)) * (0.048 if clip == "run" else 0.016)
@@ -69,7 +70,9 @@ static func pose(clip: String, phase: float) -> Dictionary:
 		elif clip == "carry":
 			angles["arm_l"] = Vector3(-25, -2, 3)
 			angles["elbow_l"] = Vector3(-68, 0, 0)
-			angles["elbow_r"] = Vector3(-16, 0, 0)
+			angles["arm_r"] = Vector3(-16 + 5 * wave, 6, -6)
+			angles["elbow_r"] = Vector3(-28, 2, 0)
+			angles["spine"] = Vector3(4.0, 2.0 * wave, 1.8 * wave)
 		return angles
 	match clip:
 		"exit_car":

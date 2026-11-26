@@ -19,6 +19,12 @@ const TRUCK_PARK_AT := Vector3(45.50, 0.0, -13.42)
 
 const THRESHOLDS := [1, 15, 35, 65, 90]
 const ROOF_MODULES := ["service_console", "service_clerestory", "service_solar", "service_mechanical", "service_lantern"]
+const ANNEXES := {
+	"market": Station.MARKET_AT + Vector3(-4.73, 0, -.30),
+	"wash": WASH_AT + Vector3(3.52, 0, -1.46),
+	"workshop": WORKSHOP_AT + Vector3(2.54, 0, -3.69),
+	"restaurant": KITCHEN_AT + Vector3(-4.57, 0, -.63),
+}
 const ROOFS := {
 	"market": [Station.MARKET_AT, [Vector3(2.52, 3.07, 1.51), Vector3(-1.52, 3.51, 0.91),
 		Vector3(-1.26, 3.51, -0.87), Vector3(2.52, 3.07, -1.92), Vector3(0.58, 3.51, 0.81)]],
@@ -46,6 +52,8 @@ var markers: Dictionary = {}
 var roof_counts: Dictionary = {}
 var roof_batches: Array[MultiMesh] = []
 var roof_slots: Array[Dictionary] = []
+var annexes: Dictionary = {}
+var annex_stages: Dictionary = {}
 var extra_islands: Dictionary = {}
 var workshop_shutters: Node3D
 var new_bays: Dictionary = {"charge": [], "truck_park": [], "tires": []}
@@ -177,6 +185,18 @@ func roof_anchor(id: String, stage: int) -> Vector3:
 	return roof[0] + roof[1][stage]
 
 func update_roofs() -> void:
+	for id: String in ANNEXES:
+		var stage: int = roof_counts[id]
+		if int(annex_stages.get(id, 0)) == stage:
+			continue
+		annex_stages[id] = stage
+		if annexes.has(id):
+			var previous: Node3D = annexes[id]
+			remove_child(previous)
+			previous.queue_free()
+			annexes.erase(id)
+		if stage >= 2:
+			annexes[id] = Art.place(self, "architecture", "annex_%s_%d" % [id, stage], ANNEXES[id], .12 if id == "restaurant" else 0.0)
 	for stage in range(roof_batches.size()):
 		var slots := roof_slots[stage]
 		slots.clear()
@@ -189,6 +209,8 @@ func update_roofs() -> void:
 			group.set_instance_transform(slots[id], Transform3D(Basis.IDENTITY, roof_anchor(id, stage)))
 
 func animate_install(id: String, previous_count: int) -> void:
+	if annexes.has(id) and roof_counts[id] > previous_count:
+		Art.settle(annexes[id])
 	for stage in range(previous_count, roof_counts[id]):
 		var lift := create_tween().set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 		var place_module := func(weight: float) -> void:
