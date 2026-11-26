@@ -1,5 +1,7 @@
 extends RefCounted
 
+const Tropical = preload("res://data/world/frontier/tropical.gd")
+
 const DESTINATIONS := {
 	"north": {"pl": "Stacja Północ", "en": "Northpoint Station", "area": "Trasa 17", "position": Vector2(.30, .29),
 		"color": "#7ea17a", "scene": "res://scenes/world/roadside.tscn", "cost": 0, "fuel": 0, "rep": 0},
@@ -13,6 +15,7 @@ const DESTINATIONS := {
 		"scene": "res://scenes/world/ocean.tscn", "from": "alpine", "cost": 17900, "fuel": 8, "rep": 45, "gate": "motel", "tier": 3},
 	"metro": {"pl": "Metro City", "en": "Metro City", "position": Vector2(.80, .38), "color": "#b99b8b", "area": "Meridian Junction",
 		"scene": "res://scenes/world/metro.tscn", "from": "ocean", "cost": 27500, "fuel": 9, "rep": 65, "gate": "vip_park", "tier": 3},
+	"tropical": Tropical.ATLAS,
 }
 
 const EXPANSION_CHAPTER := {
@@ -31,6 +34,7 @@ const STAMPS := {
 	"alpine": ["horizon", "trail", "summit"],
 	"ocean": ["vela", "coast", "regency"],
 	"metro": ["atlas", "pulse", "orion"],
+	"tropical": Tropical.STAMPS,
 }
 
 static func location_name(id: String, language: String) -> String:

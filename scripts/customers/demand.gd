@@ -40,8 +40,11 @@ func customer(economy: HbtEconomy, forced := "") -> Dictionary:
 		model = DESERT_FLEET.get(id, model)
 	if not layout.is_empty():
 		model = layout.guests.get(id, model)
-	if id == "trucker" and random.randf() < 0.45:
-		model = "atlas"
+	if id == "trucker":
+		if economy.district == "harbor" and random.randf() < .49:
+			model = "cooler" if random.randf() < .68 else "forklift"
+		elif economy.district != "wilderness" and random.randf() < 0.45:
+			model = "atlas"
 	if not campaign_model.is_empty():
 		model = campaign_model
 	var vehicle := Catalog.definition(model)
@@ -68,14 +71,15 @@ func interests(economy: HbtEconomy, customer_type: String) -> Dictionary:
 	return Desert.interests(customer_type) if economy.district == "desert" else DATA.PROFILES[customer_type].services
 
 static func has_trucks(economy: HbtEconomy) -> bool:
-	if economy.district == "metro":
-		return economy.level("logistics") > 0 or economy.level("warehouse") > 0 or economy.level("truck_park") > 0
-	return economy.level("truck") > 0
+	for id: String in economy.facilities:
+		if economy.level(id) > 0 and economy.facilities[id].vehicle_kind == "truck":
+			return true
+	return false
 
 static func accepts(facility: HbtService, visitor: Dictionary) -> bool:
-	var electric: bool = visitor.model == "pulse"
+	var electric: bool = Catalog.definition(visitor.model).category == "ev"
 	if facility.vehicle_kind == "electric":
-		return electric
+		return electric and visitor.kind == "car"
 	return facility.vehicle_kind == visitor.kind and not (facility.id == "fuel" and electric)
 
 func weighted(weights: Dictionary) -> String:

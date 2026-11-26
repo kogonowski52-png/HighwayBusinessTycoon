@@ -19,3 +19,4 @@ extends Resource
 @export var vehicle_kind := "car"
 @export var role := "attendant"
 @export var task := "service"
+@export var venue_kind := ""

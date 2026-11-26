@@ -10,6 +10,7 @@ const DesertStation = preload("res://scripts/buildings/desert_station.gd")
 const Regions = preload("res://data/world/regions.gd")
 const RegionalRoutes = preload("res://data/world/regional_routes.gd")
 const RegionalLandscape = preload("res://scripts/buildings/regional_landscape.gd")
+const FrontierLandscape = preload("res://scripts/buildings/frontier_landscape.gd")
 const RegionalCampus = preload("res://scripts/buildings/regional_campus.gd")
 const RegionalStation = preload("res://scripts/buildings/regional_station.gd")
 const Diagnostics := "res://scripts/core/runtime_diagnostics.gd"
@@ -203,8 +204,12 @@ func _ready() -> void:
 	if not arrived_from_trip:
 		log_commercial("game_start")
 		economy.checkpoint()
-	if economy.district == "metro" and not economy.preferences.auto_day:
-		set_look(Lighting.Look.NIGHT)
+	if not economy.preferences.auto_day:
+		var opening_look := int(Regions.LAYOUTS.get(economy.district, {}).get("look", Lighting.Look.DAY))
+		if economy.district == "metro":
+			opening_look = Lighting.Look.NIGHT
+		if opening_look != Lighting.Look.DAY:
+			set_look(opening_look)
 	update_expedition()
 	get_tree().auto_accept_quit = false
 	if not economy.offline_pending.empty():
@@ -216,7 +221,7 @@ func setup_district() -> void:
 	if is_regional():
 		routes = RegionalRoutes.new(economy.district)
 		station = RegionalStation.new(routes)
-		landscape = RegionalLandscape.new(routes)
+		landscape = FrontierLandscape.new(routes) if Regions.FRONTIERS.has(economy.district) else RegionalLandscape.new(routes)
 		campus = RegionalCampus.new(routes)
 		lighting.district = economy.district
 		traffic.district = economy.district
@@ -370,7 +375,10 @@ func update_scene(delta: float) -> void:
 		effects.set_hose(has_prop, worker.prop.global_position if has_prop else Vector3.ZERO, source)
 	else:
 		effects.set_hose(false, Vector3.ZERO)
-	effects.set_activity(traffic.dispatch.first_at("wash", Phase.WORKING), traffic.dispatch.first_at("workshop", Phase.WORKING))
+	if Regions.FRONTIERS.has(economy.district):
+		effects.set_activity(campus.active_job("wash", traffic.dispatch), campus.active_job("repair", traffic.dispatch))
+	else:
+		effects.set_activity(traffic.dispatch.first_at("wash", Phase.WORKING), traffic.dispatch.first_at("workshop", Phase.WORKING))
 	campus.update_chargers(traffic.dispatch)
 	if venue_activity != null:
 		venue_activity.service_activity(traffic.dispatch, delta)

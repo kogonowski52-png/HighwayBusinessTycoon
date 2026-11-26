@@ -1,6 +1,8 @@
 extends RefCounted
 ## Each row is a service plot with its model origin, route lane and bay spacing.
 
+const Tropical = preload("res://data/world/frontier/tropical.gd")
+
 const LAYOUTS := {
 	"valley": {
 		"family": "valley", "center": Vector3(-8, 0, -2), "width": 34.0, "ambient": 15.5,
@@ -60,6 +62,7 @@ const LAYOUTS := {
 		"guests": {"business": "post", "vip": "regency", "family": "orion", "local": "meridian", "tourist": "sprint"},
 		"weights": {"trucker": 2.9, "electric": 1.9, "business": 1.8},
 	},
+	"tropical": Tropical.LAYOUT,
 }
 
 # id, names, base invoice, first improvement, duration, unlock, preceding
@@ -93,6 +96,7 @@ const SERVICES := {
 		["charge", "Ładowarki Pulse Plaza", "Pulse Plaza Charging", 615, 1940, 5.1, 15400, "warehouse", 4, 35, 1030, [1, 18], "electric", "attendant", "service"],
 		["truck_park", "Parking TIR Freight Exchange", "Freight Exchange Truck Park", 685, 2090, 5.9, 22500, "logistics", 6, 48, 1230, [1, 19], "truck", "attendant", "service"],
 	],
+	"tropical": Tropical.SERVICES,
 }
 
 const ECONOMICS := {
@@ -100,6 +104,7 @@ const ECONOMICS := {
 	"alpine": [2250, 4.0, 1.7, 110, 110, "motel", "roan"],
 	"ocean": [3050, 3.7, 1.55, 110, 110, "vip_park", "ines"],
 	"metro": [4300, 2.85, 1.25, 111, 111, "logistics", "dev"],
+	"tropical": Tropical.ECONOMICS,
 }
 
 const LOCAL_CONTRACTS := {
@@ -107,7 +112,16 @@ const LOCAL_CONTRACTS := {
 	"alpine": {"field": "sales_motel", "count": 11, "time": 1500, "cash": 4000, "pl": "Goście Snowline", "en": "Snowline guests"},
 	"ocean": {"field": "sales_vip_park", "count": 8, "time": 1500, "cash": 6900, "pl": "Weekend w marinie", "en": "Marina weekend"},
 	"metro": {"field": "deliveries", "count": 24, "time": 1800, "cash": 10200, "pl": "Łańcuch dostaw", "en": "Supply chain"},
+	"tropical": Tropical.CONTRACT,
 }
+
+const FRONTIERS := {
+	"tropical": Tropical,
+}
+
+static func art_for(district: String) -> Dictionary:
+	var plan: Script = FRONTIERS.get(district)
+	return plan.SIGNS if plan != null else {}
 
 static func has_region(id: String) -> bool:
 	return LAYOUTS.has(id)
@@ -133,6 +147,8 @@ static func profiles(id: String) -> Array[HbtService]:
 		service.vehicle_kind = row[12]
 		service.role = row[13]
 		service.task = row[14]
+		if row.size() > 15:
+			service.venue_kind = row[15]
 		service.upgrade_growth = rates[3]
 		service.price_growth = rates[4]
 		definitions.append(service)
@@ -146,7 +162,13 @@ static func roster_goals(id: String) -> Array:
 		{"id": id + "_team", "group": "achievement", "counter": "staff", "goal": 5, "reward": {"cash": region[0], "diamond": 3}},
 		{"id": id + "_district", "group": "achievement", "counter": "locations", "goal": SERVICES[id].size(), "reward": {"cash": int(region[0]) * 3, "diamond": 6}},
 	]
-	if id == "metro":
+	if id == "tropical":
+		result.append({"id": "tropical_partner", "group": "mission", "counter": "rentals", "site": "rent", "goal": 4,
+			"reward": {"card": "talia", "cash": 4900}})
+	elif id == "harbor":
+		result.append({"id": "harbor_partner", "group": "mission", "counter": "site_sales", "site": "coldstore", "goal": 8,
+			"reward": {"card": "hugo", "cash": 12500}})
+	elif id == "metro":
 		result.append({"id": "metro_stock", "group": "mission", "counter": "site_sales", "site": "warehouse", "goal": 12, "reward": {"card": "mila", "cash": 4200}})
 		result.append({"id": "metro_retail", "group": "mission", "counter": "site_sales", "site": "mall", "goal": 12, "reward": {"card": "ren", "cash": 6400}})
 		result.append({"id": "metro_motors", "group": "mission", "counter": "site_sales", "site": "dealership", "goal": 12, "reward": {"card": "ellis", "diamond": 3}})
@@ -170,8 +192,14 @@ static func interests(id: String, customer: String) -> Dictionary:
 		"trucker": {"logistics": 55, "warehouse": 44, "truck_park": 24},
 	}
 	var weights: Dictionary = normal[customer]
-	var plots: Dictionary = LAYOUTS[id].plots
-	for site in plots:
-		if not weights.has(site) and plots[site][1] == "car" and customer not in ["trucker", "electric"]:
+	var layout: Dictionary = LAYOUTS[id]
+	var plots: Dictionary = layout.plots
+	weights.merge(layout.get("specialties", {}).get(customer, {}), true)
+	for site: String in plots:
+		if weights.has(site):
+			continue
+		if plots[site][1] == "truck" and customer == "trucker":
+			weights[site] = 22
+		elif plots[site][1] == "car" and customer not in ["trucker", "electric"]:
 			weights[site] = 11
 	return weights

@@ -62,6 +62,7 @@ func visit(site: HbtEconomy, ticket: HbtVisit) -> Dictionary:
 		return {}
 	var model: String = ticket.client.model
 	var service := ticket.service
+	var venue: String = site.facilities[service].venue_kind
 	spot(site.district, model)
 	var earned := ticket.invoice.decimal()
 	var signal_data := {
@@ -69,10 +70,12 @@ func visit(site: HbtEconomy, ticket: HbtVisit) -> Dictionary:
 		"deliveries": int(ticket.trade in ["inbound", "outbound"] or (site.district == "valley" and service == "market" and model in ["parcel", "post"])),
 		"liters": 42 if service == "fuel" else 165 if service == "truck" and site.district == "north" else 0,
 		"trucks": int(ticket.client.kind == "truck"), "vip": int(ticket.client.type == "vip"),
-		"repairs": int(service in ["workshop", "tires"] or (site.district == "desert" and service == "truck")),
-		"food": int(service in ["restaurant", "cafe", "drive_through"]),
-		"stay": int(service in ["motel", "parking", "vip_park"]), "clean": int(service in ["wash", "showers", "restrooms"]),
-		"charged": int(service == "charge"), "sports": int(model in ["vela", "kestrel"]),
+		"repairs": int(venue == "repair" or service in ["workshop", "tires"] or (site.district == "desert" and service == "truck")),
+		"food": int(venue == "food" or service in ["restaurant", "cafe", "drive_through"]),
+		"stay": int(venue in ["hotel", "parking"] or service in ["motel", "parking", "vip_park"]),
+		"clean": int(venue == "wash" or service in ["wash", "showers", "restrooms"]),
+		"charged": int(service == "charge"), "sports": int(model in ["vela", "kestrel", "onyx", "akari", "velvet", "sunray"]),
+		"rentals": int(ticket.trade == "lease"),
 		"special": int(ticket.client.get("campaign", false)),
 		"turnover": LIMIT if earned.length() > 9 else mini(LIMIT, earned.to_int()),
 	}
@@ -130,15 +133,26 @@ func id_for(site: String, metric: String) -> String:
 	return "%s/%s/%s" % [site, day, metric]
 
 func suitable(site: HbtEconomy, metric: String) -> bool:
+	var profile: Dictionary = Regions.LOCAL_CONTRACTS.get(site.district, {})
+	if metric == "local_" + site.district and profile.has("site"):
+		return site.level(profile.site) > 0
 	match metric:
-		"trucks": return site.level("truck") > 0 or site.level("logistics") > 0 or site.level("warehouse") > 0 or site.level("truck_park") > 0
+		"trucks":
+			return site.facilities.values().any(func(service: HbtService) -> bool:
+				return site.level(service.id) > 0 and service.vehicle_kind == "truck")
 		"vip": return site.metric("reputation") >= 5
-		"repairs": return site.level("workshop") > 0 or site.level("tires") > 0 or (site.district == "desert" and site.level("truck") > 0)
-		"deliveries", "local_metro": return site.level("market") > 0 or site.level("logistics") > 0 or site.level("warehouse") > 0
+		"repairs":
+			return open_kind(site, ["repair"]) or site.level("workshop") > 0 or site.level("tires") > 0 or (site.district == "desert" and site.level("truck") > 0)
+		"deliveries", "local_metro":
+			return open_kind(site, ["freight", "cold"]) or site.level("market") > 0 or site.level("logistics") > 0 or site.level("warehouse") > 0
 		"local_valley": return site.level("market") > 0
 		"local_alpine": return site.level("motel") > 0
 		"local_ocean": return site.level("vip_park") > 0
 		_: return true
+
+func open_kind(site: HbtEconomy, kinds: Array) -> bool:
+	return site.facilities.values().any(func(service: HbtService) -> bool:
+		return site.level(service.id) > 0 and service.venue_kind in kinds)
 
 func accept(site: HbtEconomy, metric: String) -> bool:
 	advance(site.clock)

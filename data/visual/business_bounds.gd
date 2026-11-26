@@ -43,4 +43,12 @@ const BOXES := {
 	"metro_mall": AABB(Vector3(-7.225, -0.005, -3.475), Vector3(14.450, 5.749, 7.726)),
 	"metro_charge": AABB(Vector3(-4.310, 0.000, -2.100), Vector3(8.620, 3.441, 4.245)),
 	"metro_truck_park": AABB(Vector3(-8.310, 0.000, -2.100), Vector3(16.620, 5.271, 4.245)),
+	"tropical_fuel": AABB(Vector3(-4.395, 0.000, -2.575), Vector3(8.790, 4.060, 5.150)),
+	"tropical_rent": AABB(Vector3(-5.002, -0.001, -2.675), Vector3(9.447, 4.091, 5.908)),
+	"tropical_resort": AABB(Vector3(-6.445, 0.000, -3.475), Vector3(14.686, 6.850, 7.339)),
+	"tropical_restaurant": AABB(Vector3(-4.945, 0.000, -3.025), Vector3(9.890, 4.180, 6.941)),
+	"tropical_scooters": AABB(Vector3(-3.783, -0.011, -2.325), Vector3(7.078, 3.611, 5.208)),
+	"tropical_market": AABB(Vector3(-3.745, -0.005, -2.625), Vector3(7.490, 3.885, 5.808)),
+	"tropical_parking": AABB(Vector3(-4.795, 0.000, -2.725), Vector3(9.590, 3.386, 5.450)),
+	"tropical_wash": AABB(Vector3(-4.295, 0.000, -3.025), Vector3(8.590, 4.125, 6.050)),
 }

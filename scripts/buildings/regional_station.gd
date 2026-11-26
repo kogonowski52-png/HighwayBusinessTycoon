@@ -1,6 +1,7 @@
 extends Node3D
 
 const Art = preload("res://scripts/art/visual_library.gd")
+const Regions = preload("res://data/world/regions.gd")
 const MARQUES := {"valley": "RIVERBEND", "alpine": "SUMMIT", "ocean": "BLUE CURRENT", "metro": "MERIDIAN"}
 
 var routes: RefCounted
@@ -14,7 +15,11 @@ func _init(course: RefCounted) -> void:
 func _ready() -> void:
 	position = routes.origin("fuel")
 	building = Art.place(self, "regions", routes.district + "_fuel")
-	Art.sign(building, Vector3(0, 3.47, 2.175), MARQUES[routes.district], .33, Color("#fff1d6"))
+	if Regions.FRONTIERS.has(routes.district):
+		var plaque: Array = Regions.art_for(routes.district).fuel
+		Art.sign(building, Vector3(0, plaque[1], plaque[2]), plaque[0], .30, Color("#fff1d6"))
+	else:
+		Art.sign(building, Vector3(0, 3.47, 2.175), MARQUES[routes.district], .33, Color("#fff1d6"))
 	Art.contact(self, Vector3(0, -.016, -.80), 10.0, 6.0)
 	for index in 2:
 		var stop: Vector3 = routes.position_of("fuel", index)

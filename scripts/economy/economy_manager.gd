@@ -84,6 +84,7 @@ func _init(location := "north") -> void:
 		facilities[profile.id] = profile
 		_curve[profile.id] = build_curve(profile)
 		chapters[profile.id] = []
+	commerce.configure(facilities, district)
 	if district == "desert":
 		missions = DesertBusiness.missions(facilities)
 		milestones = DesertBusiness.LANDMARKS
@@ -577,6 +578,7 @@ func metric(key: String, site := "") -> int:
 		"fuel_level": return level("fuel")
 		"site_level": return level(site)
 		"site_sales": return int(per_service[site].count)
+		"rentals": return int(commerce.record(site).outbound)
 		"site_staff": return crew[site].size()
 		"site_training":
 			var training := 0

@@ -25,14 +25,15 @@ func _init(course: RefCounted) -> void:
 
 func _ready() -> void:
 	var region: String = routes.district
-	var pigments: Array = SURFACES[region]
+	var pigments: Array = SURFACES.get(region, routes.layout.get("palette", []))
 	pavement = surface(pigments[2], pigments[3], .66)
-	Art.plane(self, Vector3(0, -.12, 0), Vector2(260, 178), surface(pigments[0], pigments[1]))
+	ground(pigments)
 	roadway("car", 5.05, true)
 	if routes.layout.has("truck"):
 		roadway("truck", 7.65, false)
 	var ambient: float = routes.layout.ambient
-	public_road(ambient, 8.7 if region != "metro" else 13.0, region == "metro")
+	var wide_road: bool = region == "metro" or routes.layout.get("boulevard", false)
+	public_road(ambient, 13.0 if wide_road else 8.7, wide_road)
 	for id in routes.layout.plots:
 		build_plot(id)
 	street_signs(ambient)
@@ -41,11 +42,18 @@ func _ready() -> void:
 		"alpine": alpine()
 		"ocean": ocean()
 		"metro": metro()
+		_: surrounding()
 	var strip := BoxMesh.new()
 	strip.size = Vector3.ONE
 	instances(strip, paint, Kit.material(Color("#e9daba")), false)
 	Batch.compact(self, true, GROUND)
 
+
+func ground(pigments: Array) -> void:
+	Art.plane(self, Vector3(0, -.12, 0), Vector2(260, 178), surface(pigments[0], pigments[1]))
+
+func surrounding() -> void:
+	pass
 
 func surface(a: String, b: String, wear := 0.0) -> ShaderMaterial:
 	var key := [a, b, wear]
@@ -132,6 +140,8 @@ func build_plot(id: String) -> void:
 	var lanes: Array = routes.layout.plots[id]
 	var heavy: bool = lanes[1] == "truck"
 	var maximum := 3 if id in ["logistics", "mall"] or (id == "restaurant" and routes.district == "ocean") 		or (id == "motel" and routes.district in ["alpine", "ocean"]) else 2
+	if lanes.size() > 4:
+		maximum = lanes[4]
 	for i in maximum:
 		var bay: Vector3 = routes.position_of(id, i)
 		var approach: Vector3 = routes.point_at(lanes[1], bay.x)
@@ -173,7 +183,7 @@ func foliage(points: Array[Vector2]) -> void:
 func street_signs(z: float) -> void:
 	var exits: Dictionary = {"valley": ["RIVERBEND", "FARM DISTRICT"], "alpine": ["SNOWLINE", "ALPINE PASS"],
 		"ocean": ["CORAL KEY", "OCEAN DRIVE"], "metro": ["MERIDIAN", "JUNCTION 09"]}
-	var labels: Array = exits[routes.district]
+	var labels: Array = exits.get(routes.district, [routes.district.replace("_", " ").to_upper(), "SERVICE DISTRICT"])
 	for x in [-18.0, 12.5]:
 		var pos := Vector3(x, -.03, z - (6.95 if routes.district == "metro" else 5.06))
 		Art.place(self, "desert", "highway_lamp", pos, PI * .5)

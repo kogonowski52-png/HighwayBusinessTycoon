@@ -70,6 +70,28 @@ CATALOG = (
     Vehicle("petrel", "Petrel", "trailer", 7.66, .99, 1.07, 2.43, .431, 1.96, 3.48, 2.07, "dc9d54", "509888", "tanker"),
 )
 
+FRONTIER = (
+    Vehicle("sunray","Sunray","sport",3.88,.83,.61,.97,.299,2.39,.90,-1.31,"e69467","58c0ac","convertible"),
+    Vehicle("reefvan","Reefliner","coach",5.72,.91,1.04,2.19,.39,3.47,2.64,-2.58,"499f9e","f1b869","tourcoach"),
+    Vehicle("dune_buggy","Dunehopper","suv",3.61,.90,1.02,1.77,.414,2.18,.66,-1.42,"e0ad64","719a63","buggy"),
+    Vehicle("oxbow","Oxbow","pickup",4.52,.86,.88,1.53,.375,2.60,1.25,-.38,"a95248","a7b898","tailgate"),
+    Vehicle("velvet","Velvet","luxury",5.13,.83,.77,1.21,.342,2.87,1.04,-1.16,"af596a","448d8f","fins"),
+    Vehicle("roamer","Roamer","van",5.21,.88,.91,2.15,.355,2.97,1.92,-2.05,"d99d62","77998d","poproof"),
+    Vehicle("container","Boxmaster","trailer",7.94,1.0,1.07,2.53,.442,2.18,3.63,2.13,"be7b4f","628789","container"),
+    Vehicle("cooler","Coldbox","trailer",8.14,1.0,1.11,2.61,.43,2.23,3.66,2.02,"9cb4b9","5c8793","reefer_truck"),
+    Vehicle("forklift","Dock Shunter","tractor",4.34,.89,1.09,2.17,.414,2.61,1.62,-.09,"d4a757","709997","shunter"),
+    Vehicle("onyx","Onyx","sport",4.23,.92,.52,.87,.296,2.51,.84,-1.05,"8b5e9c","b65157","superwing"),
+    Vehicle("lumen","Lumen","luxury",5.42,.90,.72,1.23,.342,3.31,1.44,-1.79,"69798f","e4d7b9","limousine"),
+    Vehicle("sovereign","Sovereign","suv",4.70,.91,1.03,1.76,.399,2.90,1.21,-1.69,"d0ba9e","67758f","panoramic"),
+    Vehicle("akari","Akari GT","sport",4.08,.85,.64,1.05,.302,2.46,.93,-1.33,"55aabc","ce7c78","track"),
+    Vehicle("bento","Bento","city",2.77,.61,.74,1.39,.278,1.62,.87,-1.12,"edb97b","95b69f","kei"),
+    Vehicle("ion","Ion","ev",4.45,.83,.72,1.31,.35,2.82,1.44,-1.56,"8dbbaa","8a77ab","pixel"),
+    Vehicle("timber","Timber Haul","trailer",8.22,1.00,1.12,2.58,.446,2.29,3.72,2.07,"7a8858","b48258","logs"),
+    Vehicle("boreal","Boreal Scout","suv",4.07,.89,1.08,1.79,.434,2.57,1.10,-1.58,"9b845c","738d92","snowkit"),
+    Vehicle("tandem","Tandem Rescue","pickup",4.98,.91,1.03,1.74,.398,2.94,1.44,-.37,"d79f61","7a9a89","rescue"),
+)
+
+
 PASSENGERS = ["sprint", "loop", "meridian", "crest", "trail", "coast", "pine", "summit",
               "kestrel", "vela", "regency", "orion", "pulse", "post", "cove",
               "sable", "brook", "ridgeback", "courier", "sundown", "arrow", "solstice"]
@@ -270,10 +292,13 @@ def create_car_model(car):
             if car.kind == "coach":
                 base.custom_box((0, car.roof + .039, -.89), (.91, .149, 1.08), CHROME, .13, .025, "Paint")
     else:
-        cabin(base, car, car.cabin_front, car.cabin_rear, car.shoulder - .014, car.roof, w * .836)
+        if car.detail in ("convertible","buggy"):
+            open_cabin(base, car)
+        else:
+            cabin(base, car, car.cabin_front, car.cabin_rear, car.shoulder - .014, car.roof, w * .836)
         if car.kind == "pickup":
             pickup_bed(base, car)
-        if car.kind in ("suv", "wagon") or car.detail == "rack":
+        if (car.kind in ("suv", "wagon") or car.detail == "rack") and car.detail != "buggy":
             rails(base, car)
         if car.detail == "spare":
             base.pipe([(0, .858, -z + .024), (0, .858, -z - .24)], .342, RUBBER, "Rubber", 20)
@@ -351,11 +376,102 @@ def create_car_model(car):
                  "d2fff1", .012, "Ceramic")
         brake.box((0, tail_y + .008, back_z - .015), (w * 1.33, .028, .027), TAIL, .007)
     vehicle_finish(base, car)
+    if any(entry.key == car.key for entry in FRONTIER):
+        frontier_trim(base, car)
     bake_occlusion(base.mesh("Chassis"), .37, .30)
     brake.mesh("BrakeLamps")
     left.mesh("IndicatorLeft")
     right.mesh("IndicatorRight")
     head.mesh("Headlamps")
+
+
+def open_cabin(m, car):
+    w=car.half_width
+    z=car.cabin_front
+    seat=car.shoulder
+    m.custom_box((0,seat+.017,-.24),(1.50*w,.10,1.36),TRIM,.14,.033)
+    for side in (-1,1):
+        x=side*w*.42
+        m.custom_box((x,seat+.133,-.24),(.35,.162,.54),"cbb997",.11,.048)
+        m.custom_box((x,seat+.267,-.42),(.35,.40,.23),"cbb997",.099,.046,yaw=side*.05)
+        m.pipe([(side*w*.70,seat,z-.04),(side*w*.61,seat+.40,z-.33)],.035,CHROME,"Metal",8)
+        m.box((side*w*.87,seat+.09,z-.14),(.17,.086,.12),PAINT,.039,"CoachPaint")
+    m.add([(-w*.70,seat+.05,z),(-w*.61,seat+.41,z-.31),(w*.61,seat+.41,z-.31),
+           (w*.70,seat+.05,z)],[(0,1,2,3)],"6e9fa2","Tint",True)
+    if car.detail=="buggy":
+        for side in (-1,1):
+            x=side*w*.78
+            m.pipe([(x,seat,z-.51),(x,seat+.63,-.32),(x,seat+.65,-.87),
+                    (x,seat,-1.47)],.056,DARK_TRIM,"Metal",9)
+        m.pipe([(-w*.77,seat+.64,-.53),(w*.77,seat+.64,-.53)],.053,CHROME,"Metal",9)
+
+
+def frontier_trailer(m,car):
+    w=car.half_width
+    rear=-car.length*.49
+    if car.detail=="logs":
+        for side in (-1,1):
+            for z in (-3.54,-2.52,-1.31,-.41):
+                m.pipe([(side*w*.78,.82,z),(side*w*.82,2.10,z)],.073,CHROME,"Metal",8)
+        for x,y,r in [(-.52,1.06,.27),(.01,1.06,.27),(.54,1.08,.28),
+                      (-.31,1.57,.26),(.28,1.61,.29),(.0,2.04,.25)]:
+            m.pipe([(x,y,rear+.15),(x+.06,y+.06,.56)],r,"a78558",sides=13)
+            m.pipe([(x,y,rear+.122),(x,y,rear+.15)],r*.83,"cfb182",sides=13)
+        return
+    cold=car.detail=="reefer_truck"
+    pane="bacac6" if cold else "b96955"
+    m.custom_box((0,1.66,-1.50),(w*1.88,1.76,4.80),pane,.23,.081,"Paint")
+    for side in [-1,1]:
+        for col in range(9 if cold else 15):
+            m.box((side*w*.94,1.66,.57-col*(.50 if cold else .30)),(.057,1.43,.061),
+                  "94adb3" if cold else "d08862",.015,"Metal")
+        m.box((side*.46,1.64,rear+.15),(.82,1.48,.08),pane,.056,"Paint")
+        m.pipe([(side*.55,.95,rear+.083),(side*.55,2.35,rear+.083)],.029,CHROME,"Metal",7)
+    if cold:
+        m.custom_box((0,2.51,-.42),(1.42,.30,1.86),DARK_TRIM,.20,.054,"Metal")
+        for row in range(5):
+            m.box((0,2.65,-.99+row*.28),(1.24,.033,.061),CHROME,.009,"Metal")
+
+
+DARK_TRIM="40525c"
+
+
+def frontier_trim(m,car):
+    z,w=car.length*.50,car.half_width
+    if car.detail in ("fins","tailgate"):
+        for side in (-1,1):
+            x=side*w*.82
+            m.pipe([(x,car.shoulder,-z*.38),(x*.98,car.shoulder+.1,-z*.68),
+                    (x*.84,car.shoulder+.22,-z*.94)],.067,PAINT,"CoachPaint",10)
+            m.pipe([(x*.90,car.shoulder-.034,-z*.50),(x*.96,car.shoulder-.022,-z*.955)],
+                   .028,CHROME,"Metal",9)
+        m.box((0,.45,-z-.031),(w*1.80,.09,.12),CHROME,.034,"Metal")
+    elif car.detail in ("superwing","track"):
+        h=.77 if car.detail=="superwing" else .96
+        for side in (-1,1):
+            m.pipe([(side*.43,h-.29,-z*.90),(side*.50,h,-z*.87)],.049,DARK_TRIM,"Metal",8)
+        m.custom_box((0,h,-z*.87),(w*1.84,.10,.33),DARK_TRIM,.12,.038,"Metal")
+        for side in (-1,1):
+            m.custom_box((side*w*.84,.54,-z*.55),(.26,.16,.49),TRIM,.11,.033,"Rubber")
+    elif car.detail in ("poproof","tourcoach","panoramic","limousine","kei"):
+        width=w*(1.41 if car.detail!="poproof" else 1.65)
+        height=.28 if car.detail=="poproof" else .061
+        m.custom_box((0,car.roof+height*.53,-.48),(width,height,1.61),
+                     "c4b994" if car.detail=="poproof" else "628e9a",.20,.036,"Tint")
+        if car.detail in ("tourcoach","limousine"):
+            for side in (-1,1):
+                m.box((side*w*.965,car.shoulder+.14,-.89),(.028,.074,1.38),
+                      "e8be83",.014,"Paint")
+    elif car.detail in ("rescue","snowkit","shunter"):
+        m.custom_box((0,car.roof+.077,-.24),(w*1.52,.17,.34),DARK_TRIM,.14,.048,"Paint")
+        for side in (-1,1):
+            m.orb((side*w*.51,car.roof+.163,-.24),(.146,.078,.14),"efab58",10,6,"Light")
+        if car.detail=="rescue":
+            m.box((0,car.shoulder+.32,-1.26),(1.32,.51,1.02),"b9b2a0",.104,"Metal")
+        elif car.detail=="snowkit":
+            m.pipe([(-w*.74,.49,z+.13),(0,.45,z+.22),(w*.74,.49,z+.13)],.098,CHROME,"Metal",8)
+        else:
+            m.box((0,.65,-.98),(1.51,.61,1.14),"d38c43",.17,"Paint")
 
 
 def rails(model, car):
@@ -395,6 +511,9 @@ def make_trailer(model, car):
     model.box((0, .61, -1.36), (w * 1.77, .231, 4.58), TRIM, .064, "Metal")
     if car.detail == "tanker":
         tank_finish(model)
+        return
+    if car.detail in ("logs","container","reefer_truck"):
+        frontier_trailer(model, car)
         return
     model.custom_box((0, 1.57, -1.45), (w * 1.90, 1.65, 4.57),
                      "c2cfbb", .20, .087, "Paint")
@@ -504,13 +623,14 @@ def wheel(style):
     model.mesh("Wheel")
 
 
-def generate(root):
+def generate(root, selection=None):
     folder = root / "assets/models/vehicles"
     records = []
-    for car in CATALOG:
-        clear_objects()
-        create_car_model(car)
-        export(folder / (car.key + ".glb"))
+    for car in CATALOG + FRONTIER:
+        if selection is None or car.key in selection:
+            clear_objects()
+            create_car_model(car)
+            export(folder / (car.key + ".glb"))
         heavy = car.kind in ("trailer", "tractor", "coach")
         tire = "heavy" if heavy else "utility" if car.kind in ("suv", "pickup", "van") else "street"
         records.append({
@@ -520,10 +640,11 @@ def generate(root):
             "axles": [round(axle, 3) for axle in wheels_for(car)],
             "paint": [car.color, car.alternate], "head_z": round(car.length * .50, 3),
         })
-    for style in ("street", "utility", "heavy"):
-        clear_objects()
-        wheel(style)
-        export(folder / ("wheel_" + style + ".glb"))
+    if selection is None:
+        for style in ("street", "utility", "heavy"):
+            clear_objects()
+            wheel(style)
+            export(folder / ("wheel_" + style + ".glb"))
     catalog = root / "data/visual/vehicle_catalog.gd"
     with catalog.open("w", encoding="utf-8") as destination:
         destination.write('extends RefCounted\n\n# Generated by tools/art/vehicles.py. Geometry and axle dimensions share one source.\nconst VEHICLES := {\n')

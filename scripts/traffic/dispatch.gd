@@ -137,7 +137,7 @@ func tick(delta: float) -> void:
 	grid_active = false
 	grid.clear()
 	peak_queue = maxi(peak_queue, lanes.car.size() + lanes.truck.size())
-	if economy.commerce.tick(delta, economy.level("dealership")):
+	if economy.commerce.tick(delta, economy.levels, economy.clock):
 		economy.dirty = true
 	if spawning:
 		arrival_in -= delta
@@ -260,7 +260,7 @@ func begin(ticket: HbtVisit, worker: int) -> void:
 func finish(ticket: HbtVisit) -> void:
 	ticket.phase = Phase.EXIT_WAIT
 	ticket.paid = true
-	economy.commerce.settle(ticket, economy.level(ticket.service))
+	economy.commerce.settle(ticket, economy.level(ticket.service), economy.clock)
 	if economy.global_boost != null and economy.global_boost.earning(economy.clock):
 		ticket.invoice = ticket.base_invoice.times(HbtBoost.Policy.INCOME_MULTIPLIER)
 	economy.serve(ticket.service, ticket.invoice, ticket.client.reputation, ticket.worker)

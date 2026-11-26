@@ -4,7 +4,8 @@ const Batch = preload("res://scripts/art/scenery_batch.gd")
 const Art = preload("res://scripts/art/visual_library.gd")
 const Kit = preload("res://scripts/buildings/model_kit.gd")
 const Car = preload("res://scenes/vehicles/compact.tscn")
-const Commerce = preload("res://scripts/economy/regional_commerce.gd")
+const Regions = preload("res://data/world/regions.gd")
+const Activity = preload("res://scripts/art/frontier_service_activity.gd")
 const THRESHOLDS := [1, 12, 30, 60, 90]
 const SIGNS := {
 	"valley": {"restaurant": ["ORCHARD TABLE", 2.76, 3.34, 4.05], "workshop": ["MILL & MOTOR", 2.76, 3.34, 4.05],
@@ -30,9 +31,13 @@ var docks: Dictionary = {}
 var stage_lamps: Dictionary = {}
 var display_cars: Array[Node3D] = []
 var stock_models: Array[String] = []
+var services: Dictionary = {}
+var marque: Dictionary = {}
+var jobs: Dictionary = {}
 
 func _init(course: RefCounted) -> void:
 	routes = course
+	marque = SIGNS.get(routes.district, Regions.art_for(routes.district))
 
 func _ready() -> void:
 	for id in routes.layout.plots:
@@ -64,14 +69,28 @@ func open_venue(id: String) -> void:
 	var venue: Node3D = buildings[id]
 	var region: String = routes.district
 	Art.place(venue, "regions", region + "_" + id)
-	var sign_data: Array = SIGNS[region][id]
+	var sign_data: Array = marque[id]
 	var title_height := .30 if sign_data[0].length() < 14 else .23
 	Art.sign(venue, Vector3(0, sign_data[1], sign_data[2]), sign_data[0], title_height, Color("#fff0d1"))
 	Art.contact(venue, Vector3(0, -.014, -.45), 18.9 if routes.lane_of(id) == "truck" else 10.02, 6.04)
-	if id in ["logistics", "warehouse"]:
-		setup_freight(id)
-	if id in ["mall", "dealership", "charge"]:
-		setup_counters(id)
+	if routes.layout.get("frontier", false):
+		var kind: String = routes.kinds[id]
+		if kind in ["wash", "repair", "ev", "freight", "cold", "rent", "scooter", "parking", "hotel"]:
+			var action := Activity.new(id, kind)
+			venue.add_child(action)
+			action.assemble(routes)
+			services[id] = action
+			if kind in ["wash", "repair"]:
+				if not jobs.has(kind):
+					jobs[kind] = []
+				jobs[kind].append(action)
+		if kind == "motor":
+			setup_counters(id)
+	else:
+		if id in ["logistics", "warehouse"]:
+			setup_freight(id)
+		if id in ["mall", "dealership", "charge"]:
+			setup_counters(id)
 	built_venues[id] = true
 
 func setup_freight(id: String) -> void:
@@ -128,7 +147,7 @@ func focus(id: String) -> Vector3:
 	return at.lerp(routes.position_of(id, 0), .35)
 
 func pin_at(id: String) -> Vector3:
-	var height: float = 3.93 if id == "fuel" else SIGNS[routes.district][id][3]
+	var height: float = 3.93 if id == "fuel" else marque[id][3]
 	return routes.origin(id) + Vector3(0, height + .48, .80)
 
 func update_sites(economy: HbtEconomy) -> void:
@@ -158,7 +177,17 @@ func animate_install(id: String, previous: int) -> void:
 func hose_anchor(visit: HbtVisit) -> Vector3:
 	return routes.position_of(visit.service, visit.bay) + Vector3(1.83, 1.09, -.52)
 
+func active_job(kind: String, dispatch: HbtDispatch) -> HbtVisit:
+	for service: Node3D in jobs.get(kind, []):
+		var ticket: HbtVisit = service.active_ticket(dispatch)
+		if ticket != null:
+			return ticket
+	return null
+
 func update_chargers(dispatch: HbtDispatch) -> void:
+	for service: Node3D in services.values():
+		if service.is_visible_in_tree():
+			service.advance(dispatch)
 	for id in cargo:
 		if not buildings[id].visible:
 			continue
@@ -196,7 +225,8 @@ func update_showroom(economy: HbtEconomy) -> void:
 	for i in display_cars.size():
 		var preview := display_cars[i]
 		preview.visible = i < int(inventory.stock)
-		var model: String = Commerce.SHOWROOM_MODELS[(int(inventory.sold) + i) % Commerce.SHOWROOM_MODELS.size()]
+		var variants: Array = economy.commerce.showroom
+		var model: String = variants[(int(inventory.sold) + i) % variants.size()]
 		if preview.visible and model != stock_models[i]:
 			for child in preview.get_children():
 				preview.remove_child(child)

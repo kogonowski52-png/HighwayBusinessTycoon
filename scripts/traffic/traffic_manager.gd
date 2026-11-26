@@ -31,11 +31,11 @@ func _ready() -> void:
 	layout = Regions.LAYOUTS.get(district, {})
 	if not layout.is_empty():
 		var middle: float = layout.ambient
-		if district == "metro":
+		if district == "metro" or layout.get("boulevard", false):
 			ambient_lanes.assign([middle - 4.84, middle - 1.62, middle + 1.62, middle + 4.84])
 		else:
 			ambient_lanes.assign([middle - 1.88, middle + 1.89])
-	for i in 6 if district == "metro" else 4:
+	for i in 6 if district == "metro" or layout.get("boulevard", false) else 4:
 		add_ambient(i)
 	passing = background.size()
 
@@ -77,7 +77,7 @@ func physics_step(delta: float) -> void:
 	for car in background:
 		var distance := 7.35 * delta
 		var direction := signf(car.rotation.y)
-		var border := 43.0 if layout.is_empty() else 72.0
+		var border := 43.0 if layout.is_empty() else 87.0 if layout.get("frontier", false) else 72.0
 		car.position.x += distance * direction
 		if car.position.x * direction >= border:
 			car.position.x -= (80.0 if layout.is_empty() else border * 2.0) * direction

@@ -16,18 +16,27 @@ func render_all() -> void:
 		return
 	var folder := "res://assets/ui/business"
 	var bounds_path := "res://data/visual/business_bounds.gd"
+	var selected := ""
 	for argument in OS.get_cmdline_user_args():
 		if argument.begins_with("--output="):
 			folder = argument.trim_prefix("--output=")
 		elif argument.begins_with("--bounds="):
 			bounds_path = argument.trim_prefix("--bounds=")
+		elif argument.begins_with("--district="):
+			selected = argument.trim_prefix("--district=")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(folder))
+	var previous: Dictionary = {}
+	if not selected.is_empty():
+		previous = load(bounds_path).BOXES
 	var file := FileAccess.open(bounds_path, FileAccess.WRITE)
 	if file == null:
 		quit(1)
 		return
 	file.store_line("extends RefCounted\n\n# Generated from the original venue meshes by tools/art/render_business_cards.gd.")
 	file.store_line("const BOXES := {")
+	for key: String in previous:
+		if not key.begins_with(selected + "_"):
+			store_box(file, key, previous[key])
 	var view := SubViewport.new()
 	view.size = Vector2i(256, 256)
 	view.own_world_3d = true
@@ -53,6 +62,8 @@ func render_all() -> void:
 	lens.current = true
 	studio.add_child(lens)
 	for district: String in Atlas.DESTINATIONS:
+		if not selected.is_empty() and selected != district:
+			continue
 		var store := HbtEconomy.new(district)
 		for site: String in store.facilities:
 			var family := "architecture" if district == "north" else "desert" if district == "desert" else "regions"
@@ -84,5 +95,9 @@ func render_all() -> void:
 			model.free()
 	file.store_line("}")
 	file.close()
-	print("Rendered business art for every location")
+	print("Rendered business art for " + ("every location" if selected.is_empty() else selected))
 	quit()
+
+func store_box(file: FileAccess, key: String, bounds: AABB) -> void:
+	file.store_line('	"%s": AABB(Vector3(%.3f, %.3f, %.3f), Vector3(%.3f, %.3f, %.3f)),' % [key,
+		bounds.position.x, bounds.position.y, bounds.position.z, bounds.size.x, bounds.size.y, bounds.size.z])

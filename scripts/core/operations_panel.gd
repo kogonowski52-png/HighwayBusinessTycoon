@@ -358,14 +358,17 @@ func show_upgrades() -> void:
 	if tier > 0:
 		var inventory := store.commerce.statistics(site, tier)
 		if not inventory.is_empty():
-			match site:
-				"logistics", "warehouse":
+			match store.commerce.operations[site]:
+				"freight", "cold":
 					box(controller.t("commerce_stock") % [inventory.stock, inventory.capacity],
 						controller.t("commerce_freight") % [inventory.inbound, inventory.outbound])
-				"dealership":
+				"motor":
 					box(controller.t("commerce_showroom") % [inventory.stock, inventory.capacity],
 						controller.t("commerce_sold") % inventory.sold)
-				"mall":
+				"rent", "scooter":
+					box(controller.t("commerce_rental") % [inventory.stock, inventory.capacity],
+						controller.t("commerce_leases") % [inventory.outbound, inventory.inbound])
+				"retail":
 					box(controller.t("commerce_shoppers") % inventory.shoppers, controller.t("venue_capacity") % store.capacity(site))
 	for index in range(thresholds.size()):
 		var stage_number: int = thresholds[index]

@@ -18,6 +18,15 @@ const LOOKS := [
 		"angles": Vector3(-21, 36, 0), "back": Color("#e5bb9a"), "sky": Color("#a9c5da"), "practicals": 0.09 },
 ]
 
+const FRONTIER_DAWN := {
+	"tropical": [Color("#d8e7c6"), Color("#fff0bf"), .98],
+	"route66": [Color("#e1c6a3"), Color("#ffe0a5"), 1.12],
+	"harbor": [Color("#bdcdd3"), Color("#ffebcd"), 1.02],
+	"luxury": [Color("#c6d9df"), Color("#ffe3c0"), 1.05],
+	"japan": [Color("#d4cfe9"), Color("#fff0d4"), .96],
+	"wilderness": [Color("#c2d2cc"), Color("#ffebd4"), .89],
+}
+
 var environment := Environment.new()
 var sun := DirectionalLight3D.new()
 var reflected_sky := ProceduralSkyMaterial.new()
@@ -139,6 +148,11 @@ func set_look(look: Look) -> void:
 				environment.ambient_light_color = Color("#c5e0e2")
 				sun.light_color = Color("#fff3da")
 				sun.light_energy *= 1.02
+	if FRONTIER_DAWN.has(district) and look in [Look.DAY, Look.GOLDEN, Look.DAWN]:
+		var palette: Array = FRONTIER_DAWN[district]
+		environment.ambient_light_color = environment.ambient_light_color.lerp(palette[0], .67)
+		sun.light_color = sun.light_color.lerp(palette[1], .55)
+		sun.light_energy *= palette[2]
 	if district == "metro" and look == Look.NIGHT:
 		environment.ambient_light_energy = .33
 		sun.light_energy = .28

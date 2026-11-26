@@ -6,10 +6,14 @@ const ROAD_Y := .035
 
 var layout: Dictionary
 var district: String
+var kinds: Dictionary = {}
 
 func _init(id: String) -> void:
 	district = id
 	layout = Regions.LAYOUTS[id]
+	if layout.get("frontier", false):
+		for definition: Array in Regions.SERVICES[id]:
+			kinds[definition[0]] = definition[15]
 
 func centerline(lane: String) -> Array:
 	return layout.get(lane, layout.car)
@@ -63,7 +67,10 @@ func reverse_first(_id: String) -> bool:
 func position_of(id: String, index: int) -> Vector3:
 	var plot: Array = layout.plots[id]
 	var at := origin(id)
-	var offset: float = [-.5, .5, 1.5][clampi(index, 0, 2)]
+	var offsets := [-.5, .5, 1.5]
+	if plot.size() > 4 and int(plot[4]) == 3:
+		offsets = [-.85, 0.0, .85]
+	var offset: float = offsets[clampi(index, 0, 2)]
 	return Vector3(at.x + offset * float(plot[2]), ROAD_Y, at.z + float(plot[3]))
 
 func stopping_yaw(_id: String) -> float:
@@ -71,15 +78,17 @@ func stopping_yaw(_id: String) -> float:
 
 func worker_at(id: String, bay: int) -> Vector3:
 	var position := position_of(id, bay)
-	if id in ["fuel", "wash", "workshop", "charge", "parking", "vip_park", "truck_park"]:
-		return position + Vector3(1.48, 0, -.8)
-	if lane_of(id) == "truck":
+	if lane_of(id) == "truck" and id != "truck_park":
 		return position + Vector3(1.9, 0, -2.75)
+	if id in ["fuel", "wash", "workshop", "charge", "parking", "vip_park", "truck_park"] \
+			or kinds.get(id, "") in ["wash", "ev", "repair", "parking"]:
+		return position + Vector3(1.48, 0, -.8)
 	var entrance_z := (origin(id) + Vector3(0, 0, 4.13 if id in ["mall", "dealership"] else 3.38)).z
 	return Vector3(position.x + .50, position.y, maxf(entrance_z, position.z - 1.52))
 
 func guest_path(id: String, index: int) -> PackedVector3Array:
-	if id in ["fuel", "workshop", "wash", "logistics", "warehouse", "truck_park", "charge"]:
+	if id in ["fuel", "workshop", "wash", "logistics", "warehouse", "truck_park", "charge"] \
+			or (not kinds.is_empty() and lane_of(id) == "truck") or kinds.get(id, "") in ["wash", "ev", "repair", "parking"]:
 		return PackedVector3Array()
 	var parked := position_of(id, index)
 	var gate := worker_at(id, index) + Vector3(-.55, 0, -.57)

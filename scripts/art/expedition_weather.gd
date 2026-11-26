@@ -9,6 +9,7 @@ var ornaments := Node3D.new()
 var wardrobe := Node3D.new()
 var lighting: Node3D
 var desert := false
+var winter := false
 var district := "north"
 var routes: Object
 
@@ -16,7 +17,8 @@ func setup(world_lighting: Node3D, region: String, course: Object) -> void:
 	lighting = world_lighting
 	district = region
 	routes = course
-	desert = region == "desert"
+	desert = region in ["desert", "route66"]
+	winter = region in ["alpine", "wilderness"]
 	add_child(ornaments)
 	add_child(wardrobe)
 	add_child(effect)
@@ -35,19 +37,19 @@ func follow(at: Vector3) -> void:
 func apply(site: HbtEconomy, event: Dictionary, quality: int, choice: String) -> void:
 	var condition := choice
 	if choice == "auto":
-		condition = event.weather if event.live else "wind" if desert else "snow" if district == "alpine" else "clear"
+		condition = event.weather if event.live else "wind" if desert else "snow" if winter else "clear"
 		if desert and condition == "haze":
 			condition = "wind"
-		if district == "alpine" and condition in ["rain", "clear"]:
+		if winter and condition in ["rain", "clear"]:
 			condition = "snow"
-		if district == "ocean" and condition == "snow":
+		if district in ["ocean", "tropical", "harbor", "luxury"] and condition == "snow":
 			condition = "haze"
 	var changed := condition != weather or effect.mesh == null
 	weather = condition
 	lighting.set_condition(condition)
 	var fog: Environment = lighting.environment
 	fog.fog_enabled = condition not in ["clear", "cloud"]
-	fog.fog_density = .0057 if condition == "haze" else .0025 if district == "alpine" else .0033
+	fog.fog_density = .0057 if condition == "haze" else .0025 if winter else .0033
 	fog.fog_light_color = Color("#efbf93") if desert else Color("#c7d8e5")
 	site.conditions = {}
 	match condition:
