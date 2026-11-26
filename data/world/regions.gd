@@ -11,6 +11,8 @@ const Luxury = preload("res://data/world/frontier/luxury.gd")
 
 const Japan = preload("res://data/world/frontier/japan.gd")
 
+const Wilderness = preload("res://data/world/frontier/wilderness.gd")
+
 const LAYOUTS := {
 	"valley": {
 		"family": "valley", "center": Vector3(-8, 0, -2), "width": 34.0, "ambient": 15.5,
@@ -75,6 +77,7 @@ const LAYOUTS := {
 	"harbor": Harbor.LAYOUT,
 	"luxury": Luxury.LAYOUT,
 	"japan": Japan.LAYOUT,
+	"wilderness": Wilderness.LAYOUT,
 }
 
 # id, names, base invoice, first improvement, duration, unlock, preceding
@@ -113,6 +116,7 @@ const SERVICES := {
 	"harbor": Harbor.SERVICES,
 	"luxury": Luxury.SERVICES,
 	"japan": Japan.SERVICES,
+	"wilderness": Wilderness.SERVICES,
 }
 
 const ECONOMICS := {
@@ -125,6 +129,7 @@ const ECONOMICS := {
 	"harbor": Harbor.ECONOMICS,
 	"luxury": Luxury.ECONOMICS,
 	"japan": Japan.ECONOMICS,
+	"wilderness": Wilderness.ECONOMICS,
 }
 
 const LOCAL_CONTRACTS := {
@@ -137,6 +142,7 @@ const LOCAL_CONTRACTS := {
 	"harbor": Harbor.CONTRACT,
 	"luxury": Luxury.CONTRACT,
 	"japan": Japan.CONTRACT,
+	"wilderness": Wilderness.CONTRACT,
 }
 
 const FRONTIERS := {
@@ -145,6 +151,7 @@ const FRONTIERS := {
 	"harbor": Harbor,
 	"luxury": Luxury,
 	"japan": Japan,
+	"wilderness": Wilderness,
 }
 
 static func art_for(district: String) -> Dictionary:

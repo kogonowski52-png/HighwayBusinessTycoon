@@ -10,6 +10,8 @@ const Luxury = preload("res://data/world/frontier/luxury.gd")
 
 const Japan = preload("res://data/world/frontier/japan.gd")
 
+const Wilderness = preload("res://data/world/frontier/wilderness.gd")
+
 const DESTINATIONS := {
 	"north": {"pl": "Stacja Północ", "en": "Northpoint Station", "area": "Trasa 17", "position": Vector2(.30, .29),
 		"color": "#7ea17a", "scene": "res://scenes/world/roadside.tscn", "cost": 0, "fuel": 0, "rep": 0},
@@ -28,6 +30,7 @@ const DESTINATIONS := {
 	"harbor": Harbor.ATLAS,
 	"luxury": Luxury.ATLAS,
 	"japan": Japan.ATLAS,
+	"wilderness": Wilderness.ATLAS,
 }
 
 const EXPANSION_CHAPTER := {
@@ -51,6 +54,7 @@ const STAMPS := {
 	"harbor": Harbor.STAMPS,
 	"luxury": Luxury.STAMPS,
 	"japan": Japan.STAMPS,
+	"wilderness": Wilderness.STAMPS,
 }
 
 static func location_name(id: String, language: String) -> String:

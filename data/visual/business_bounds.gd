@@ -79,4 +79,11 @@ const BOXES := {
 	"japan_wash": AABB(Vector3(-4.845, 0.000, -3.275), Vector3(9.690, 4.595, 6.654)),
 	"japan_charge": AABB(Vector3(-5.545, 0.000, -2.825), Vector3(11.090, 4.002, 5.682)),
 	"japan_parking": AABB(Vector3(-6.295, 0.000, -3.525), Vector3(12.590, 5.482, 7.648)),
+	"wilderness_fuel": AABB(Vector3(-4.895, 0.000, -2.875), Vector3(9.790, 4.730, 5.750)),
+	"wilderness_logging": AABB(Vector3(-6.695, 0.000, -3.525), Vector3(13.390, 6.070, 7.050)),
+	"wilderness_workshop": AABB(Vector3(-4.845, 0.000, -3.175), Vector3(9.690, 5.190, 6.350)),
+	"wilderness_haulage": AABB(Vector3(-6.295, 0.000, -3.475), Vector3(12.590, 5.600, 6.950)),
+	"wilderness_rent": AABB(Vector3(-5.479, 0.000, -3.125), Vector3(10.374, 4.820, 6.808)),
+	"wilderness_motel": AABB(Vector3(-6.845, 0.000, -3.525), Vector3(13.690, 8.150, 7.439)),
+	"wilderness_truck_service": AABB(Vector3(-6.195, 0.000, -3.525), Vector3(12.390, 5.950, 7.050)),
 }
