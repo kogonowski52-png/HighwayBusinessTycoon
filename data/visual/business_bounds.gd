@@ -57,4 +57,12 @@ const BOXES := {
 	"route66_workshop": AABB(Vector3(-4.190, 0.000, -3.060), Vector3(8.380, 3.745, 6.151)),
 	"route66_parts": AABB(Vector3(-3.690, -0.005, -2.660), Vector3(7.380, 3.360, 6.043)),
 	"route66_restoration": AABB(Vector3(-5.290, 0.000, -3.360), Vector3(10.580, 5.505, 6.780)),
+	"harbor_fuel": AABB(Vector3(-4.240, 0.000, -2.510), Vector3(8.480, 3.925, 5.020)),
+	"harbor_terminal": AABB(Vector3(-6.590, 0.000, -3.460), Vector3(13.180, 6.170, 6.990)),
+	"harbor_transfer": AABB(Vector3(-6.040, 0.000, -3.460), Vector3(12.080, 5.920, 6.990)),
+	"harbor_coldstore": AABB(Vector3(-5.940, 0.000, -3.360), Vector3(11.880, 5.345, 6.780)),
+	"harbor_truck_service": AABB(Vector3(-5.490, 0.000, -3.410), Vector3(10.980, 5.205, 6.885)),
+	"harbor_distribution": AABB(Vector3(-5.640, 0.000, -3.310), Vector3(11.280, 5.840, 6.675)),
+	"harbor_truck_wash": AABB(Vector3(-4.940, 0.000, -3.610), Vector3(9.880, 5.455, 7.304)),
+	"harbor_transport": AABB(Vector3(-5.290, 0.000, -2.760), Vector3(10.580, 4.955, 5.523)),
 }

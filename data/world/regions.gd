@@ -5,6 +5,8 @@ const Tropical = preload("res://data/world/frontier/tropical.gd")
 
 const RouteSixtySix = preload("res://data/world/frontier/route66.gd")
 
+const Harbor = preload("res://data/world/frontier/harbor.gd")
+
 const LAYOUTS := {
 	"valley": {
 		"family": "valley", "center": Vector3(-8, 0, -2), "width": 34.0, "ambient": 15.5,
@@ -66,6 +68,7 @@ const LAYOUTS := {
 	},
 	"tropical": Tropical.LAYOUT,
 	"route66": RouteSixtySix.LAYOUT,
+	"harbor": Harbor.LAYOUT,
 }
 
 # id, names, base invoice, first improvement, duration, unlock, preceding
@@ -101,6 +104,7 @@ const SERVICES := {
 	],
 	"tropical": Tropical.SERVICES,
 	"route66": RouteSixtySix.SERVICES,
+	"harbor": Harbor.SERVICES,
 }
 
 const ECONOMICS := {
@@ -110,6 +114,7 @@ const ECONOMICS := {
 	"metro": [4300, 2.85, 1.25, 111, 111, "logistics", "dev"],
 	"tropical": Tropical.ECONOMICS,
 	"route66": RouteSixtySix.ECONOMICS,
+	"harbor": Harbor.ECONOMICS,
 }
 
 const LOCAL_CONTRACTS := {
@@ -119,11 +124,13 @@ const LOCAL_CONTRACTS := {
 	"metro": {"field": "deliveries", "count": 24, "time": 1800, "cash": 10200, "pl": "Łańcuch dostaw", "en": "Supply chain"},
 	"tropical": Tropical.CONTRACT,
 	"route66": RouteSixtySix.CONTRACT,
+	"harbor": Harbor.CONTRACT,
 }
 
 const FRONTIERS := {
 	"tropical": Tropical,
 	"route66": RouteSixtySix,
+	"harbor": Harbor,
 }
 
 static func art_for(district: String) -> Dictionary:
