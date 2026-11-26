@@ -18,6 +18,7 @@ var gait_route: Array[Vector3] = []
 var gait_index := 1
 var pace := 1.14
 var looping_walk := true
+var detailed_animation := true
 
 func _ready() -> void:
 	var visual := Art.place(self, "characters", role)
@@ -31,6 +32,13 @@ func _ready() -> void:
 	if not tool.is_empty():
 		attach_prop(tool)
 	play("idle")
+	set_process(false)
+
+func set_detailed_animation(on: bool) -> void:
+	if detailed_animation == on:
+		return
+	detailed_animation = on
+	animation.active = on
 
 func attach_prop(key: String) -> void:
 	prop = BoneAttachment3D.new()
@@ -59,6 +67,7 @@ func configure_walk(points: Array[Vector3], clip := "walk", speed := 1.10, loop 
 	position = points[0]
 	pace = speed
 	play(clip)
+	set_process(true)
 
 func _process(delta: float) -> void:
 	if gait_route.is_empty():
@@ -72,6 +81,7 @@ func _process(delta: float) -> void:
 				gait_index = 0
 			else:
 				gait_route.clear()
+				set_process(false)
 				play("idle")
 				arrived.emit()
 		return
@@ -82,9 +92,11 @@ func represent_service(waiting: bool, serving: bool, _delta: float) -> void:
 	visible = waiting or serving
 	if visible:
 		play("fuel" if serving else "service")
+	set_detailed_animation(visible)
 
 func pose_at(clip: String, time: float) -> void:
 	if cycles != clip:
 		play(clip, 0.0)
-	animation.seek(time, true)
-	animation.advance(0)
+	if detailed_animation:
+		animation.seek(time, true)
+		animation.advance(0)

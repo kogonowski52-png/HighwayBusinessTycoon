@@ -35,6 +35,7 @@ var blink_elapsed := 0.0
 var lit_at_night := false
 var eased_speed := 0.0
 var steering := 0.0
+var applied_signals := -1
 
 func build(id: String, variant := 0, local_trim := false, region := "") -> void:
 	if is_instance_valid(decoration):
@@ -90,6 +91,7 @@ func build(id: String, variant := 0, local_trim := false, region := "") -> void:
 		Vector2(float(record.width) * 1.63, 3.47), Color("#ffdfaf"), 0.81)
 	(head_pool.material_override as ShaderMaterial).set_shader_parameter("headlights", true)
 	configure_light_materials()
+	applied_signals = -1
 	apply_headlamps()
 
 func apply_paint(chassis: MeshInstance3D, swatch: Color) -> void:
@@ -129,12 +131,27 @@ func apply_headlamps() -> void:
 	headlamps.material_override = head_lit if lit_at_night else null
 	head_pool.visible = lit_at_night
 
+func reset_drive() -> void:
+	steering = 0.0
+	eased_speed = 0.0
+	blink_elapsed = 0.0
+	chassis_art.rotation.x = 0.0
+	chassis_art.rotation.z = 0.0
+	for wheel in wheels:
+		wheel.rotation.x = 0.0
+	update_wheel_transforms()
+	update_signals(false, 0, 0.0)
+
 func update_signals(braking: bool, turn: int, delta: float) -> void:
 	blink_elapsed = fmod(blink_elapsed + delta, 0.78) if turn != 0 else 0.0
 	var flash := blink_elapsed < 0.42
-	brake_lamps.material_override = brake_lit if braking else null
-	left_lamps.material_override = indicator_lit if turn == -1 and flash else null
-	right_lamps.material_override = indicator_lit if turn == 1 and flash else null
+	var state := int(braking) | (2 if flash and turn < 0 else (4 if flash and turn > 0 else 0))
+	if applied_signals == state:
+		return
+	applied_signals = state
+	brake_lamps.material_override = brake_lit if state & 1 else null
+	left_lamps.material_override = indicator_lit if state & 2 else null
+	right_lamps.material_override = indicator_lit if state & 4 else null
 
 func spin(distance: float) -> void:
 	for wheel in wheels:
@@ -142,6 +159,8 @@ func spin(distance: float) -> void:
 	update_wheel_transforms()
 
 func suspension(distance: float, turning: int, delta: float) -> void:
+	if is_zero_approx(distance) and absf(eased_speed) < .005 and absf(steering) < .005:
+		return
 	var speed := distance / maxf(delta, 0.001)
 	var ease := 1.0 - exp(-delta * 9.0)
 	var nose := clampf((eased_speed - speed) * 0.010, -0.047, 0.047)

@@ -1,0 +1,26 @@
+[Unit]
+Description=Finalize purchase receipts, reconcile refunds and back up verifier
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=hbt-play
+Group=hbt-play
+WorkingDirectory=/opt/hbt-play
+EnvironmentFile=/etc/hbt-play/verifier.env
+LoadCredential=account:/etc/hbt-play/account.secret
+LoadCredential=google.json:/etc/hbt-play/publisher.json
+StateDirectory=hbt-play
+UMask=0077
+ExecStart=/opt/hbt-play/venv/bin/python backup.py /var/lib/hbt-play/backups
+ExecStart=/opt/hbt-play/venv/bin/python service.py retry
+ExecStart=/opt/hbt-play/venv/bin/python service.py reconcile --days 14
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+TimeoutStartSec=300

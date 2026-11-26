@@ -1,5 +1,6 @@
 extends Node3D
 
+const Batch = preload("res://scripts/art/scenery_batch.gd")
 const Art = preload("res://scripts/art/visual_library.gd")
 const Kit = preload("res://scripts/buildings/model_kit.gd")
 const Routes = preload("res://data/world/desert_routes.gd")
@@ -36,6 +37,8 @@ func _ready() -> void:
 		Art.place(self, "desert", "pylon", at)
 		Art.sign(self, at + Vector3(.13, 3.52, .295), "COPPER MILE", .225, WHITE)
 		Art.sign(self, at + Vector3(.025, 2.59, .23), "HIGHWAY  66", .186, WHITE)
+	Batch.compact(self)
+
 
 func stretch(at: Vector3, size: Vector2) -> void:
 	surface(at, size, pavement)
@@ -136,15 +139,8 @@ func build_roadside_furniture() -> void:
 		Art.place(self, "desert", "highway_lamp", point, -PI * .5)
 
 func instances(id: String, entries: Array[Transform3D]) -> void:
-	var group := MultiMesh.new()
-	group.transform_format = MultiMesh.TRANSFORM_3D
-	group.mesh = Art.extract_mesh("desert", id)
-	group.instance_count = entries.size()
-	for i in entries.size():
-		group.set_instance_transform(i, entries[i])
-	var foliage := MultiMeshInstance3D.new()
-	foliage.multimesh = group
-	add_child(foliage)
+	Batch.instances(self, Art.extract_mesh("desert", id), entries)
+
 
 func set_forecourt_tier(tier: int) -> void:
 	pavement.set_shader_parameter("trail", clampf(1.10 - float(tier) * .18, .14, .92))

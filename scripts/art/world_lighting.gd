@@ -144,7 +144,7 @@ func set_look(look: Look) -> void:
 	environment.glow_enabled = supports_glow and not reduced and look in [Look.EVENING, Look.NIGHT]
 	for index in range(practical_lights.size()):
 		var lamp := practical_lights[index]
-		lamp.visible = intensity > 0.0 and index < [3, 5, practical_lights.size()][quality]
+		lamp.visible = intensity > 0.0 and index < [3, 5, practical_lights.size(), practical_lights.size()][quality]
 		lamp.light_energy = intensity * (1.32 if index < 2 else 0.96)
 	for decal in floor_glows:
 		decal.visible = intensity > 0.0
@@ -157,6 +157,8 @@ func set_quality(tier: int) -> void:
 	if quality != tier:
 		quality = tier
 		reduced = quality == 0
-		sun.directional_shadow_max_distance = [40.0, 57.0, 74.0][quality]
-		sun.shadow_blur = [1.0, 1.28, 1.6][quality]
+		sun.directional_shadow_max_distance = [34.0, 57.0, 74.0, 88.0][quality]
+		sun.shadow_blur = [1.0, 1.28, 1.6, 1.75][quality]
+		sun.directional_shadow_mode = [DirectionalLight3D.SHADOW_ORTHOGONAL, DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS,
+			DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS, DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS][quality]
 		set_look(current)

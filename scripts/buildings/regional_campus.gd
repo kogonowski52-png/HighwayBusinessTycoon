@@ -1,5 +1,6 @@
 extends Node3D
 
+const Batch = preload("res://scripts/art/scenery_batch.gd")
 const Art = preload("res://scripts/art/visual_library.gd")
 const Kit = preload("res://scripts/buildings/model_kit.gd")
 const Car = preload("res://scenes/vehicles/compact.tscn")
@@ -19,6 +20,7 @@ const SIGNS := {
 
 var routes: RefCounted
 var buildings: Dictionary = {}
+var built_venues: Dictionary = {}
 var plots: Dictionary = {}
 var upgrades: Dictionary = {}
 var roof_counts: Dictionary = {}
@@ -33,36 +35,44 @@ func _init(course: RefCounted) -> void:
 	routes = course
 
 func _ready() -> void:
-	var region: String = routes.district
 	for id in routes.layout.plots:
 		var at: Vector3 = routes.origin(id)
 		roof_counts[id] = 0
 		upgrades[id] = []
-		for stage in range(1, 5):
-			var fixture := Art.place(self, "regions", "%s_%s_%d" % [region, id, stage], at)
-			fixture.hide()
-			upgrades[id].append(fixture)
+		for _stage in range(1, 5):
+			upgrades[id].append(anchor_at(at, false))
 		if id == "fuel":
 			continue
-		var venue := Art.place(self, "regions", region + "_" + id, at)
-		venue.hide()
-		var sign_data: Array = SIGNS[region][id]
-		var title_height := .30 if sign_data[0].length() < 14 else .23
-		Art.sign(venue, Vector3(0, sign_data[1], sign_data[2]), sign_data[0], title_height, Color("#fff0d1"))
-		Art.contact(venue, Vector3(0, -.014, -.45), 18.9 if routes.lane_of(id) == "truck" else 10.02, 6.04)
-		buildings[id] = venue
-		var parcel := Node3D.new()
-		parcel.position = at
-		add_child(parcel)
+		buildings[id] = anchor_at(at, false)
+		var parcel := anchor_at(at)
 		var stakes := Art.place(parcel, "desert", "upgrade_storage", Vector3(.2, 0, -.1))
 		stakes.scale = Vector3(.8, .8, .8)
 		Art.place(parcel, "desert", "barrier", Vector3(1.40, 0, 2.30), .14)
 		Art.place(parcel, "desert", "barrier", Vector3(-1.14, 0, 2.11), -.16)
 		plots[id] = parcel
-		if id in ["logistics", "warehouse"]:
-			setup_freight(id)
-		if id in ["mall", "dealership", "charge"]:
-			setup_counters(id)
+
+func anchor_at(at: Vector3, shown := true) -> Node3D:
+	var node := Node3D.new()
+	node.position = at
+	node.visible = shown
+	add_child(node)
+	return node
+
+func open_venue(id: String) -> void:
+	if built_venues.has(id):
+		return
+	var venue: Node3D = buildings[id]
+	var region: String = routes.district
+	Art.place(venue, "regions", region + "_" + id)
+	var sign_data: Array = SIGNS[region][id]
+	var title_height := .30 if sign_data[0].length() < 14 else .23
+	Art.sign(venue, Vector3(0, sign_data[1], sign_data[2]), sign_data[0], title_height, Color("#fff0d1"))
+	Art.contact(venue, Vector3(0, -.014, -.45), 18.9 if routes.lane_of(id) == "truck" else 10.02, 6.04)
+	if id in ["logistics", "warehouse"]:
+		setup_freight(id)
+	if id in ["mall", "dealership", "charge"]:
+		setup_counters(id)
+	built_venues[id] = true
 
 func setup_freight(id: String) -> void:
 	var root: Node3D = buildings[id]
@@ -77,6 +87,7 @@ func setup_freight(id: String) -> void:
 		var dock := Kit.box(root, Vector3(bay.x, 1.51, 4.22), Vector3(3.57, 2.72, .12), tint)
 		for stripe in range(6):
 			Kit.box(dock, Vector3(0, -.98 + stripe * .385, .077), Vector3(3.52, .032, .043), Color("#adbac0"))
+		Batch.compact(dock, false)
 		if index >= 2:
 			dock.position.z -= .52
 		docks[id].append(dock)
@@ -126,12 +137,17 @@ func update_sites(economy: HbtEconomy) -> void:
 		if id != "fuel":
 			buildings[id].visible = level > 0
 			plots[id].visible = level == 0
+			if level > 0:
+				open_venue(id)
 		var stage := 0
 		for line in THRESHOLDS:
 			stage += int(level >= line)
 		roof_counts[id] = stage
 		for i in 4:
-			upgrades[id][i].visible = i + 1 < stage
+			var fixture: Node3D = upgrades[id][i]
+			fixture.visible = i + 1 < stage
+			if fixture.visible and fixture.get_child_count() == 0:
+				Art.place(fixture, "regions", "%s_%s_%d" % [routes.district, id, i + 1])
 
 func animate_install(id: String, previous: int) -> void:
 	if previous == 0 and id in buildings:

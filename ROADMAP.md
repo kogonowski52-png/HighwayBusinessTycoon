@@ -8,3 +8,8 @@
 6. **Ekspansja sześciu tras** · niezależna kampania, sześć lokacji, 41 usług, atlas, wydarzenia, kontrakty, kolekcje, pogoda, prestiż, cztery nowe biznesy Metro i 590 zadań rozdziałowych. [Audyt 0.6.1](docs/STAGE5_STATUS.md)
 7. **Monetyzacja testowa** · BOOST, natywne jednostki testowe, Play Billing, sklep, przepustki i weryfikator zakupów. [Audyt 0.7.0](docs/STAGE6_STATUS.md)
 8. **Wydanie** · urządzeniowe testy AdMob i transakcji licencyjnych, konfiguracja produkcyjna właściciela, optymalizacja, Android App Bundle oraz osobny eksport i walidacja iOS.
+
+
+## Przed publikacją Google Play
+
+Na fizycznym Androidzie pozostają do wykonania pomiary klas urządzeń, próba instalacji aktualizacyjnej i rozruchu 16 KiB, produkcyjna konfiguracja UMP oraz próby zakupów i zwrotów na torze licencyjnym. Właściciel dostarcza zatwierdzoną domenę, konfigurację AdMob i klucz upload. [Testy Androida](docs/ANDROID_QA.md) · [Wdrożenie HTTPS](docs/HTTPS_VERIFIER.md)

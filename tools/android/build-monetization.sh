@@ -8,12 +8,14 @@ template="${HBT_ANDROID_TEMPLATE:?Set HBT_ANDROID_TEMPLATE to android_source.zip
 [[ -f "$template" ]]
 
 case "$mode" in
-  test)
+  test|test-x86)
     [[ "$output" = *.apk ]]
     : "${GODOT_ANDROID_KEYSTORE_DEBUG_PATH:?Use the existing test certificate}"
     : "${GODOT_ANDROID_KEYSTORE_DEBUG_USER:?Use the existing test alias}"
     : "${GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD:?Supply the existing test password privately}"
     target="Android Test"
+    if [[ "$mode" = test-x86 ]]; then target="Android Test x86_64"; fi
+    mode=test
     export_flag=--export-debug
     ;;
   production)
@@ -40,7 +42,7 @@ case "$mode" in
     target="Android Play"
     export_flag=--export-release
     ;;
-  *) printf 'Mode must be test or production\n' >&2; exit 2 ;;
+  *) printf 'Mode must be test, test-x86 or production\n' >&2; exit 2 ;;
 esac
 mkdir -p "$(dirname "$output")"
 mkdir -p android

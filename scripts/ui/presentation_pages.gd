@@ -3,6 +3,7 @@ extends RefCounted
 const Data = preload("res://data/economy/recognition.gd")
 const Managers = preload("res://data/economy/managers.gd")
 const Book = preload("res://data/economy/progression.gd")
+const Budget = preload("res://scripts/core/render_budget.gd")
 const Prefs = preload("res://scripts/core/player_preferences.gd")
 const Store = preload("res://data/economy/store_offers.gd")
 
@@ -21,6 +22,7 @@ func bind_to(owner: CanvasLayer) -> void:
 func show(name: String) -> void:
 	match name:
 		"settings": settings()
+		"diagnostics": diagnostics()
 		"calendar": calendar()
 		"achievements": achievements()
 		"managers": managers()
@@ -45,13 +47,20 @@ func settings() -> void:
 		link.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var system: VBoxContainer = panel.box(game.t("preferences_display"))
 	panel.section_row(system, ["PL", "EN"], store.language.to_upper(), game.set_language)
-	panel.section_row(system, [game.t("quality_low"), game.t("quality_mid"), game.t("quality_high")],
-		game.t(["quality_low", "quality_mid", "quality_high"][preferences.quality]), game.set_quality, true)
+	var graphic_labels: Array[String] = []
+	for name in Budget.LABELS:
+		graphic_labels.append(game.t(name))
+	panel.section_row(system, graphic_labels, graphic_labels[preferences.quality] if not preferences.quality_auto else "",
+		game.set_quality, true)
+	panel.button(system, game.t("quality_auto_on") % graphic_labels[game.render_quality] if preferences.quality_auto else game.t("quality_auto_off"),
+		game.set_quality_auto, false, preferences.quality_auto)
 	panel.section_row(system, ["30 FPS", "60 FPS"], "%d FPS" % preferences.fps, game.set_fps, true)
 	panel.button(system, game.t("battery_on" if store.low_power else "battery_off"), game.toggle_power, false, store.low_power)
 	if store.low_power:
 		var note: Label = hud.caption(system, 24, hud.FADE)
 		note.text = game.t("battery_effect")
+	if is_instance_valid(game.diagnostics):
+		panel.button(system, game.t("diagnostics_header"), game.open_page.bind("diagnostics"))
 	var mixing: VBoxContainer = panel.box(game.t("preferences_audio"))
 	for group in Prefs.CHANNELS:
 		var row := HBoxContainer.new()
@@ -83,6 +92,23 @@ func settings() -> void:
 		game.toggle_haptics, false, preferences.haptics)
 	if game.ads.privacy_required():
 		panel.button(mixing, game.t("ad_privacy"), game.ads.privacy)
+
+func diagnostics() -> void:
+	if not is_instance_valid(game.diagnostics):
+		return
+	var monitor: CanvasLayer = game.diagnostics
+	panel.box(game.t("diagnostics_header"), monitor.sdk_summary())
+	panel.button(panel.rows, game.t("diagnostic_fps_on" if monitor.board.visible else "diagnostic_fps_off"), toggle_monitor)
+	if game.ads.available():
+		panel.button(panel.rows, game.t("diagnostic_load_ad"), game.ads.prepare.bind("boost"), game.ads.busy() or game.ads.loading("boost"))
+	if game.purchases.configured():
+		panel.button(panel.rows, game.t("diagnostic_check_store"), game.purchases.open)
+	if game.purchases.verified_checkout():
+		panel.button(panel.rows, game.t("diagnostic_check_https"), monitor.check_verifier)
+
+func toggle_monitor() -> void:
+	game.diagnostics.toggle()
+	panel.refresh()
 
 func handle() -> GradientTexture2D:
 	if knob == null:

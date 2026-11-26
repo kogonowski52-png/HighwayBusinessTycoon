@@ -40,14 +40,19 @@ static func extract_mesh(family: String, key: String, part := "") -> Mesh:
 	return meshes[identity]
 
 static func release_region(region: String) -> void:
-	var model_path := "res://assets/models/regions/" + region + "_"
-	var mesh_key := "regions/" + region + "_"
-	for key: String in scenes.keys():
-		if key.begins_with(model_path):
-			scenes.erase(key)
-	for key: String in meshes.keys():
-		if key.begins_with(mesh_key):
-			meshes.erase(key)
+	var families: Array[String] = ["regions/" + region + "_"]
+	if region == "north":
+		families = ["architecture/", "landscape/"]
+	elif region == "desert":
+		families = ["desert/"]
+	for family in families:
+		var model_path := "res://assets/models/" + family
+		for key: String in scenes.keys():
+			if key.begins_with(model_path):
+				scenes.erase(key)
+		for key: String in meshes.keys():
+			if key.begins_with(family):
+				meshes.erase(key)
 
 static func sign(parent: Node3D, at: Vector3, message: String, height: float, tint: Color) -> Label3D:
 	var label := Label3D.new()

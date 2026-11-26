@@ -17,14 +17,15 @@ Po odebraniu sygnału SDK menedżer zapisuje nagrodę i limit w tym samym pliku 
 | Preset | Cele |
 | --- | --- |
 | Android | Poprzedni samodzielny eksport offline. |
-| Android Test | Podpisany APK z natywnym mostem, testowymi reklamami Google i prawdziwym BillingClient. Zakupy wymagają konfiguracji weryfikatora. |
+| Android Test | Podpisany APK ARM64 z natywnym mostem, testowymi reklamami Google, BillingClient i ekranem diagnostycznym. Zakupy wymagają konfiguracji weryfikatora. |
+| Android Test x86_64 | Osobny APK tej samej kompilacji dla emulatorów x86_64. Użyj trybu `test-x86`. |
 | Android Play | Gradle AAB. Wymaga zarejestrowanego klucza upload, publicznych identyfikatorów AdMob i HTTPS dla weryfikatora. |
 
 Godot 4.7.2 Stable, JDK 21, Android SDK 36 i Build Tools 36.1.0 dla szablonu, Gradle 8.13 do biblioteki. Zależności natywne są przypięte do Mobile Ads 25.5.0, UMP 4.0.0, Play Billing 9.1.0, Credential Manager 1.6.0 i Google ID 1.2.1. Wersje potwierdzono w oficjalnych metadanych Maven, API zależności oraz udanej kompilacji. Oficjalne serwisy developers.google.com, developer.android.com i centrum pomocy zwracały HTTP 403 ze środowiska Cloud. Dostępne były oficjalne przykłady Google, artefakty SDK, schema Android Publisher i dokumentacja Godota z repozytorium autorów. [Dokumentacja Godota](https://github.com/godotengine/godot-docs/blob/master/tutorials/platform/android/android_plugin.rst) · [Przykłady Google Mobile Ads](https://github.com/googleads/googleads-mobile-android-examples) · [Przykłady Play Billing](https://github.com/android/play-billing-samples) · [Android Publisher API](https://github.com/googleapis/google-api-python-client/blob/main/googleapiclient/discovery_cache/documents/androidpublisher.v3.json)
 
 ```bash
 export HBT_ANDROID_TEMPLATE=/pełna/ścieżka/android_source.zip
-tools/android/build-monetization.sh test /pełna/ścieżka/HighwayBusinessTycoon-0.7.0-test.apk
+tools/android/build-monetization.sh test /pełna/ścieżka/HighwayBusinessTycoon-0.8.0-test.apk
 ```
 
 Środowisko eksportu musi otrzymać dotychczasowe zmienne `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER`, `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`. Plik APK można porównać z lokalnym 0.6.1 poleceniem `tools/android/verify-monetization-apk.sh NEW.apk OLD.apk` po ustawieniu `ANDROID_BUILD_TOOLS_DIR`. [Stały certyfikat](ANDROID_SIGNING.md)

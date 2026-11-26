@@ -1,5 +1,6 @@
 extends Node3D
 
+const Batch = preload("res://scripts/art/scenery_batch.gd")
 const Art = preload("res://scripts/art/visual_library.gd")
 const Kit = preload("res://scripts/buildings/model_kit.gd")
 const GROUND = preload("res://assets/materials/ground.gdshader")
@@ -39,6 +40,8 @@ func _ready() -> void:
 		var shape := BoxMesh.new()
 		shape.size = Vector3.ONE
 		batch(shape, stamps[tint], Kit.material(tint), false)
+	Batch.compact(self)
+
 
 func pavement() -> void:
 	var blacktop := Color("#56626d")
@@ -371,15 +374,4 @@ func transform_at(at: Vector3, yaw: float, scale: float) -> Transform3D:
 	return Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3.ONE * scale), at)
 
 func batch(mesh: Mesh, transforms: Array[Transform3D], surface: Material = null, shadows := true) -> void:
-	var instances := MultiMesh.new()
-	instances.transform_format = MultiMesh.TRANSFORM_3D
-	instances.mesh = mesh
-	instances.instance_count = transforms.size()
-	for index in range(transforms.size()):
-		instances.set_instance_transform(index, transforms[index])
-	var group := MultiMeshInstance3D.new()
-	group.multimesh = instances
-	group.material_override = surface
-	if not shadows:
-		group.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(group)
+	Batch.instances(self, mesh, transforms, surface, GeometryInstance3D.SHADOW_CASTING_SETTING_ON if shadows else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)

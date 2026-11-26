@@ -1,5 +1,28 @@
 # Raport testów
 
+## 0.8.0 · Wydajność, stabilność i Android
+
+Godot 4.7.2 Stable, Linux x86_64, izolowane profile i rzeczywiste renderowanie Mesa w próbach okienkowych. Bazę do pomiaru stanowił osobny checkout `aec0754`. [Wydajność](docs/performance-0.8.0.md) · [Stabilność](docs/stability-0.8.0.md) · [Galeria i film](screenshots/0.8.0/README.md)
+
+| Próba | Wynik |
+| --- | --- |
+| Profile, pamięć wyboru ręcznego, oszczędzanie baterii, Boost po pauzie, 41 dokładnych kosztorysów, obciążenie 20–200 pojazdami | 241/241 |
+| Czas dispatchera z 20, 50, 100 i 200 rzeczywiście aktywnymi instancjami | 4/4 w obu wersjach |
+| 30 minut i 120 minut na 41 maksymalnie rozwiniętych usługach | Dwa rzeczywiste przebiegi headless, po 33/33. Końcowa próba miała 941 wyjazdów, 936 rozliczeń i 32 podróże. |
+| Końcowe rundy w renderowanej grze | Trzy pełne rundy. Jedna aktywna scena i stabilne liczniki węzłów, zasobów oraz alokatora po powrocie. |
+| Trzy rozmiary okna i zasymulowane wcięcia, ekran diagnostyczny i panel FPS | 15/15, bez pozostających uchwytów audio przy zamknięciu |
+| Autentyczny zapis 0.7.0, uszkodzony plik i niedokończony zapis | 7/7 na oryginalnym kodzie przy tworzeniu, 6/6 przy migracji i odzyskiwaniu |
+| Rzeczywiste nagłe zamknięcie procesu na Linuksie | `SIGKILL`, kod 137, dwie poprawne kopie i nowy start z tym samym plikiem |
+| BOOST, tryb offline, kontrakty i lokalne rozliczenia | 67/67, 69/69 dla gospodarki i zapisu, 93/93 dla regionów |
+| Przeciętny ruch, stacja, grafika i animacje | 30/30, 27/27 i 113/113 |
+| Kampania, kariera, UI i wczytanie od tytułu | 202/202 i 44/44 dla kariery. 278/278 i 49/49 dla prezentacji. Zimny start zaliczony. |
+| Ekspansja i przebiegi ekonomii | 64/64 i 45/45 dla ekspansji, po 45/45 dla bazowej, Desert i pełnej kampanii, 20/20 dla monetyzacji. |
+| Weryfikator płatności i kopia SQLite | 10/10 testów. Lokalny Caddy przesłał poprawnie HTTPS do WSGI, blokował niedozwolone trasy i zbyt duże żądania. |
+| Obraz i film | 35 nowych ujęć, 12 ujęć odniesienia, 608 klatek filmu. Próba potwierdziła opłaconą dostawę i przejazd do Green Valley. |
+| APK | Oba ABI mają osobne pliki z kodem 8000, stałym certyfikatem, min API 24, target API 36 i potwierdzoną zgodnością ELF/ZIP 16 KiB. |
+
+ADB i oficjalne emulatory nie udostępniły działającego urządzenia w Cloud. Weryfikacja reklam, rzeczywistych transakcji Play, instalacji, powrotu z tła na Androidzie, temperatury i FPS poszczególnych telefonów pozostaje otwarta. Przepływ płatności w bieżących próbach korzystał z kontrolowanych odpowiedzi. Publiczny weryfikator oraz AAB wymagają konfiguracji właściciela. [Android QA](docs/ANDROID_QA.md) · [Podpis](docs/ANDROID_SIGNING.md) · [Rozmiar](docs/app-size-0.8.0.md) · [Status etapu](docs/STAGE7_STATUS.md)
+
 ## 0.7.0 · BOOST, sklep i przepustka
 
 Godot 4.7.2 uruchomiono na Linuksie z odizolowanymi zapisami i rendererem Compatibility (Mesa llvmpipe). Do kompilacji kodu natywnego użyto Android SDK 36 i JDK 21. [Galeria 30 ujęć i film](screenshots/0.7.0/README.md) · [Balans](docs/balance-0.7.0.md) · [Stan etapu](docs/STAGE6_STATUS.md)

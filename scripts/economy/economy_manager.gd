@@ -63,7 +63,9 @@ var save_error := OK
 var dirty := false
 var _reward_count := -1
 var _curve: Dictionary = {}
+var _prefix_costs: Dictionary = {}
 var _sales: Array[Dictionary] = []
+var _sales_total := HbtAmount.new()
 var district := "north"
 var commerce := Commerce.new()
 var milestones: Array = BOOK.MILESTONES
@@ -134,6 +136,7 @@ func reset() -> void:
 	high_water = 0
 	clock = 0
 	_sales.clear()
+	_sales_total = HbtAmount.new()
 	campaign_data = {}
 	prestige_rank = 0
 	_reward_count = -1
@@ -330,19 +333,37 @@ func cost_at(id: String, tier: int) -> HbtAmount:
 		return HbtAmount.new()
 	return _curve[id].cost[tier - 1].times(BPS - skill("discount", id)).divided(BPS)
 
+func cost_prefix(id: String) -> Array[HbtAmount]:
+	var discount := skill("discount", id)
+	var cached: Dictionary = _prefix_costs.get(id, {})
+	if cached.get("discount", -1) == discount:
+		return cached.totals
+	var totals: Array[HbtAmount] = [HbtAmount.new()]
+	for tier in range(1, CONFIG.max_level):
+		var cost: HbtAmount = _curve[id].cost[tier - 1].times(BPS - discount).divided(BPS)
+		totals.append(totals[-1].plus(cost))
+	_prefix_costs[id] = {"discount": discount, "totals": totals}
+	return totals
+
 func quote_upgrade(id: String, quantity: int) -> Dictionary:
 	var tier := level(id)
-	var total := HbtAmount.new()
-	if tier == 0:
-		return {"count": 0, "cost": total, "affordable": false}
-	var limit := CONFIG.max_level - tier if quantity == 0 else mini(quantity, CONFIG.max_level - tier)
-	var count := 0
-	while count < limit:
-		var next := total.plus(cost_at(id, tier + count))
-		if quantity == 0 and not can_afford(next):
-			break
-		total = next
-		count += 1
+	if tier == 0 or tier >= CONFIG.max_level or quantity < 0:
+		return {"count": 0, "cost": HbtAmount.new(), "affordable": false}
+	if quantity == 1:
+		var cost := cost_at(id, tier)
+		return {"count": 1, "cost": cost, "affordable": can_afford(cost)}
+	var totals := cost_prefix(id)
+	var start := tier - 1
+	var count := mini(quantity, CONFIG.max_level - tier)
+	if quantity == 0:
+		var high := CONFIG.max_level - tier
+		while count < high:
+			var middle := (count + high + 1) >> 1
+			if can_afford(totals[start + middle].minus(totals[start])):
+				count = middle
+			else:
+				high = middle - 1
+	var total := totals[start + count].minus(totals[start])
 	return {"count": count, "cost": total, "affordable": count > 0 and can_afford(total)}
 
 func buy_levels(id: String, quantity: int) -> int:
@@ -431,6 +452,7 @@ func serve(id: String, value: HbtAmount, reputation: int, worker: int) -> void:
 	per_service[id].gross = per_service[id].gross.plus(value)
 	gross = gross.plus(value)
 	_sales.append({"time": clock, "value": value})
+	_sales_total = _sales_total.plus(value)
 	credit("reputation", HbtAmount.from(reputation))
 	if id in current_event().services:
 		if event_day != day_index():
@@ -464,11 +486,8 @@ func collect() -> HbtAmount:
 
 func income_per_minute() -> HbtAmount:
 	while not _sales.is_empty() and int(_sales.front().time) <= clock - 60:
-		_sales.pop_front()
-	var total := HbtAmount.new()
-	for record in _sales:
-		total = total.plus(record.value)
-	return total
+		_sales_total = _sales_total.minus(_sales.pop_front().value)
+	return _sales_total
 
 func manager_for(key: String, site := "") -> String:
 	var best := ""

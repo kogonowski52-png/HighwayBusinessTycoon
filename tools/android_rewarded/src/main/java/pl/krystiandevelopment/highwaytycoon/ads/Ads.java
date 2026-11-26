@@ -30,10 +30,11 @@ final class Ads {
     private final AtomicBoolean fullscreen = new AtomicBoolean();
     private volatile boolean consentUpdating;
     private boolean consentChecked;
-    private boolean initializing;
-    private boolean initialized;
+    private volatile boolean initializing;
+    private volatile boolean initialized;
     private int generation;
     private volatile boolean privacyRequired;
+    private volatile String consentLabel = "idle";
 
     private static final class Loaded {
         final Object ad;
@@ -47,6 +48,17 @@ final class Ads {
     boolean rewardLoading(String slot) { return loading.contains(slot); }
     boolean rewardReady(String slot) { return PLACEMENTS.contains(slot) && usable(slot); }
     boolean breakReady() { return usable(BREAK); }
+    String initializationStatus() {
+        return initialized ? "ready" : initializing || consentUpdating ? "loading" : "idle";
+    }
+    String consentStatus() { return consentUpdating ? "loading" : consentLabel; }
+
+    void resume() {
+        Activity host = bridge.activity();
+        if (host != null && !loading.isEmpty() && !fullscreen()) {
+            host.runOnUiThread(() -> consentThenLoad(host));
+        }
+    }
 
     private boolean usable(String slot) {
         Loaded item = ready.get(slot);
@@ -68,12 +80,12 @@ final class Ads {
 
     private void prepare(String slot) {
         Activity host = bridge.activity();
-        if (host == null || fullscreen() || unit(slot).isEmpty() || usable(slot) || !loading.add(slot)) return;
+        if (host == null || bridge.suspended() || fullscreen() || unit(slot).isEmpty() || usable(slot) || !loading.add(slot)) return;
         host.runOnUiThread(() -> consentThenLoad(host));
     }
 
     private void consentThenLoad(Activity host) {
-        if (consentUpdating) return;
+        if (consentUpdating || bridge.suspended()) return;
         ConsentInformation consent = UserMessagingPlatform.getConsentInformation(host);
         if (consentChecked && consent.canRequestAds()) {
             loadPermitted(host);
@@ -99,7 +111,7 @@ final class Ads {
     }
 
     private void loadPermitted(Activity host) {
-        if (initializing) return;
+        if (initializing || bridge.suspended()) return;
         if (!initialized) {
             initializing = true;
             MobileAds.initialize(host, result -> host.runOnUiThread(() -> {
@@ -200,6 +212,9 @@ final class Ads {
     }
 
     private void updatePrivacy(ConsentInformation consent) {
+        consentLabel = !consent.canRequestAds() ? "blocked"
+                : consent.getPrivacyOptionsRequirementStatus() == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED ? "required"
+                : consent.getConsentStatus() == ConsentInformation.ConsentStatus.NOT_REQUIRED ? "not_required" : "allowed";
         privacyRequired = consent.getPrivacyOptionsRequirementStatus()
                 == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED;
     }

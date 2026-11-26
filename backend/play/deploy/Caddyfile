@@ -1,0 +1,12 @@
+{$HBT_HOST} {
+    @verifier path /health /v1/challenge /v1/session /v1/receipt /v1/sync
+    handle @verifier {
+        request_body {
+            max_size 16KB
+        }
+        reverse_proxy 127.0.0.1:8074
+    }
+    handle {
+        respond 404
+    }
+}

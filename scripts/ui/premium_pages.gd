@@ -1,10 +1,10 @@
 extends RefCounted
 
 const Config = preload("res://data/monetization/config.gd")
-const Treasury = preload("res://assets/ui/premium/treasury.png")
-const Gems = preload("res://assets/ui/premium/gems.png")
-const Builder = preload("res://assets/ui/premium/builder.png")
-const Season = preload("res://assets/ui/premium/season.png")
+const TREASURY := "res://assets/ui/premium/treasury.png"
+const GEMS := "res://assets/ui/premium/gems.png"
+const BUILDER := "res://assets/ui/premium/builder.png"
+const SEASON := "res://assets/ui/premium/season.png"
 
 const SHOP_TABS: Array[String] = ["shop_special", "shop_packs", "shop_free", "shop_season"]
 const PASS_TABS: Array[String] = ["pass_free", "pass_premium"]
@@ -19,6 +19,7 @@ var pass_index := -1
 var pass_paid := false
 var clock_label: Label
 var boost_bar: ProgressBar
+var textures: Dictionary = {}
 
 func bind(owner: CanvasLayer) -> void:
 	panel = owner
@@ -55,6 +56,11 @@ func signature(page: String) -> String:
 			return str([page, offer, detail, e.language, game.ads.available(), game.ads.playable(offer, detail),
 				game.ads.ready(offer), game.ads.loading(offer), game.ads.busy()])
 	return ""
+
+func art(path: String) -> Texture2D:
+	if not textures.has(path):
+		textures[path] = load(path)
+	return textures[path]
 
 func text(key: String) -> String:
 	return game.t(key)
@@ -95,32 +101,32 @@ func update_clock() -> void:
 	boost_bar.value = left
 
 func shop() -> void:
-	hero(Treasury, text("shop_header"), text("premium_shop_copy"))
+	hero(art(TREASURY), text("shop_header"), text("premium_shop_copy"))
 	if game.purchases.catalogue.is_empty():
 		panel.box(text("store_play_price"))
 	panel.section_tabs(SHOP_TABS, shop_tab, choose_tab)
 	match shop_tab:
 		"shop_special":
 			for id in ["starter_pack", "remove_ads"]:
-				product(id, Treasury if id == "starter_pack" else hud.BOLT)
+				product(id, art(TREASURY) if id == "starter_pack" else hud.BOLT)
 			shop_shortcuts()
 		"shop_packs":
 			panel.box(text("shop_gems_title"))
 			for id in Config.PRODUCTS:
 				if Config.PRODUCTS[id].section == "gems":
-					product(id, Gems)
+					product(id, art(GEMS))
 			panel.box(text("shop_business_title"))
 			for id in ["manager_pack", "builder_pack", "workshop_pack", "wash_pack", "freight_pack", "coast_pack"]:
 				if game.purchases.eligible(id):
-					product(id, Builder if id != "manager_pack" else panel.extra.portrait(Config.AD_MANAGER))
+					product(id, art(BUILDER) if id != "manager_pack" else panel.extra.portrait(Config.AD_MANAGER))
 		"shop_free":
 			free_rewards()
 		"shop_season":
-			panel.feature(Season, text("pass_header"), text("pass_shop_copy"))
+			panel.feature(art(SEASON), text("pass_header"), text("pass_shop_copy"))
 			panel.button(panel.rows, text("pass_view"), game.open_page.bind("pass"), false, true)
 			var season := Config.season_at(game.economy.clock)
 			if not season.is_empty():
-				product(season.sku, Season)
+				product(season.sku, art(SEASON))
 	if game.purchases.verified_checkout():
 		panel.button(panel.rows, text("store_restore"), game.purchases.restore_purchases,
 			game.purchases.busy() or game.ads.busy())
@@ -188,7 +194,7 @@ func ad_offer() -> void:
 	var copy := text("offer_detail_" + offer)
 	if offer in ["training", "upgrade"] and detail.has("site"):
 		copy += "\n" + game.site_name(detail.site)
-	var card := hero(Treasury, text("offer_" + offer), copy)
+	var card := hero(art(TREASURY), text("offer_" + offer), copy)
 	ad_action(card, offer, detail, true)
 	panel.button(panel.rows, text("offer_decline"), panel.hide_page)
 
@@ -221,7 +227,7 @@ func selected_pass() -> Dictionary:
 
 func season_pass() -> void:
 	var season := selected_pass()
-	hero(Season, text("pass_header") if season.is_empty() else text("season_" + season.id), text("pass_shop_copy"))
+	hero(art(SEASON), text("pass_header") if season.is_empty() else text("season_" + season.id), text("pass_shop_copy"))
 	if season.is_empty():
 		panel.box(text("pass_between"))
 		return
@@ -242,7 +248,7 @@ func season_pass() -> void:
 	panel.section_tabs(PASS_TABS, "pass_premium" if pass_paid else "pass_free", change_track)
 	if pass_paid and not ledger.entitlements.has(season.sku) and game.economy.clock < season.end:
 		game.purchases.open()
-		product(season.sku, Season)
+		product(season.sku, art(SEASON))
 	var completed: Dictionary = results.premium if pass_paid else results.free
 	for tier in range(1, Config.SEASON_TIERS + 1):
 		var gift := Config.pass_reward(tier, pass_paid, season.id)

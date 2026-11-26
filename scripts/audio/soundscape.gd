@@ -38,6 +38,9 @@ var transition: Tween
 var haptics := true
 var ducked := false
 var streams: Dictionary = {}
+var mixer_levels: Dictionary = {}
+var suspended := false
+var stopping := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -49,11 +52,11 @@ func _ready() -> void:
 		decks.append(player(BUSES.music, -65.0))
 	for key in FIELD:
 		var sound := player(BUSES.ambient, -58.0)
-		sound.stream = looped(sound_file(FIELD[key]) as AudioStreamOggVorbis)
 		ambience[key] = sound
 		targets[key] = 0.0
 	voices = {"small": player(BUSES.effects, -11.0), "sale": player(BUSES.effects, -7.5),
 		"signal": player(BUSES.effects, -5.5)}
+	set_process(DisplayServer.get_name() != "headless")
 
 func player(bus_name: String, volume: float) -> AudioStreamPlayer:
 	var voice := AudioStreamPlayer.new()
@@ -74,6 +77,9 @@ func looped(source: AudioStreamOggVorbis) -> AudioStreamOggVorbis:
 
 func apply(preferences: RefCounted) -> void:
 	haptics = preferences.haptics
+	if mixer_levels == preferences.volumes:
+		return
+	mixer_levels = preferences.volumes.duplicate()
 	for group in BUSES:
 		var index := AudioServer.get_bus_index(BUSES[group])
 		var level: float = preferences.volumes[group]
@@ -106,19 +112,47 @@ func update_field(strength: Dictionary, mute := false) -> void:
 		targets[key] = clampf(strength.get(key, 0.0), 0.0, 1.0)
 
 func _process(delta: float) -> void:
-	if DisplayServer.get_name() == "headless":
+	if suspended:
 		return
 	for key in ambience:
 		var voice: AudioStreamPlayer = ambience[key]
 		var level: float = targets[key] * (0.44 if ducked else 1.0)
+		if level <= .02 and not voice.playing:
+			continue
 		var destination := -10.0 + linear_to_db(maxf(level, 0.004))
 		if level > 0.02 and not voice.playing:
+			if voice.stream == null:
+				voice.stream = looped(sound_file(FIELD[key]) as AudioStreamOggVorbis)
 			voice.play()
 		voice.volume_db = lerpf(voice.volume_db, destination, 1.0 - exp(-4.0 * delta))
 		if level <= 0.02 and voice.playing and voice.volume_db < -46.0:
 			voice.stop()
 		if key in ["cars", "truck"]:
 			voice.pitch_scale = lerpf(voice.pitch_scale, 0.83 + targets[key] * 0.24, 1.0 - exp(-3.0 * delta))
+
+func _notification(what: int) -> void:
+	if not OS.has_feature("mobile") or what not in [NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_RESUMED]:
+		return
+	suspended = what == NOTIFICATION_APPLICATION_PAUSED
+	for voice in get_children():
+		if voice is AudioStreamPlayer:
+			voice.stream_paused = suspended
+
+func shut_down() -> void:
+	if stopping:
+		return
+	stopping = true
+	set_process(false)
+	if transition != null:
+		transition.kill()
+	for voice in get_children():
+		if voice is AudioStreamPlayer:
+			voice.stop()
+			voice.stream = null
+	streams.clear()
+
+func _exit_tree() -> void:
+	shut_down()
 
 func cue(key: String, vibrate := false) -> void:
 	if vibrate and haptics and OS.has_feature("mobile"):

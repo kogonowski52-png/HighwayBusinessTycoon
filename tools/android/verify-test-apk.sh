@@ -30,7 +30,12 @@ fi
 unzip -tq "$apk"
 badging=$("$build_tools/aapt" dump badging "$apk")
 [[ "$badging" == *"name='$package_id' versionCode='$expected_code' versionName='$version'"* ]]
-[[ "$badging" == *"native-code: 'arm64-v8a' 'x86_64'"* ]]
+case "${HBT_APK_ARCHITECTURES:-both}" in
+  arm64) [[ "$(sed -n '/^native-code:/p' <<< "$badging")" == "native-code: 'arm64-v8a'" ]] ;;
+  x86) [[ "$badging" == *"native-code: 'x86_64'"* ]] ;;
+  both) [[ "$badging" == *"native-code: 'arm64-v8a' 'x86_64'"* ]] ;;
+  *) echo "Unknown APK architecture mode" >&2; exit 2 ;;
+esac
 case "${HBT_APK_NETWORK_MODE:-offline}" in
   offline) [[ "$badging" != *android.permission.INTERNET* ]] ;;
   native) [[ "$badging" == *android.permission.INTERNET* ]] ;;

@@ -20,6 +20,7 @@ public final class HighwayRewarded extends GodotPlugin {
     private final Store store = new Store(this);
     private Bundle metadata;
     private Integer bootCount;
+    private volatile boolean suspended;
 
     public HighwayRewarded(Godot godot) {
         super(godot);
@@ -45,6 +46,17 @@ public final class HighwayRewarded extends GodotPlugin {
                 new SignalInfo("identity_result", String.class)
         ));
     }
+
+    @Override public void onMainPause() { suspended = true; }
+
+    @Override public void onMainResume() {
+        suspended = false;
+        ads.resume();
+    }
+
+    @Override public void onMainDestroy() { store.close(); }
+
+    boolean suspended() { return suspended; }
 
     Activity activity() {
         Activity host = getActivity();
@@ -97,6 +109,17 @@ public final class HighwayRewarded extends GodotPlugin {
     @UsedByGodot public void prepareBreak() { ads.prepareBreak(); }
     @UsedByGodot public boolean showBreak(String ticket) {
         return TICKET.matcher(ticket).matches() && !store.checkoutOpen() && ads.showBreak(ticket);
+    }
+
+    @UsedByGodot public boolean diagnosticsEnabled() { return "true".equals(config("diagnostics")); }
+    @UsedByGodot public String diagnosticAdState() {
+        return diagnosticsEnabled() && adsConfigured() ? ads.initializationStatus() : "unconfigured";
+    }
+    @UsedByGodot public String diagnosticConsent() {
+        return diagnosticsEnabled() && adsConfigured() ? ads.consentStatus() : "unconfigured";
+    }
+    @UsedByGodot public String diagnosticBilling() {
+        return diagnosticsEnabled() && billingConfigured() ? store.diagnosticStatus() : "unconfigured";
     }
 
     @UsedByGodot public String purchaseEndpoint() { return config("backend"); }

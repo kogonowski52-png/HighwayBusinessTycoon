@@ -1,0 +1,28 @@
+[Unit]
+Description=Highway Business Tycoon purchase verifier
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=hbt-play
+Group=hbt-play
+WorkingDirectory=/opt/hbt-play
+EnvironmentFile=/etc/hbt-play/verifier.env
+LoadCredential=account:/etc/hbt-play/account.secret
+LoadCredential=google.json:/etc/hbt-play/publisher.json
+StateDirectory=hbt-play
+UMask=0077
+ExecStart=/opt/hbt-play/venv/bin/gunicorn --bind 127.0.0.1:8074 --workers 2 --timeout 30 --limit-request-line 1024 'service:make_app()'
+Restart=on-failure
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target

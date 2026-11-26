@@ -2,6 +2,7 @@ extends Node3D
 
 const Routes = preload("res://data/economy/routes.gd")
 const RegionalRoutes = preload("res://data/world/regional_routes.gd")
+const ViewVolume = preload("res://scripts/art/view_volume.gd")
 const Actor = preload("res://scripts/customers/customer_manager.gd")
 const Managers = preload("res://data/economy/managers.gd")
 const MANAGER_SPOTS := {
@@ -15,6 +16,13 @@ var staff: Dictionary = {}
 var directors: Dictionary = {}
 var manual: Dictionary = {}
 var visitors: Dictionary = {}
+var visual_area := ViewVolume.new()
+
+func actor_count() -> int:
+	return get_child_count()
+
+func set_detail(actor: Actor) -> void:
+	actor.set_detailed_animation(visual_area.sees(actor.position, 3.7))
 
 func roster(economy: HbtEconomy) -> void:
 	for id in economy.facilities:
@@ -32,6 +40,7 @@ func roster(economy: HbtEconomy) -> void:
 			directors.erase(id)
 
 func update(economy: HbtEconomy, dispatch: HbtDispatch, delta: float) -> void:
+	visual_area.update(get_viewport().get_camera_3d())
 	var jobs := {}
 	var assignments := {}
 	for visit: HbtVisit in dispatch.live.values():
@@ -55,6 +64,8 @@ func update(economy: HbtEconomy, dispatch: HbtDispatch, delta: float) -> void:
 		if ticket == null or ticket.phase != HbtVisit.Phase.WORKING:
 			manual[id].queue_free()
 			manual.erase(id)
+		else:
+			set_detail(manual[id])
 	for number in visitors.keys():
 		var ticket: HbtVisit = dispatch.live.get(number)
 		if ticket == null or ticket.phase == HbtVisit.Phase.DEPART:
@@ -70,6 +81,7 @@ func update(economy: HbtEconomy, dispatch: HbtDispatch, delta: float) -> void:
 		walk_to_work(directors[id], job, manager_post(id), task, delta)
 
 func walk_to_work(actor: Actor, job: HbtVisit, post: Vector3, task: String, delta: float) -> void:
+	set_detail(actor)
 	var target: Vector3 = post if job == null else routes.worker_at(job.service, job.bay)
 	var offset := target - actor.position
 	var distance := offset.length()
@@ -93,6 +105,7 @@ func update_visitor(visit: HbtVisit, delta: float) -> void:
 	var next := visit.foot_position(visit.walked)
 	var shift := next - guest.position
 	guest.position = next
+	set_detail(guest)
 	if delivery:
 		guest.prop.visible = visit.walked > .90 and visit.phase != HbtVisit.Phase.EXIT_WAIT
 	if visit.phase != HbtVisit.Phase.EXIT_WAIT and visit.walked < 0.91:

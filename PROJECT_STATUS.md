@@ -1,5 +1,9 @@
 # Stan projektu
 
+## 0.8.0 · Optymalizacja i zgodność Androida
+
+Wersja zawiera cztery profile grafiki, automatyczny wybór, ograniczanie pracy poza kadrem, pulę aut, asynchroniczne podróże i zachowane dane wszystkich lokalizacji. Testowe APK wykorzystuje ten sam certyfikat oraz mniejszy wariant ARM64. Próby płynności, cyklu życia i zakupów na fizycznym Androidzie pozostają otwarte. Weryfikator HTTPS ma gotową instalację bez uruchamiania zewnętrznej usługi. [Status wszystkich wymagań](docs/STAGE7_STATUS.md) · [Weryfikacja urządzeń](docs/ANDROID_QA.md)
+
 ## 0.7.0 · BOOST i monetyzacja testowa
 
 - BOOST ×2 jest wspólny dla sześciu regionów, ma 5 minut za film i 30 minut maksymalnej kolejki. Dochód offline korzysta z rzeczywistego przecięcia czasu. Zachowano kupowanie kuponów za walutę gry i zwykłe wypłaty.

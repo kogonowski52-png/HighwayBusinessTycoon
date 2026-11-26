@@ -15,6 +15,7 @@ var hose: Array[MeshInstance3D] = []
 var washing := false
 var repairing := false
 var reduced := false
+var emitters: Dictionary = {}
 
 func _ready() -> void:
 	soft_disk = soft_texture()
@@ -54,6 +55,13 @@ func _ready() -> void:
 		segment.visible = false
 		segment.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		hose.append(segment)
+	emitters = {dust: 11, steam: 12, smoke: 10, foam: 21, water: 32, mote: 15}
+
+func set_quality(tier: int) -> void:
+	reduced = tier == 0
+	var ratio: float = [.45, .74, 1.0, 1.30][tier]
+	for source: CPUParticles3D in emitters:
+		source.amount = maxi(1, roundi(emitters[source] * ratio))
 
 func soft_texture() -> GradientTexture2D:
 	var gradient := Gradient.new()

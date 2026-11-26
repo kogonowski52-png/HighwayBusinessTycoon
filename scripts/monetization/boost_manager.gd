@@ -11,7 +11,13 @@ var anchor_second := 0
 var boot := -1
 var boot_tick := -1
 
-func observe_device(wall: int) -> int:
+var native_seen_ms := -1
+var native_base_ms := -1
+
+func observe_device(wall: int, refresh_native := true) -> int:
+	var local := Time.get_ticks_msec()
+	if not refresh_native and native_seen_ms >= 0 and local - native_seen_ms < 1000:
+		return observe_boot(wall, native_base_ms + local - native_seen_ms, boot)
 	if Engine.has_singleton("HighwayRewarded"):
 		var bridge := Engine.get_singleton("HighwayRewarded")
 		var sample := str(bridge.clockSample()).split(":")
@@ -19,8 +25,13 @@ func observe_device(wall: int) -> int:
 			var id := sample[0].to_int()
 			var ticks := sample[1].to_int()
 			if id >= 0 and ticks >= 0:
+				native_seen_ms = local
+				# A millisecond rounding difference is not a second boot.
+				if boot == id:
+					ticks = maxi(ticks, boot_tick)
+				native_base_ms = ticks
 				return observe_boot(wall, ticks, id)
-	return advance(wall, Time.get_ticks_msec())
+	return advance(wall, local)
 
 func observe_boot(wall: int, ticks: int, id: int) -> int:
 	if boot != id or ticks < boot_tick:
@@ -98,6 +109,8 @@ func snapshot() -> Dictionary:
 func restore(data: Dictionary) -> void:
 	clock = maxi(0, int(data.get("clock", 0)))
 	anchor_ms = -1
+	native_seen_ms = -1
+	native_base_ms = -1
 	boot = int(data.get("boot", -1))
 	boot_tick = int(data.get("boot_tick", -1))
 	windows.clear()

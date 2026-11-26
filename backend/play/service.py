@@ -4,6 +4,7 @@ from base64 import urlsafe_b64encode
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import secrets
@@ -25,6 +26,7 @@ TOKEN = re.compile(r"[A-Za-z0-9_.~/+=-]{16,4096}\Z")
 INSTALL = re.compile(r"[0-9a-f]{32}\Z")
 NONCE = re.compile(r"[0-9a-f]{64}\Z")
 DAY = 86_400
+LOG = logging.getLogger("hbt.play")
 
 
 class ApiError(Exception):
@@ -319,8 +321,9 @@ class Service:
             code, body = error.status, {"error": error.code}
         except (ValueError, UnicodeError):
             code, body = 400, {"error": "invalid_request"}
-        except Exception:
-            # HTTP/client errors can embed receipt tokens in URLs. Do not log the exception.
+        except Exception as error:
+            # Error details can contain a receipt token in the Publisher request URL.
+            LOG.warning("Verifier operation unavailable (%s)", type(error).__name__)
             code, body = 503, {"error": "temporarily_unavailable"}
         status = {200: "OK", 400: "Bad Request", 401: "Unauthorized", 404: "Not Found", 409: "Conflict",
                   410: "Gone", 422: "Unprocessable Entity", 503: "Service Unavailable"}[code]
@@ -332,8 +335,18 @@ class Service:
 
 def from_environment():
     audience = os.environ["HBT_GOOGLE_CLIENT_ID"]
-    return Service(Path(os.environ["HBT_PLAY_DB"]), os.environ["HBT_ACCOUNT_SECRET"].encode(),
-                   Google(audience), os.environ.get("HBT_PLAY_TEST") == "1")
+    credential_dir = os.environ.get("CREDENTIALS_DIRECTORY")
+    if credential_dir:
+        root = Path(credential_dir)
+        secret = (root / "account").read_bytes().strip()
+        os.environ.setdefault("GOOGLE_APPLICATION_CREDENTIALS", str(root / "google.json"))
+    else:
+        secret = os.environ["HBT_ACCOUNT_SECRET"].encode()
+    return Service(Path(os.environ["HBT_PLAY_DB"]), secret, Google(audience), os.environ.get("HBT_PLAY_TEST") == "1")
+
+
+def make_app():
+    return from_environment().wsgi
 
 
 if __name__ == "__main__":
@@ -346,9 +359,14 @@ if __name__ == "__main__":
     args.add_argument("--days", type=int, default=14)
     command = args.parse_args()
     service = from_environment()
-    if command.action == "reconcile":
-        print(f"Voided receipts reconciled: {service.reconcile(command.days)}")
-    elif command.action == "retry":
-        print(f"Receipts finalized: {service.retry_finalization()}")
+    if command.action in ("reconcile", "retry"):
+        try:
+            if command.action == "reconcile":
+                print(f"Voided receipts reconciled: {service.reconcile(command.days)}")
+            else:
+                print(f"Receipts finalized: {service.retry_finalization()}")
+        except Exception as error:
+            LOG.error("Verifier maintenance unavailable (%s)", type(error).__name__)
+            raise SystemExit(1) from None
     else:
         make_server("127.0.0.1", command.port, service.wsgi).serve_forever()

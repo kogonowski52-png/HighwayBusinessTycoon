@@ -146,7 +146,8 @@ jobs:
             exit 1
           fi
           checksum=$(sha256sum "$APK" | cut -d ' ' -f 1)
-          notes="Testowy APK Android dla arm64-v8a i x86_64. Gra działa offline. SHA-256: $checksum"
+          architectures=$("$ANDROID_HOME/build-tools/$ANDROID_BUILD_TOOLS/aapt" dump badging "$APK" | sed -n "s/^native-code: //p" | tr -d "'")
+          notes="Testowy APK Android ($architectures). Gra działa offline. SHA-256: $checksum"
           publish_release() {
             local release
             if ! release=$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets,isDraft); then

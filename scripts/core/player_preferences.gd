@@ -5,6 +5,7 @@ const DEFAULTS := {"music": 0.64, "ambient": 0.53, "effects": 0.77}
 
 var volumes: Dictionary = DEFAULTS.duplicate()
 var quality := 2
+var quality_auto := OS.has_feature("mobile")
 var fps := 60
 var haptics := true
 var weather := "auto"
@@ -12,7 +13,8 @@ var auto_day := false
 
 func restore(data: Dictionary, old_feedback := true) -> void:
 	haptics = data.get("haptics", old_feedback) == true
-	quality = clampi(int(data.get("quality", 2)), 0, 2)
+	quality = clampi(int(data.get("quality", 2)), 0, 3)
+	quality_auto = data.get("quality_auto", data.is_empty() and OS.has_feature("mobile")) == true
 	fps = 30 if int(data.get("fps", 60)) == 30 else 60
 	var climate: Variant = data.get("weather", "auto")
 	weather = climate if climate in ["auto", "clear", "rain", "snow", "wind", "haze"] else "auto"
@@ -25,7 +27,7 @@ func restore(data: Dictionary, old_feedback := true) -> void:
 		volumes.effects = 0.0
 
 func snapshot() -> Dictionary:
-	return {"volumes": volumes.duplicate(), "quality": quality, "fps": fps, "haptics": haptics,
+	return {"volumes": volumes.duplicate(), "quality": quality, "quality_auto": quality_auto, "fps": fps, "haptics": haptics,
 		"weather": weather, "auto_day": auto_day}
 
 func effective_quality(power_saving: bool) -> int:

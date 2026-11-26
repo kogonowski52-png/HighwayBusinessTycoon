@@ -33,6 +33,8 @@ Przepustki tworzy się za 24,99 PLN każda. Każdą aktywuj tylko dla właściwe
 
 ## Uwierzytelnienie i weryfikator
 
+Gotowa konfiguracja systemd, HTTPS i kopii zapasowych jest opisana w instrukcji wdrożenia. [Wdrożenie weryfikatora](HTTPS_VERIFIER.md)
+
 1. W Google Cloud przygotuj publiczny OAuth Web Client ID i powiąż Android OAuth Client z pakietem oraz odciskiem certyfikatu używanego na danym torze Play. Billing i konto zweryfikowane przez Credential Manager powinny używać tego samego konta testera. Adresu e-mail z tokena aplikacja nie zapisuje.
 2. W Play Console nadaj tożsamości usługi weryfikacyjnej dostęp do zamówień tej aplikacji. Włącz Android Publisher API w projekcie właściciela. Serwer korzysta z Application Default Credentials. Użyj tożsamości infrastruktury lub pliku konta usługi przechowanego poza repozytorium i aplikacją.
 3. W odizolowanym środowisku zainstaluj `backend/play/requirements.txt`. Skonfiguruj `HBT_GOOGLE_CLIENT_ID`, `HBT_PLAY_DB` na trwałym woluminie z backupem i `HBT_ACCOUNT_SECRET` z sejfu. Sekret ma co najmniej 32 losowe bajty i służy do pseudonimizacji identyfikatora oraz szyfrowania oczekujących tokenów.
@@ -42,7 +44,7 @@ Przepustki tworzy się za 24,99 PLN każda. Każdą aktywuj tylko dla właściwe
 ```bash
 cd backend/play
 python -m pip install -r requirements.txt
-gunicorn --bind 127.0.0.1:8074 --workers 2 'service:from_environment().wsgi'
+gunicorn --bind 127.0.0.1:8074 --workers 2 'service:make_app()'
 python service.py retry
 python service.py reconcile --days 14
 ```

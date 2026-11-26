@@ -1,5 +1,6 @@
 extends Node3D
 
+const Batch = preload("res://scripts/art/scenery_batch.gd")
 const Art = preload("res://scripts/art/visual_library.gd")
 const Kit = preload("res://scripts/buildings/model_kit.gd")
 const GROUND = preload("res://assets/materials/desert_ground.gdshader")
@@ -42,6 +43,8 @@ func _ready() -> void:
 	var strip := BoxMesh.new()
 	strip.size = Vector3.ONE
 	instances(strip, paint, Kit.material(Color("#e9daba")), false)
+	Batch.compact(self)
+
 
 func surface(a: String, b: String, wear := 0.0) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
@@ -143,20 +146,8 @@ func stroke(a: Vector3, b: Vector3, width: float) -> Transform3D:
 	return Transform3D(pivot.scaled_local(Vector3(a.distance_to(b), .009, width)), a.lerp(b, .5))
 
 func instances(mesh: Mesh, locations: Array[Transform3D], material: Material = null, shadows := true) -> void:
-	if locations.is_empty():
-		return
-	var batch := MultiMesh.new()
-	batch.transform_format = MultiMesh.TRANSFORM_3D
-	batch.mesh = mesh
-	batch.instance_count = locations.size()
-	for i in locations.size():
-		batch.set_instance_transform(i, locations[i])
-	var drawn := MultiMeshInstance3D.new()
-	drawn.multimesh = batch
-	drawn.material_override = material
-	if not shadows:
-		drawn.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(drawn)
+	Batch.instances(self, mesh, locations, material, GeometryInstance3D.SHADOW_CASTING_SETTING_ON if shadows else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+
 
 func plant(at: Vector3, scale: float, angle: float) -> Transform3D:
 	return Transform3D(Basis(Vector3.UP, angle).scaled_local(Vector3.ONE * scale), at)

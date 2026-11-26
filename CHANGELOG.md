@@ -1,5 +1,12 @@
 # Historia zmian
 
+## 0.8.0 · Wydajność i Android
+
+- Cztery profile grafiki, dobór automatyczny i oszczędzanie baterii. Stan detali wizualnych jest oddzielony od częstotliwości gospodarki.
+- Grupowanie dekoracji, ograniczenie animacji poza kadrem, pula pojazdów oraz siatka kolizji przy dużym ruchu. Dokładne kwoty i rozliczenia BOOST zachowują poprzedni format.
+- Asynchroniczne wejście i podróż, późne wczytanie otwieranych budynków, oddzielne zasoby lokalizacji oraz test odzyskania zapisu `0.7.0`.
+- Podpisany APK ARM64 z kodem `8000`, diagnostyka testowa i weryfikacja wyrównania 16 KiB. Konfiguracja usługi zakupów z HTTPS i kopiami SQLite.
+
 ## 0.7.0 · BOOST i monetyzacja testowa
 
 - Dodano wspólny BOOST z 300 sekundami za ukończony materiał i limitem 1800 sekund. Wypłaty online sprawdzają czas rozliczenia. Odliczenia offline rozpoznają aktywne przedziały bez drugiego mnożnika.

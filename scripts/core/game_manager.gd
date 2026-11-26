@@ -12,6 +12,9 @@ const RegionalRoutes = preload("res://data/world/regional_routes.gd")
 const RegionalLandscape = preload("res://scripts/buildings/regional_landscape.gd")
 const RegionalCampus = preload("res://scripts/buildings/regional_campus.gd")
 const RegionalStation = preload("res://scripts/buildings/regional_station.gd")
+const Diagnostics = preload("res://scripts/core/runtime_diagnostics.gd")
+const WorldStream = preload("res://scripts/core/world_stream.gd")
+const RenderBudget = preload("res://scripts/core/render_budget.gd")
 const Weather = preload("res://scripts/art/expedition_weather.gd")
 const TrafficManager = preload("res://scripts/traffic/traffic_manager.gd")
 const Landscape = preload("res://scripts/buildings/roadside_landscape.gd")
@@ -44,9 +47,13 @@ var economy := HbtEconomy.new()
 var campaign: HbtCampaign
 var routes: Object = Routes
 var traveling := false
+var travel_layer: CanvasLayer
+var travel_progress: ProgressBar
 var arrived_from_trip := false
 var weather: Node3D
 var world_second := -1
+var scene_elapsed := 0.0
+var paused_3d := false
 var shown_event := ""
 var traffic := TrafficManager.new()
 var station: Node3D
@@ -84,11 +91,19 @@ var wall_override := -1
 var seed_override := -1
 var hud_time := 0.0
 var autosave := 0.0
+var diagnostics: Diagnostics
+var render_budget := RenderBudget.new()
+var render_quality := -1
+var live_levels: Dictionary = {}
+var live_language := ""
+var live_crew: Dictionary = {}
+var live_directors: Array = []
 var simulation_clock := 0.0
 var message := ""
 var message_time := 0.0
 var suspended_at := -1
 var mounted := false
+var closing := false
 var fuel_art_level := 1
 var displayed_rank := 1
 var guided_step := 0
@@ -104,6 +119,8 @@ func _ready() -> void:
 	economy.save_hook = campaign.checkpoint
 	if entry_language in ["pl", "en"]:
 		economy.language = entry_language
+	if not render_budget.initialized:
+		render_budget.reset()
 	setup_district()
 	shown_cards = economy.cards.duplicate()
 	known_diamonds = economy.amount("diamond")
@@ -167,6 +184,10 @@ func _ready() -> void:
 	operations.closed.connect(consider_ad_break)
 	add_child(world_offers)
 	world_offers.bind(self)
+	if debug_tools_available():
+		diagnostics = Diagnostics.new()
+		diagnostics.game = self
+		add_child(diagnostics)
 	ads.availability_changed.connect(operations.refresh)
 	get_viewport().size_changed.connect(frame_camera)
 	get_viewport().size_changed.connect(operations.apply_layout)
@@ -176,11 +197,11 @@ func _ready() -> void:
 	boost_was_active = campaign.boost.earning(economy.clock)
 	if not arrived_from_trip:
 		log_commercial("game_start")
+		economy.checkpoint()
 	if economy.district == "metro" and not economy.preferences.auto_day:
 		set_look(Lighting.Look.NIGHT)
 	update_expedition()
 	get_tree().auto_accept_quit = false
-	economy.checkpoint()
 	if not economy.offline_pending.empty():
 		operations.show_page("offline")
 	if arrived_from_trip and motion_enabled():
@@ -219,6 +240,12 @@ func setup_camera() -> void:
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.keep_aspect = Camera3D.KEEP_WIDTH
 	camera.current = true
+
+func debug_tools_available() -> bool:
+	if not OS.is_debug_build():
+		return false
+	return not OS.has_feature("mobile") or (Engine.has_singleton("HighwayRewarded") \
+		and Engine.get_singleton("HighwayRewarded").diagnosticsEnabled())
 
 func motion_enabled() -> bool:
 	return not economy.low_power and DisplayServer.get_name() != "headless"
@@ -276,7 +303,7 @@ func tick_game(delta: float) -> void:
 	simulation_clock += delta
 	economy.clock = int(simulation_clock)
 	if wall_override < 0:
-		economy.clock = campaign.boost.observe_device(int(Time.get_unix_time_from_system()))
+		economy.clock = campaign.boost.observe_device(int(Time.get_unix_time_from_system()), false)
 	else:
 		campaign.boost.advance(economy.clock)
 	if not ads.busy() and not purchases.busy():
@@ -289,16 +316,21 @@ func tick_game(delta: float) -> void:
 		boost_was_active = current
 		purchases.tick()
 		update_expedition()
+		if operations.modal_open() and operations.page == "diagnostics":
+			operations.refresh()
 	if campaign.premium.vip.has(economy.district) and not traffic.dispatch.live.values().any(func(ticket: HbtVisit) -> bool: return ticket.ad_guest):
 		var guest := traffic.dispatch.try_admit("vip")
 		if guest != null:
 			guest.ad_guest = true
 	traffic.physics_step(delta)
-	crew.update(economy, traffic.dispatch, delta)
-	world_offers.tick(delta)
-	update_scene(delta)
+	scene_elapsed += delta
+	if scene_elapsed >= (1.0 / 30.0 if render_quality == 0 else 1.0 / 60.0):
+		crew.update(economy, traffic.dispatch, scene_elapsed)
+		world_offers.tick(scene_elapsed)
+		update_scene(scene_elapsed)
+		scene_elapsed = 0.0
 	sound_elapsed += delta
-	if sound_elapsed > 0.19:
+	if sound_elapsed > (0.32 if economy.low_power else 0.19):
 		sound_elapsed = 0.0
 		update_soundscape()
 	var day := economy.day_index()
@@ -307,7 +339,9 @@ func tick_game(delta: float) -> void:
 		if operations.modal_open() and operations.page == "calendar":
 			operations.refresh()
 	autosave += delta
-	if autosave >= economy.CONFIG.checkpoint_seconds:
+	var base_interval: float = economy.CONFIG.checkpoint_seconds
+	var idle_interval := base_interval * (3.0 if economy.low_power else 2.0)
+	if autosave >= (base_interval if economy.dirty else idle_interval):
 		autosave = 0.0
 		economy.checkpoint()
 	hud_time += delta
@@ -375,10 +409,16 @@ func _notification(what: int) -> void:
 					economy.clock = campaign.boost.observe_device(int(Time.get_unix_time_from_system()))
 				economy.checkpoint()
 				suspended_at = Time.get_ticks_msec()
+				render_budget.clear_sample()
+				if OS.has_feature("mobile"):
+					paused_3d = get_viewport().disable_3d
+					get_viewport().disable_3d = true
 		NOTIFICATION_APPLICATION_RESUMED:
 			if suspended_at >= 0:
-				var now := campaign.boost.observe_device(int(Time.get_unix_time_from_system()))
+				var now := campaign.boost.observe_device(int(Time.get_unix_time_from_system())) if wall_override < 0 else wall_override
 				economy.capture_absence(now)
+				if OS.has_feature("mobile"):
+					get_viewport().disable_3d = paused_3d
 				purchases.resume()
 				suspended_at = -1
 				simulation_clock = float(economy.clock)
@@ -390,19 +430,29 @@ func _notification(what: int) -> void:
 			if operations.modal_open():
 				operations.hide_page()
 			else:
-				economy.checkpoint()
-				get_tree().quit()
+				leave_game()
 		NOTIFICATION_WM_CLOSE_REQUEST:
-			economy.checkpoint()
-			get_tree().quit()
+			leave_game()
+
+func leave_game() -> void:
+	if closing:
+		return
+	closing = true
+	set_physics_process(false)
+	economy.checkpoint()
+	route_audio.shut_down()
+	# Playback handles are released on the next audio mix cycles.
+	await get_tree().create_timer(.15).timeout
+	get_tree().quit()
 
 func _exit_tree() -> void:
+	if not paused_3d and suspended_at >= 0 and OS.has_feature("mobile"):
+		get_viewport().disable_3d = false
 	if mounted and not traveling and economy.dirty:
 		economy.checkpoint()
 	if mounted:
 		economy.commerce.reservations.clear()
-		if is_regional():
-			Art.release_region(economy.district)
+		Art.release_region(economy.district)
 		economy.save_hook = Callable()
 
 func select_site(id: String) -> void:
@@ -423,6 +473,8 @@ func serve_customer() -> void:
 	traffic.dispatch.start_manual(selected)
 
 func open_page(name: String) -> void:
+	if name == "diagnostics" and not is_instance_valid(diagnostics):
+		return
 	if name == "shop":
 		log_commercial("shop_opened")
 		purchases.open()
@@ -549,8 +601,34 @@ func set_language(value: String) -> void:
 	apply_setting()
 
 func set_quality(index: int) -> void:
-	economy.preferences.quality = clampi(index, 0, 2)
+	economy.preferences.quality = clampi(index, 0, 3)
+	economy.preferences.quality_auto = false
 	apply_setting()
+
+func set_quality_auto() -> void:
+	economy.preferences.quality_auto = not economy.preferences.quality_auto
+	render_budget.reset()
+	apply_setting()
+
+func apply_render_quality() -> void:
+	var prefs = economy.preferences
+	var tier: int = 0 if economy.low_power else (render_budget.active if prefs.quality_auto else prefs.quality)
+	var cap := 30 if tier == 0 else int(prefs.effective_fps(economy.low_power))
+	if Engine.max_fps != cap:
+		Engine.max_fps = cap
+	if render_quality == tier:
+		return
+	render_quality = tier
+	render_budget.apply(get_viewport(), tier)
+	lighting.set_quality(tier)
+	effects.set_quality(tier)
+	apply_weather()
+
+func _process(delta: float) -> void:
+	if mounted and suspended_at < 0 and not traveling and not economy.low_power \
+			and economy.preferences.quality_auto and not operations.modal_open() and not ads.busy() \
+			and render_budget.sample(delta, economy.preferences.fps):
+		apply_render_quality()
 
 func set_fps(choice: int) -> void:
 	economy.preferences.fps = 30 if choice in [0, 30] else 60
@@ -695,18 +773,28 @@ func claim_pass(index: int, tier: int, paid: bool) -> void:
 		operations.refresh()
 
 func on_economy_changed() -> void:
-	campus.update_sites(economy)
-	var art_level: int = mini(5, economy.level("fuel")) if economy.district == "north" else campus.roof_counts.fuel
-	if economy.district != "north":
-		station.set_bays(economy.capacity("fuel"))
-	else:
-		station.set_market_open(economy.level("market") > 0)
-	if fuel_art_level != art_level:
-		fuel_art_level = art_level
-		if economy.district == "north":
-			station.setup(art_level)
-		landscape.set_forecourt_tier(art_level)
-	crew.roster(economy)
+	var geometry_changed := live_levels != economy.levels or live_language != economy.language
+	if geometry_changed:
+		live_levels = economy.levels.duplicate()
+		live_language = economy.language
+		campus.update_sites(economy)
+		var art_level: int = mini(5, economy.level("fuel")) if economy.district == "north" else campus.roof_counts.fuel
+		if economy.district != "north":
+			station.set_bays(economy.capacity("fuel"))
+		else:
+			station.set_market_open(economy.level("market") > 0)
+		if fuel_art_level != art_level:
+			fuel_art_level = art_level
+			if economy.district == "north":
+				station.setup(art_level)
+			landscape.set_forecourt_tier(art_level)
+	var roster := {}
+	for id in economy.crew:
+		roster[id] = economy.crew[id].size()
+	if live_crew != roster or live_directors != economy.equipped:
+		live_crew = roster
+		live_directors = economy.equipped.duplicate()
+		crew.roster(economy)
 	route_audio.apply(economy.preferences)
 	if mounted:
 		for id in economy.cards:
@@ -726,18 +814,8 @@ func on_economy_changed() -> void:
 	if economy.player_level() > displayed_rank:
 		displayed_rank = economy.player_level()
 		promotion_feedback(t("career_level") % displayed_rank, hud.REPUTATION)
-	Engine.max_fps = economy.preferences.effective_fps(economy.low_power)
-	var quality: int = economy.preferences.effective_quality(economy.low_power)
-	lighting.set_quality(quality)
-	apply_weather()
-	effects.reduced = quality == 0
-	var render_scale: float = [0.74, 0.88, 1.0][quality]
-	if not is_equal_approx(get_viewport().scaling_3d_scale, render_scale):
-		get_viewport().scaling_3d_scale = render_scale
-	var samples := Viewport.MSAA_2X if quality == 2 else Viewport.MSAA_DISABLED
-	if get_viewport().msaa_3d != samples:
-		get_viewport().msaa_3d = samples
-	if operations.page not in ["settings", "help", "privacy", "licenses"]:
+	apply_render_quality()
+	if operations.page not in ["settings", "help", "privacy", "licenses", "diagnostics"]:
 		operations.call_deferred("refresh")
 	site_buttons.refresh()
 	refresh()
@@ -890,7 +968,7 @@ func update_expedition() -> void:
 	operations.expedition.update_clock()
 
 func apply_weather() -> void:
-	weather.apply(economy, campaign.ledger.season(), economy.preferences.effective_quality(economy.low_power),
+	weather.apply(economy, campaign.ledger.season(), maxi(0, render_quality),
 		economy.preferences.weather)
 
 func choose_weather(choice: String) -> void:
@@ -946,53 +1024,74 @@ func redeem_collection(group: String) -> void:
 		economy.checkpoint()
 
 func travel_to(id: String) -> void:
-	if traveling or ads.busy() or purchases.busy() or not campaign.available(id) or id == campaign.active:
+	if closing or traveling or ads.busy() or purchases.busy() or not campaign.available(id) or id == campaign.active:
 		return
 	var first := not campaign.districts.has(id)
-	var destination: PackedScene = load(Atlas.DESTINATIONS[id].scene)
-	if destination == null:
+	var stream := await stream_destination(id)
+	if stream == null:
 		return
+	sync_commercial_clock()
 	if campaign.travel(id) != OK:
-		refresh()
+		stream.queue_free()
+		stop_travel()
 		return
 	if first:
 		log_commercial("location_unlocked", id)
 		economy.checkpoint()
-	traveling = true
-	set_physics_process(false)
-	if motion_enabled():
-		await travel_veil(t("journey_depart") % district_name(id), true).finished
-	mount_destination.call_deferred(destination)
+	stream.replace.call_deferred(self, campaign, seed_override, wall_override)
 
 func confirm_prestige() -> void:
-	if traveling or ads.busy() or purchases.busy() or operations.page != "prestige_confirm" or not operations.modal_open():
+	if closing or traveling or ads.busy() or purchases.busy() or operations.page != "prestige_confirm" or not operations.modal_open():
 		return
-	var destination: PackedScene = load(Atlas.DESTINATIONS[campaign.active].scene)
-	if destination == null or campaign.prestige(true) != OK:
+	var stream := await stream_destination(campaign.active)
+	if stream == null:
 		return
+	if campaign.prestige(true) != OK:
+		stream.queue_free()
+		stop_travel()
+		return
+	feedback.play("rank", true)
+	stream.replace.call_deferred(self, campaign, seed_override, wall_override)
+
+func stream_destination(id: String) -> WorldStream:
 	traveling = true
 	set_physics_process(false)
-	feedback.play("rank", true)
-	mount_destination.call_deferred(destination)
+	var stream := WorldStream.new()
+	get_tree().root.add_child(stream)
+	stream.start(Atlas.DESTINATIONS[id].scene, id)
+	var animated := motion_enabled()
+	var curtain: Tween
+	if animated:
+		curtain = travel_veil(t("journey_depart") % district_name(id), true)
+	while not stream.done():
+		var loading := stream.poll()
+		if is_instance_valid(travel_progress):
+			travel_progress.value = loading
+		await get_tree().process_frame
+	if animated and curtain.is_running():
+		await curtain.finished
+	if closing:
+		stream.queue_free()
+		return null
+	if stream.failed or stream.target_scene == null:
+		stream.queue_free()
+		stop_travel()
+		show_message(t("front_error"))
+		return null
+	return stream
 
-func mount_destination(scene: PackedScene) -> void:
-	var next := scene.instantiate()
-	next.campaign = campaign
-	next.seed_override = seed_override
-	next.wall_override = wall_override
-	next.arrived_from_trip = true
-	var host := get_tree()
-	hide()
-	hud.hide()
-	operations.hide()
-	host.root.add_child(next)
-	host.current_scene = next
-	queue_free()
+func stop_travel() -> void:
+	traveling = false
+	if is_instance_valid(travel_layer):
+		travel_layer.queue_free()
+	set_physics_process(true)
+	refresh()
 
 func travel_veil(label: String, departing: bool) -> Tween:
 	var layer := CanvasLayer.new()
 	layer.layer = 20
 	add_child(layer)
+	travel_layer = layer
 	var curtain := ColorRect.new()
 	curtain.color = Color("#142f38")
 	layer.add_child(curtain)
@@ -1006,6 +1105,18 @@ func travel_veil(label: String, departing: bool) -> Tween:
 	title.add_theme_font_size_override("font_size", 56)
 	title.add_theme_color_override("font_color", hud.CREAM)
 	title.text = label
+	if departing:
+		travel_progress = ProgressBar.new()
+		curtain.add_child(travel_progress)
+		travel_progress.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+		travel_progress.offset_left = -220
+		travel_progress.offset_right = 220
+		travel_progress.offset_top = 72
+		travel_progress.offset_bottom = 93
+		travel_progress.max_value = 1.0
+		travel_progress.show_percentage = false
+		travel_progress.add_theme_stylebox_override("background", hud.style(Color("#274551"), Color("#56777d"), 8, 1))
+		travel_progress.add_theme_stylebox_override("fill", hud.style(Color("#ebb96f"), Color("#f0d39f"), 8, 1))
 	curtain.modulate.a = 0.0 if departing else 1.0
 	var fade := create_tween().set_trans(Tween.TRANS_CUBIC)
 	fade.tween_property(curtain, "modulate:a", 1.0 if departing else 0.0, .37 if departing else .51)

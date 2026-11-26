@@ -1,6 +1,6 @@
 # Podpisywanie testowych wydań Androida
 
-Pakiet zachowuje identyfikator `pl.krystiandevelopment.highwaytycoon`. Wersje 0.6.0, 0.6.1 i 0.7.0 mają odpowiednio kody 6000, 6001 i 7000. Wersje używają wzoru `major × 1 000 000 + minor × 1 000 + patch`, przy składowych od 0 do 999. Weryfikator odrzuca APK z kodem niezgodnym z wersją, błędnym identyfikatorem lub innym certyfikatem. Publikacje są wykonywane kolejno, a workflow odrzuca wersję starszą od opublikowanej.
+Pakiet zachowuje identyfikator `pl.krystiandevelopment.highwaytycoon`. Wersje 0.6.0, 0.6.1, 0.7.0 i 0.8.0 mają odpowiednio kody 6000, 6001, 7000 i 8000. Wersje używają wzoru `major × 1 000 000 + minor × 1 000 + patch`, przy składowych od 0 do 999. Weryfikator odrzuca APK z kodem niezgodnym z wersją, błędnym identyfikatorem lub innym certyfikatem. Publikacje są wykonywane kolejno, a workflow odrzuca wersję starszą od opublikowanej.
 
 | Kompilacja | Kod | SHA-256 certyfikatu |
 | --- | ---: | --- |
@@ -37,6 +37,15 @@ Przebieg `v0.6.1` zatrzymał się przy ładowaniu certyfikatu, ponieważ runner 
 ## Testowy APK 0.7.0
 
 `HighwayBusinessTycoon-0.7.0-test.apk` ma SHA-256 `6694224c2f194a76188b8ca3c44b6929f749691def3455f42a1b1780e3c51f6f`. `verify-monetization-apk.sh` potwierdził zgodność identyfikatora i certyfikatu z lokalnym `0.6.1`, rosnący kod wersji oraz obecność natywnych bibliotek. Konfiguracja reklamy używa oficjalnych jednostek testowych Google. Kompilacja na GitHub Actions wymaga tej samej pary sekretów. Klucz do wysyłki AAB i konfiguracja Google Play są potrzebne niezależnie od podpisu testowego. [Konfiguracja monetyzacji](MONETIZATION.md)
+
+## Testowe APK 0.8.0
+
+| Plik | ABI | SHA-256 |
+| --- | --- | --- |
+| `HighwayBusinessTycoon-0.8.0-test.apk` | ARM64 | `55767aeed17013228844e26490780d0fef15cbe131bea14c555a4d2ce044c032` |
+| `HighwayBusinessTycoon-0.8.0-test-x86_64.apk` | x86_64 | `83be7eaa5a9e98031d450c6e9d527af6ec8fd8876d80eb996ebb7e52c2992fa9` |
+
+Oba pliki mają kod `8000`, certyfikat testowego `0.7.0` oraz zweryfikowane wyrównanie ZIP i ELF 16 KiB. GitHub Actions buduje wariant ARM64. Wymagane sekrety to `ANDROID_TEST_KEYSTORE_BASE64` i `ANDROID_TEST_KEYSTORE_PASSWORD` z istniejącego magazynu. Przygotowany preset AAB do Play wymaga osobnego klucza upload zarejestrowanego przez właściciela oraz właściwych ustawień weryfikatora i reklam. Podpisanego AAB właścicielskiego jeszcze nie wyeksportowano. [Ustawienia sekretów](https://github.com/kogonowski52-png/HighwayBusinessTycoon/settings/secrets/actions) · [Konfiguracja eksportu](MONETIZATION.md) · [Kompatybilność](ANDROID_QA.md)
 
 ## Aktualizacja i zapis
 

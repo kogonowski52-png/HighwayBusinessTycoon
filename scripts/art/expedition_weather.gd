@@ -55,7 +55,7 @@ func apply(site: HbtEconomy, event: Dictionary, quality: int, choice: String) ->
 		"snow": site.conditions = {"workshop": 1.22, "truck": 1.12, "motel": 1.24, "restaurant": 1.19}
 	if changed:
 		configure_particles(condition)
-	var cap: int = [18, 31, 48][quality]
+	var cap: int = [12, 28, 48, 65][quality]
 	if effect.amount != cap:
 		effect.amount = cap
 	effect.emitting = condition in ["rain", "snow", "wind"]

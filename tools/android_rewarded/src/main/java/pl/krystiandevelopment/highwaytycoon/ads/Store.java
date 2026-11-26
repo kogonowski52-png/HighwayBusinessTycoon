@@ -38,12 +38,29 @@ final class Store {
     private final Map<String, ProductDetails> products = new ConcurrentHashMap<>();
     private final AtomicBoolean checkout = new AtomicBoolean();
     private final AtomicBoolean identity = new AtomicBoolean();
-    private BillingClient client;
+    private volatile BillingClient client;
     private List<QueryProductDetailsParams.Product> ids = java.util.Collections.emptyList();
-    private boolean connecting;
+    private volatile boolean connecting;
+    private volatile boolean connectionAttempted;
 
     Store(HighwayRewarded bridge) { this.bridge = bridge; }
     boolean checkoutOpen() { return checkout.get() || identity.get(); }
+    String diagnosticStatus() {
+        final BillingClient connected = client;
+        return connected != null && connected.isReady() ? "ready"
+                : connecting ? "loading" : connectionAttempted ? "failed" : "idle";
+    }
+
+    void close() {
+        if (client != null) {
+            client.endConnection();
+            client = null;
+        }
+        products.clear();
+        connecting = false;
+        checkout.set(false);
+        identity.set(false);
+    }
 
     void connect(String input) {
         Activity host = bridge.activity();
@@ -72,6 +89,7 @@ final class Store {
         }
         if (connecting) return;
         connecting = true;
+        connectionAttempted = true;
         if (client == null) {
             client = BillingClient.newBuilder(host.getApplicationContext())
                 .setListener((result, purchases) -> {

@@ -1,0 +1,10 @@
+[Unit]
+Description=Hourly purchase reconciliation and daily SQLite snapshot
+
+[Timer]
+OnCalendar=hourly
+Persistent=yes
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

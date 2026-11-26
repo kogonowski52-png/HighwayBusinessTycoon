@@ -15,6 +15,7 @@ var pending := ""
 var offer := ""
 var context := {}
 var confirmed := false
+var reward_receipts := 0
 var interstitial := ""
 var break_counted := false
 
@@ -138,6 +139,7 @@ func receive(token: String) -> void:
 	if pending.is_empty() or pending != token or confirmed or context.district != region().district:
 		return
 	confirmed = true
+	reward_receipts += 1
 	game.sync_commercial_clock()
 	var e := region()
 	var world: HbtCampaign = game.campaign

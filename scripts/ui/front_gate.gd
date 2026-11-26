@@ -11,6 +11,7 @@ const FontHeavy = preload("res://assets/fonts/OpenSans-ExtraBold.ttf")
 const Strings = preload("res://localization/strings.gd")
 const Saving = preload("res://scripts/core/save_manager.gd")
 const Preferences = preload("res://scripts/core/player_preferences.gd")
+const WorldStream = preload("res://scripts/core/world_stream.gd")
 const Touch = preload("res://scripts/ui/touch_button.gd")
 
 var play: Button
@@ -28,6 +29,8 @@ var load_progress := 0.0
 var loading_world := false
 var world_logic: Script
 var road_file := ROAD
+var district := "north"
+var stream: WorldStream
 @onready var route_audio: Node = get_node("/root/RouteAudio")
 var profile_path := ""
 
@@ -44,6 +47,7 @@ func _ready() -> void:
 		var last: Variant = world.get("active", "north")
 		if last is String and Atlas.DESTINATIONS.get(last, {}).has("scene"):
 			road_file = Atlas.DESTINATIONS[last].scene
+			district = last
 	resume_game = not profile.is_empty() or save.read_only
 	locale = "en" if profile.get("language") == "en" else "pl"
 	var prefs := Preferences.new()
@@ -54,6 +58,7 @@ func _ready() -> void:
 	route_audio.set_track("menu")
 	build_layout()
 	update_copy()
+	set_process(false)
 
 func build_layout() -> void:
 	var colors := Gradient.new()
@@ -186,6 +191,7 @@ func begin_loading() -> void:
 	if busy:
 		return
 	busy = true
+	set_process(true)
 	wait_frames = 0
 	load_progress = 0.0
 	load_bar.value = 0.0
@@ -203,28 +209,25 @@ func _process(delta: float) -> void:
 	if not loading_world:
 		# Compile shared GDScript dependencies on the main thread before streaming the scene.
 		world_logic = load(WORLD_LOGIC) as Script
-		if world_logic == null or not world_logic.can_instantiate() or ResourceLoader.load_threaded_request(road_file) != OK:
+		if world_logic == null or not world_logic.can_instantiate():
 			show_failure()
 			return
+		stream = WorldStream.new()
+		add_child(stream)
+		stream.start(road_file, district)
 		loading_world = true
 		return
-	var progress := []
-	var status := ResourceLoader.load_threaded_get_status(road_file, progress)
-	if status in [ResourceLoader.THREAD_LOAD_FAILED, ResourceLoader.THREAD_LOAD_INVALID_RESOURCE]:
-		if status == ResourceLoader.THREAD_LOAD_FAILED:
-			ResourceLoader.load_threaded_get(road_file)
-		show_failure()
-		return
-	var latest: float = progress[0] if not progress.is_empty() else 0.0
+	var latest := stream.poll()
 	load_progress = move_toward(load_progress, latest, delta * 3.2)
 	load_bar.value = load_progress
-	if status == ResourceLoader.THREAD_LOAD_LOADED:
-		var scene := ResourceLoader.load_threaded_get(road_file) as PackedScene
-		if scene == null:
+	if stream.done():
+		if stream.failed or stream.target_scene == null:
+			stream.queue_free()
 			show_failure()
 			return
 		busy = false
-		enter_game.call_deferred(scene)
+		set_process(false)
+		enter_game.call_deferred(stream.target_scene)
 
 func enter_game(scene: PackedScene) -> void:
 	var route := scene.instantiate()
@@ -238,6 +241,7 @@ func enter_game(scene: PackedScene) -> void:
 func show_failure() -> void:
 	busy = false
 	loading_world = false
+	set_process(false)
 	loading.show()
 	load_caption.text = Strings.phrase(locale, "front_error")
 	play.show()

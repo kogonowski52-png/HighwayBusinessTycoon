@@ -16,6 +16,7 @@ const ROOFLINE := {"fuel": 3.80, "cafe": 2.59, "restrooms": 2.71, "vip_park": 3.
 	"showers": 2.71, "motel": 4.31, "truck_park": 4.46, "drive_through": 2.66, "charge": 3.22}
 
 var buildings := {}
+var built_venues := {}
 var plots := {}
 var upgrades := {}
 var roof_counts := {}
@@ -27,29 +28,42 @@ func _ready() -> void:
 	for id in Routes.FRONTS:
 		var at: Vector3 = Routes.FRONTS[id]
 		roof_counts[id] = 0
-		var parts := Node3D.new()
-		add_child(parts)
 		upgrades[id] = []
 		for index in UPGRADES.size():
-			var part_at := at + upgrade_offset(id, index)
-			var part := Art.place(parts, "desert", "upgrade_" + UPGRADES[index], part_at)
-			part.hide()
-			upgrades[id].append(part)
+			upgrades[id].append(anchor_at(at + upgrade_offset(id, index), false))
 		if id == "fuel":
 			continue
-		var building := Art.place(self, "desert", id, at)
+		buildings[id] = anchor_at(at, false)
+		# Contact stamps were visible on the vacant lots as well.
 		Art.contact(self, at + Vector3(0, -.010, 0), 9.0 if Routes.is_truck(id) else 6.1, 4.20)
-		var placard: Array = SIGNS[id]
-		Art.sign(building, Vector3(0, placard[1], placard[2]), placard[0], .25, Color("#fff0c0"))
-		buildings[id] = building
-		var pad := Node3D.new()
-		pad.position = at
-		add_child(pad)
+		var pad := anchor_at(at)
 		Art.place(pad, "desert", "upgrade_storage", Vector3(.10, 0, .63))
 		var marker := Kit.box(pad, Vector3(-.83, .52, 1.07), Vector3(.51, .19, .12), Color("#e9b667"))
 		marker.rotation.z = 0.12
 		Kit.box(pad, Vector3(-.83, .22, 1.07), Vector3(.06, .45, .05), Color("#69564c"))
 		plots[id] = pad
+
+func anchor_at(at: Vector3, shown := true) -> Node3D:
+	var node := Node3D.new()
+	node.position = at
+	node.visible = shown
+	add_child(node)
+	return node
+
+func open_venue(id: String) -> void:
+	if built_venues.has(id):
+		return
+	var building: Node3D = buildings[id]
+	Art.place(building, "desert", id)
+	var placard: Array = SIGNS[id]
+	Art.sign(building, Vector3(0, placard[1], placard[2]), placard[0], .25, Color("#fff0c0"))
+	if id == "charge":
+		setup_charging()
+	elif id == "truck":
+		shutter = Kit.box(building, Vector3(0, 3.39, 2.31), Vector3(4.7, 1.20, .12), Color("#779386"))
+	built_venues[id] = true
+
+func setup_charging() -> void:
 	for bay: Vector3 in Routes.BAYS.charge:
 		var item := Art.place(buildings.charge, "desert", "charger", bay - Routes.FRONTS.charge + Vector3(-1.17, 0, -.66))
 		chargers.append(item)
@@ -59,7 +73,6 @@ func _ready() -> void:
 		light.omni_range = 1.86
 		item.add_child(light)
 		lamps.append(light)
-	shutter = Kit.box(buildings.truck, Vector3(0, 3.39, 2.31), Vector3(4.7, 1.20, .12), Color("#779386"))
 
 func upgrade_offset(id: String, index: int) -> Vector3:
 	var width := 6.75 if Routes.is_truck(id) else 3.77
@@ -78,10 +91,17 @@ func update_sites(economy: HbtEconomy) -> void:
 		if id != "fuel":
 			buildings[id].visible = level > 0
 			plots[id].visible = level == 0
-		var stage := THRESHOLDS.filter(func(tier: int) -> bool: return level >= tier).size()
+			if level > 0:
+				open_venue(id)
+		var stage := 0
+		for tier in THRESHOLDS:
+			stage += int(level >= tier)
 		roof_counts[id] = stage
 		for index in UPGRADES.size():
-			upgrades[id][index].visible = index + 1 < stage
+			var fixture: Node3D = upgrades[id][index]
+			fixture.visible = index + 1 < stage
+			if fixture.visible and fixture.get_child_count() == 0:
+				Art.place(fixture, "desert", "upgrade_" + UPGRADES[index])
 	for index in chargers.size():
 		chargers[index].visible = index < economy.capacity("charge")
 
@@ -98,6 +118,8 @@ func update_chargers(dispatch: HbtDispatch) -> void:
 	for index in lamps.size():
 		var ticket := dispatch.visit_at("charge", index)
 		lamps[index].light_energy = .61 if ticket != null and ticket.phase == HbtVisit.Phase.WORKING else 0.0
+	if not is_instance_valid(shutter):
+		return
 	var carrier := dispatch.visit_at("truck", 0)
 	var height := 4.02 if carrier != null else 3.39
 	shutter.position.y = lerpf(shutter.position.y, height, .12)
