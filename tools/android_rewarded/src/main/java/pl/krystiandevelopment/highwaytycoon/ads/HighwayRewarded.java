@@ -2,6 +2,7 @@ package pl.krystiandevelopment.highwaytycoon.ads;
 
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -37,6 +38,7 @@ public final class HighwayRewarded extends GodotPlugin {
                 new SignalInfo("reward_availability"),
                 new SignalInfo("reward_earned", String.class),
                 new SignalInfo("reward_closed", String.class),
+                new SignalInfo("reward_show_failed", String.class),
                 new SignalInfo("ad_shown", String.class),
                 new SignalInfo("break_shown", String.class),
                 new SignalInfo("break_closed", String.class),
@@ -54,7 +56,10 @@ public final class HighwayRewarded extends GodotPlugin {
         ads.resume();
     }
 
-    @Override public void onMainDestroy() { store.close(); }
+    @Override public void onMainDestroy() {
+        ads.stop();
+        store.close();
+    }
 
     boolean suspended() { return suspended; }
 
@@ -97,6 +102,8 @@ public final class HighwayRewarded extends GodotPlugin {
     }
 
     @UsedByGodot public boolean adsConfigured() { return !config("rewarded_boost").isEmpty(); }
+    @UsedByGodot public void preloadAds() { if (adsConfigured()) ads.start(); }
+    @UsedByGodot public String adPlacementState(String slot) { return ads.state(slot); }
     @UsedByGodot public boolean rewardReady(String slot) { return ads.rewardReady(slot); }
     @UsedByGodot public boolean rewardLoading(String slot) { return ads.rewardLoading(slot); }
     @UsedByGodot public boolean privacyOptionsRequired() { return ads.privacyRequired(); }
@@ -105,6 +112,8 @@ public final class HighwayRewarded extends GodotPlugin {
     @UsedByGodot public boolean showRewarded(String slot, String ticket) {
         return TICKET.matcher(ticket).matches() && !store.checkoutOpen() && ads.showRewarded(slot, ticket);
     }
+    @UsedByGodot public boolean cancelRewarded(String ticket) { return ads.cancelRewarded(ticket); }
+    boolean checkoutOpen() { return store.checkoutOpen(); }
     @UsedByGodot public boolean breakReady() { return ads.breakReady(); }
     @UsedByGodot public void prepareBreak() { ads.prepareBreak(); }
     @UsedByGodot public boolean showBreak(String ticket) {
@@ -118,8 +127,29 @@ public final class HighwayRewarded extends GodotPlugin {
     @UsedByGodot public String diagnosticConsent() {
         return diagnosticsEnabled() && adsConfigured() ? ads.consentStatus() : "unconfigured";
     }
+    @UsedByGodot public String diagnosticConsentError() {
+        return diagnosticsEnabled() ? ads.consentProblem() : "";
+    }
+    @UsedByGodot public String diagnosticAdSlot(String slot) {
+        return diagnosticsEnabled() ? ads.diagnostic(slot) : "";
+    }
     @UsedByGodot public String diagnosticBilling() {
         return diagnosticsEnabled() && billingConfigured() ? store.diagnosticStatus() : "unconfigured";
+    }
+
+    @UsedByGodot public String serviceMode() { return config("mode"); }
+    @UsedByGodot public boolean installedFromPlay() {
+        Activity host = activity();
+        if (host == null) return false;
+        try {
+            PackageManager pm = host.getPackageManager();
+            String name = Build.VERSION.SDK_INT >= 30
+                ? pm.getInstallSourceInfo(host.getPackageName()).getInstallingPackageName()
+                : pm.getInstallerPackageName(host.getPackageName());
+            return "com.android.vending".equals(name);
+        } catch (PackageManager.NameNotFoundException | SecurityException ignored) {
+            return false;
+        }
     }
 
     @UsedByGodot public String privacyPolicyUrl() { return config("privacy_url"); }

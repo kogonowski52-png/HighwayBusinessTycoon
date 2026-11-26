@@ -34,8 +34,9 @@ func run() -> void:
 	await close_sheet()
 	await show("shop", "03-start-sklep.jpg")
 	var shop = game.operations.premium
-	shop.choose_tab("shop_packs")
+	shop.choose_tab("shop_gems")
 	await scene_photo("04-pakiety-diamentow.jpg")
+	shop.choose_tab("shop_business")
 	await reveal("Pakiet rozbudowy")
 	await scene_photo("05-pakiet-rozbudowy.jpg")
 	shop.choose_tab("shop_free")
@@ -52,13 +53,17 @@ func run() -> void:
 	await close_sheet()
 
 	provider = Fixture.new()
+	provider.auto_complete = false
 	game.ads.connect_provider(provider)
 	mark_fixture()
 	game.open_page("boost")
 	await scene_photo("13-boost-przygotowanie.jpg")
-	await click_row(game.t("ad_prepare"))
-	await scene_photo("14-boost-film-gotowy.jpg")
 	await click_row(game.t("boost_watch"))
+	await scene_photo("14-boost-film-gotowy.jpg")
+	expect(game.ads.waiting("boost") and provider.screens == 0, "first tap waits for the SDK")
+	provider.auto_complete = true
+	provider.complete("boost", true)
+	await process_frame
 	expect(game.ads.busy(), "native contract waits for a callback")
 	await scene_photo("15-oczekiwanie-na-zdarzenie.jpg")
 	provider.finish(true, true)

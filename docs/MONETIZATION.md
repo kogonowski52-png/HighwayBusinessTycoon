@@ -1,4 +1,6 @@
-# Etap 6 · BOOST, reklamy i sklep
+# BOOST, reklamy i sklep
+
+Wydanie 0.9.2 wstępnie ładuje reklamy po UMP i udostępnia anulowalne oczekiwanie. Aktualne próby i stan usług opisuje raport sklepu i reklam. [Raport 0.9.2](ANDROID_COMMERCE_092.md)
 
 ## Co znajduje się w grze
 
@@ -25,22 +27,22 @@ Godot 4.7.2 Stable, JDK 21, Android SDK 36 i Build Tools 36.1.0 dla szablonu, Gr
 
 ```bash
 export HBT_ANDROID_TEMPLATE=/pełna/ścieżka/android_source.zip
-tools/android/build-monetization.sh test /pełna/ścieżka/HighwayBusinessTycoon-0.9.0-RC.apk
+tools/android/build-monetization.sh test /pełna/ścieżka/HighwayBusinessTycoon-0.9.2-test.apk
 ```
 
-Środowisko eksportu musi otrzymać dotychczasowe zmienne `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER`, `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`. Plik APK można porównać z lokalnym 0.6.1 poleceniem `tools/android/verify-monetization-apk.sh NEW.apk OLD.apk` po ustawieniu `ANDROID_BUILD_TOOLS_DIR`. [Stały certyfikat](ANDROID_SIGNING.md)
+Środowisko eksportu musi otrzymać dotychczasowe zmienne `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER`, `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`. Plik APK można porównać z poprzednim testowym APK poleceniem `tools/android/verify-monetization-apk.sh NEW.apk OLD.apk` po ustawieniu `ANDROID_BUILD_TOOLS_DIR`. [Stały certyfikat](ANDROID_SIGNING.md)
 
 ## Konfiguracja AdMob na koncie właściciela
 
 1. W AdMob dodaj lub wybierz istniejącą aplikację Android o identyfikatorze `pl.krystiandevelopment.highwaytycoon`. Skopiuj jej App ID do `HBT_ADMOB_APP_ID`.
 2. Utwórz trzy jednostki **Rewarded**. Wprowadź identyfikatory jako `HBT_REWARDED_BOOST_ID`, `HBT_REWARDED_OFFLINE_ID` i `HBT_REWARDED_BONUS_ID`. Ich nazwy w konsoli powinny wskazywać miejsca emisji. Kwoty dla gracza ustala konfiguracja w grze.
 3. Opcjonalnie utwórz jednostkę **Interstitial** i użyj `HBT_INTERSTITIAL_ID`. `HBT_INTERSTITIALS=off` całkowicie wyłącza ten format w danej kompilacji.
-4. W AdMob **Privacy & messaging** opublikuj właściwy komunikat zgody dla aplikacji i testuj także możliwość ponownego otwarcia formularza. Dopiero `canRequestAds()` pozwala inicjalizować SDK i pobrać reklamę. Okno nie pojawia się przy uruchomieniu gry.
+4. W AdMob **Privacy & messaging** opublikuj właściwy komunikat zgody dla aplikacji i testuj także możliwość ponownego otwarcia formularza. Dopiero `canRequestAds()` pozwala inicjalizować SDK i pobrać reklamę. Gdy Google wymaga zgody, formularz może pojawić się po wejściu na mapę.
 5. Na urządzeniach wewnętrznych użyj wyłącznie testowego presetu lub skonfigurowanych urządzeń testowych. Testowy preset automatycznie wybiera publiczny App ID `ca-app-pub-3940256099942544~3347511713`, Rewarded `ca-app-pub-3940256099942544/5224354917` dla każdego miejsca i Interstitial `ca-app-pub-3940256099942544/1033173712`.
 
 Punkty weryfikacji właściciela przed użyciem prawdziwych jednostek to polityka nagród, zgody dla rzeczywistej grupy docelowej, konfiguracja regionalna i przegląd deklaracji prywatności. [Rewarded](https://developers.google.com/admob/android/rewarded) · [Interstitial](https://developers.google.com/admob/android/interstitial) · [UMP](https://developers.google.com/admob/android/privacy) · [Polityka nagród](https://support.google.com/admob/answer/7313578)
 
-## Parametry wydania 0.9.0
+## Parametry eksportu
 
 Zmiennych nie trzeba wpisywać do GDScriptu. `tools/android/build-monetization.sh` sprawdza wartości i stan HTTPS weryfikatora, a `addons/highway_rewarded/plugin.gd` dodaje metadane manifestu. Aktywację przerywników kontroluje opcja `HBT_INTERSTITIALS=off`.
 

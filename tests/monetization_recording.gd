@@ -21,6 +21,7 @@ func run() -> void:
 	site.skip_tutorial()
 	site.traffic.dispatch.spawning = false
 	var test_source := Fixture.new()
+	test_source.auto_complete = false
 	site.ads.connect_provider(test_source)
 	var layer := CanvasLayer.new()
 	layer.layer = 15
@@ -36,9 +37,9 @@ func run() -> void:
 	await create_timer(.7).timeout
 	press(site.hud.boost_button)
 	await create_timer(1.15).timeout
-	await select_button(site, site.t("ad_prepare"))
-	await create_timer(1.10).timeout
 	await select_button(site, site.t("boost_watch"))
+	await create_timer(1.10).timeout
+	test_source.complete("boost", true)
 	await create_timer(.78).timeout
 	var requested: bool = site.ads.busy()
 	test_source.finish(true, true)

@@ -1,5 +1,7 @@
 # Licencje zasobów
 
+Ilustracje kart sklepu i cieniowane tła w 0.9.2 są zasobami autorskimi. Skrypt tools/art/premium_offer_art.py składa je z renderów modeli tej gry i nowych elementów rysowanych proceduralnie. [Zasoby](assets/ui/premium/offers)
+
 ## Zasoby 0.9.1
 
 Ilustracje 41 usług pochodzą z własnych modeli gry i zostały wyrenderowane w Godocie. Kolorowy młotek i kłódka są autorskimi ikonami tego wydania. [Generator kadrów](tools/art/render_business_cards.gd)

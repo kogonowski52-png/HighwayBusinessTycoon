@@ -3,6 +3,7 @@ extends RefCounted
 const STEP_SECONDS := 300
 const CAP_SECONDS := 1800
 const INCOME_MULTIPLIER := 2
+const AD_WAIT_MSEC := 12_000
 const DAY := 86_400
 const PLAY_BEFORE_BREAK := 900
 const BREAK_INTERVAL := 480

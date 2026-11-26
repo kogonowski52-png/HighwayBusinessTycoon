@@ -40,6 +40,7 @@ var ducked := false
 var streams: Dictionary = {}
 var mixer_levels: Dictionary = {}
 var suspended := false
+var ad_fullscreen := false
 var stopping := false
 
 func _ready() -> void:
@@ -112,7 +113,7 @@ func update_field(strength: Dictionary, mute := false) -> void:
 		targets[key] = clampf(strength.get(key, 0.0), 0.0, 1.0)
 
 func _process(delta: float) -> void:
-	if suspended:
+	if suspended or ad_fullscreen:
 		return
 	for key in ambience:
 		var voice: AudioStreamPlayer = ambience[key]
@@ -134,9 +135,16 @@ func _notification(what: int) -> void:
 	if not OS.has_feature("mobile") or what not in [NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_RESUMED]:
 		return
 	suspended = what == NOTIFICATION_APPLICATION_PAUSED
+	apply_pause()
+
+func set_ad_fullscreen(value: bool) -> void:
+	ad_fullscreen = value
+	apply_pause()
+
+func apply_pause() -> void:
 	for voice in get_children():
 		if voice is AudioStreamPlayer:
-			voice.stream_paused = suspended
+			voice.stream_paused = suspended or ad_fullscreen
 
 func shut_down() -> void:
 	if stopping:

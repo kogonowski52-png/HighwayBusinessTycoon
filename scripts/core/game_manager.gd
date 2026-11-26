@@ -47,6 +47,7 @@ var economy := HbtEconomy.new()
 var campaign: HbtCampaign
 var routes: Object = Routes
 var traveling := false
+var deferred_ad_feedback := ""
 var travel_layer: CanvasLayer
 var travel_progress: ProgressBar
 var arrived_from_trip := false
@@ -179,6 +180,8 @@ func _ready() -> void:
 	ads.rewarded.connect(ad_rewarded)
 	ads.failed.connect(func() -> void: show_message(t("bonus_unavailable")))
 	ads.unconfirmed.connect(func() -> void: show_message(t("boost_unconfirmed")))
+	ads.commercial_started.connect(route_audio.set_ad_fullscreen.bind(true))
+	ads.commercial_finished.connect(route_audio.set_ad_fullscreen.bind(false))
 	add_child(purchases)
 	purchases.bind(self)
 	purchases.changed.connect(operations.refresh)
@@ -190,7 +193,7 @@ func _ready() -> void:
 		diagnostics = load(Diagnostics).new()
 		diagnostics.game = self
 		add_child(diagnostics)
-	ads.availability_changed.connect(operations.refresh)
+	ads.availability_changed.connect(on_ad_state_changed)
 	get_viewport().size_changed.connect(frame_camera)
 	get_viewport().size_changed.connect(operations.apply_layout)
 	frame_camera()
@@ -308,7 +311,7 @@ func tick_game(delta: float) -> void:
 		economy.clock = campaign.boost.observe_device(int(Time.get_unix_time_from_system()), false)
 	else:
 		campaign.boost.advance(economy.clock)
-	if not ads.busy() and not purchases.busy():
+	if not ads.displaying() and not purchases.busy():
 		campaign.premium.active_seconds += delta
 	if world_second != economy.clock:
 		world_second = economy.clock
@@ -411,6 +414,7 @@ func _notification(what: int) -> void:
 					economy.clock = campaign.boost.observe_device(int(Time.get_unix_time_from_system()))
 				economy.checkpoint()
 				suspended_at = Time.get_ticks_msec()
+				ads.cancel_wait()
 				render_budget.clear_sample()
 				if OS.has_feature("mobile"):
 					paused_3d = get_viewport().disable_3d
@@ -425,7 +429,11 @@ func _notification(what: int) -> void:
 				suspended_at = -1
 				simulation_clock = float(economy.clock)
 				economy.checkpoint()
-				if not economy.offline_pending.empty() and not ads.busy():
+				if not deferred_ad_feedback.is_empty():
+					var reward := deferred_ad_feedback
+					deferred_ad_feedback = ""
+					ad_rewarded(reward)
+				elif not economy.offline_pending.empty() and not ads.busy() and not operations.modal_open():
 					operations.show_page("offline")
 				refresh()
 		NOTIFICATION_WM_GO_BACK_REQUEST:
@@ -440,6 +448,7 @@ func leave_game() -> void:
 	if closing:
 		return
 	closing = true
+	ads.cancel_wait()
 	set_physics_process(false)
 	economy.checkpoint()
 	route_audio.shut_down()
@@ -481,11 +490,13 @@ func serve_customer() -> void:
 func open_page(name: String) -> void:
 	if name == "diagnostics" and not is_instance_valid(diagnostics):
 		return
+	if traveling or ads.displaying():
+		return
 	if name == "shop":
 		log_commercial("shop_opened")
 		purchases.open()
-	if traveling:
-		return
+	elif name == "pass":
+		purchases.open()
 	camera_rig.release_gestures()
 	camera_rig.cancel_film(true)
 	if economy.tutorial_step == 2 and name == "goals":
@@ -691,19 +702,15 @@ func collect_income() -> void:
 		economy.checkpoint()
 
 func claim_offline() -> void:
-	if ads.busy():
+	if ads.displaying():
 		return
+	ads.cancel_wait()
 	var value := economy.redeem_offline()
 	if not value.empty():
 		operations.hide_page()
 		show_message(t("collect_action") % money(value))
 		reward_feedback()
 		economy.checkpoint()
-
-func start_offline_ad() -> void:
-	if not ads.request("offline"):
-		show_message(t("bonus_unavailable"))
-	operations.refresh()
 
 func sync_commercial_clock() -> void:
 	if wall_override >= 0:
@@ -715,17 +722,19 @@ func sync_commercial_clock() -> void:
 		economy.clock = now
 
 func offer_ad(id: String, detail: Dictionary = {}) -> void:
-	if purchases.busy() or not ads.playable(id, detail):
-		return
-	if ads.ready(id):
-		if not ads.request(id, detail):
-			show_message(t("bonus_unavailable"))
-	else:
-		ads.prepare(id)
-		show_message(t("ad_loading") if ads.loading(id) else t("bonus_unavailable"))
+	if not ads.request(id, detail):
+		show_message(t("bonus_unavailable"))
+	operations.refresh()
+
+func on_ad_state_changed() -> void:
+	if is_instance_valid(hud.boost_button):
+		refresh_boost_hud()
 	operations.refresh()
 
 func ad_rewarded(id: String) -> void:
+	if suspended_at >= 0:
+		deferred_ad_feedback = id
+		return
 	if id == "boost":
 		boost_was_active = true
 		feedback.play("boost", true)
@@ -736,7 +745,8 @@ func ad_rewarded(id: String) -> void:
 			hud.animate_reward(hud.boost_button.get_global_rect().get_center(), true)
 		hud.announce(t("boost_earned"), hud.BOLT, motion_enabled())
 	elif id == "offline":
-		operations.hide_page()
+		if operations.page == "offline":
+			operations.hide_page()
 		reward_feedback()
 	else:
 		reward_feedback("reward", id in ["cash", "mission"])
@@ -888,6 +898,14 @@ func flow_text() -> String:
 func boost_time(seconds: int) -> String:
 	return "%02d:%02d" % [floori(seconds / 60.0), seconds % 60]
 
+func refresh_boost_hud() -> void:
+	var left := campaign.boost.remaining(economy.clock)
+	var placement := ads.placement_status("boost")
+	var status := "ad_short_ready" if placement == "ready" else "ad_short_loading" \
+		if placement in ["initializing", "loading", "reloading"] else "ad_short_showing" \
+		if placement == "showing" else "ad_short_unavailable"
+	hud.set_boost(left, RevenueConfig.CAP_SECONDS, boost_time(left), t("boost_active"), t(status), motion_enabled())
+
 @warning_ignore("integer_division")
 func clock_text(seconds: int) -> String:
 	return "%dh %02dm" % [seconds / 3600, seconds / 60 % 60] if seconds >= 3600 else "%dm %02ds" % [seconds / 60, seconds % 60]
@@ -895,10 +913,10 @@ func clock_text(seconds: int) -> String:
 func refresh() -> void:
 	if not is_instance_valid(hud.cash):
 		return
-	var left := campaign.boost.remaining(economy.clock)
-	hud.set_boost(left, RevenueConfig.CAP_SECONDS, boost_time(left), t("boost_active"), motion_enabled())
+	refresh_boost_hud()
 	if operations.page in ["boost", "reward_offer"] and operations.modal_open():
 		operations.refresh()
+	if operations.modal_open():
 		operations.premium.update_clock()
 	hud.lighting.text = t(LOOK_LABELS[lighting.current])
 	hud.lighting.tooltip_text = t("lighting_tip")

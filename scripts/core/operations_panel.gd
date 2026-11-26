@@ -81,6 +81,7 @@ func setup(game: Node3D, hud: CanvasLayer) -> void:
 	back = hud.action(top, 145, 90, false)
 	back.pressed.connect(hide_page)
 	business.setup(self, stack)
+	premium.setup_navigation(stack)
 	scroll = TouchScroll.new()
 	scroll.touch_area = panel
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -112,7 +113,11 @@ func show_page(name: String) -> void:
 	if opening != null and opening.is_running() and entering:
 		opening.kill()
 	page = name
+	if entering:
+		controller.ads.cancel_wait()
+		controller.purchases.cancel_selection()
 	business.tabs.visible = page == "sites"
+	premium.navigation.visible = page == "shop"
 	if entering and page == "sites" and controller.economy.tutorial_step == 5:
 		business.filter = "sites_all"
 	closing = false
@@ -169,6 +174,8 @@ func hide_page() -> void:
 	if not modal_open():
 		return
 	closing = true
+	controller.ads.cancel_wait()
+	controller.purchases.cancel_selection()
 	scroll.listening = false
 	scroll.cancel_interaction()
 	refresh_pending = false
@@ -608,14 +615,10 @@ func show_offline() -> void:
 	credited.text = controller.t("offline_limit") % [controller.clock_text(store.offline_seconds), controller.clock_text(store.offline_limit())]
 	mission_bar(card, store.offline_seconds, store.offline_limit())
 	button(card, controller.t("claim_offline") % controller.money(value), controller.claim_offline,
-		controller.ads.busy(), true)
+		controller.ads.displaying(), true)
 	if controller.ads.available() and controller.ads.playable("offline"):
-		if controller.ads.busy() or controller.ads.ready():
-			var desc: String = controller.t("bonus_running") if controller.ads.busy() else controller.t("claim_bonus") % controller.money(value.plus(store.offline_eligible()))
-			button(card, desc, controller.start_offline_ad, controller.ads.busy())
-		else:
-			var loading: bool = controller.ads.loading()
-			button(card, controller.t("ad_loading" if loading else "ad_prepare"), controller.ads.prepare.bind("offline"), loading)
+		var desc: String = controller.t("claim_bonus") % controller.money(value.plus(store.offline_eligible()))
+		premium.ad_action(card, "offline", {}, true, desc)
 
 func feature(picture: Texture2D, title: String, detail := "") -> VBoxContainer:
 	var surface := PanelContainer.new()

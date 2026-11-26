@@ -53,6 +53,7 @@ class MobileExport extends EditorExportPlugin:
 			"highwaytycoon.rewarded_bonus": TEST_REWARD if test else read_identifier("HBT_REWARDED_BONUS_ID", "/"),
 			"highwaytycoon.interstitial": TEST_BREAK if test else read_identifier("HBT_INTERSTITIAL_ID", "/"),
 			"highwaytycoon.billing": "true",
+			"highwaytycoon.mode": "test" if test else "production",
 			"highwaytycoon.diagnostics": "true" if test and _debug else "",
 		}
 		if OS.get_environment("HBT_INTERSTITIALS") == "off":

@@ -9,8 +9,6 @@ var text: Label
 var frames := 0
 var elapsed := 0.0
 var average := 0.0
-var probe: HTTPRequest
-var verifier := "diagnostic_unconfigured"
 
 func _ready() -> void:
 	layer = 15
@@ -22,13 +20,6 @@ func _ready() -> void:
 	text = game.hud.caption(board, 23, Color("#fff3d4"), game.hud.HEAVY)
 	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	board.hide()
-	probe = HTTPRequest.new()
-	probe.timeout = 5.0
-	probe.body_size_limit = 1024
-	add_child(probe)
-	probe.request_completed.connect(verification_status)
-	if game.purchases.verified_checkout():
-		verifier = "diagnostic_idle"
 	set_process(false)
 
 func toggle() -> void:
@@ -74,36 +65,41 @@ func sdk_summary() -> String:
 	var ads_copy: String = game.t("diagnostic_unconfigured")
 	var ump_copy := ads_copy
 	var store_copy := ads_copy
+	var ump_code := ""
 	if is_instance_valid(native) and native.has_method("diagnosticAdState"):
 		ads_copy = game.t("diagnostic_" + str(native.diagnosticAdState()))
 		ump_copy = game.t("diagnostic_" + str(native.diagnosticConsent()))
 		store_copy = game.t("diagnostic_" + str(native.diagnosticBilling()))
-	return "AdMob · %s\nUMP · %s\n%s · %s / %s / %s\nBilling · %s  |  %s %d\nHTTPS · %s\nBOOST · %s  |  %s %d" % [
-		ads_copy, ump_copy, game.t("diagnostic_placements"), ad_slot("boost"), ad_slot("offline"), ad_slot("cash"), store_copy, game.t("diagnostic_products"), game.purchases.catalogue.size(),
-		game.t(verifier), game.clock_text(game.campaign.boost.remaining(game.economy.clock)),
-		game.t("diagnostic_confirmed"), game.ads.reward_receipts]
+		if native.has_method("diagnosticConsentError"):
+			ump_code = str(native.diagnosticConsentError())
+	var mode: String = game.purchases.service_mode()
+	var bill_code := ""
+	if not game.purchases.billing_source.is_empty():
+		bill_code = code_text("%s %d" % [game.purchases.billing_source, game.purchases.billing_code])
+	return "\n".join([
+		game.t("diagnostic_test_mode" if mode == "test" else "diagnostic_prod_mode" if mode == "production" else "diagnostic_desktop_mode"),
+		"AdMob · %s" % ads_copy,
+		"UMP · %s%s" % [ump_copy, code_text(ump_code)],
+		"BOOST · " + ad_slot("boost"),
+		game.t("offline_header") + " · " + ad_slot("offline"),
+		game.t("diagnostic_slot_bonus") + " · " + ad_slot("bonus"),
+		game.t("diagnostic_slot_break") + " · " + ad_slot("interstitial"),
+		"%s · %s (%d)" % [game.t("diagnostic_last_reward"), game.t("diagnostic_reward_" + game.ads.last_reward), game.ads.reward_receipts],
+		"Billing · %s · %s %d%s" % [store_copy, game.t("diagnostic_products"), game.purchases.catalogue.size(), bill_code],
+		"HTTPS · %s" % game.t(game.purchases.verifier),
+	])
 
 func ad_slot(key: String) -> String:
-	if not game.ads.available():
+	var native: Object = game.ads.provider
+	if not is_instance_valid(native) or not native.has_method("diagnosticAdSlot"):
 		return game.t("diagnostic_unconfigured")
-	return game.t("diagnostic_ready" if game.ads.ready(key) else (
-		"diagnostic_loading" if game.ads.loading(key) else "diagnostic_failed"))
+	var fields := str(native.diagnosticAdSlot(key)).split("|")
+	if fields.size() != 3:
+		return game.t("diagnostic_unconfigured")
+	return game.t("diagnostic_" + fields[0]) + (" · %s ms" % fields[1] if fields[1] != "-1" else "") + code_text(fields[2])
 
-func check_verifier() -> void:
-	if not game.purchases.verified_checkout():
-		return
-	var address: String = game.purchases.bridge.purchaseEndpoint()
-	verifier = "diagnostic_loading"
-	if probe.request(address.trim_suffix("/") + "/health") != OK:
-		verifier = "diagnostic_failed"
-	game.operations.refresh()
-
-func verification_status(result: int, code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
-	var payload: Variant = JSON.parse_string(body.get_string_from_utf8())
-	verifier = "diagnostic_ready" if result == HTTPRequest.RESULT_SUCCESS and code == 200 \
-		and payload is Dictionary and payload.get("status") == "ready" else "diagnostic_failed"
-	if game.operations.page == "diagnostics":
-		game.operations.refresh()
+func code_text(value: String) -> String:
+	return "" if value.is_empty() else " · " + game.t("diagnostic_sdk_code") % value
 
 func _exit_tree() -> void:
 	if is_instance_valid(board) and board.visible:

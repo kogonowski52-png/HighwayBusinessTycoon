@@ -1,6 +1,6 @@
 # Highway Business Tycoon
 
-**0.9.1** poprawia obsługę dotykową, budowę jednym dotknięciem, samouczek i oświetlenie. Testowy APK ARM64 ma kod 9001 i stały certyfikat aktualizacji. [Kadry i nagranie](screenshots/0.9.1/README.md) · [Testy](TEST_REPORT.md)
+**0.9.2** ładuje reklamy w tle i otwiera je po pierwszym dotknięciu. Sklep ma dziewięć ilustrowanych sekcji i pokazuje rzeczywisty stan Google Play. Podpisany APK na Android ARM64 ma kod 9002. [APK w GitHub Releases](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.2-rc.1) · [Galeria](screenshots/0.9.2/README.md) · [Raport](docs/ANDROID_COMMERCE_092.md)
 
 **0.9.0 Release Candidate** · wersja testowa ARM64 z kodem 9000. Wydanie dopracowuje pierwszy kontakt z grą, czytelność map, BOOST i weryfikację zakupów. Zachowuje sześć lokalizacji, 41 usług, 590 misji i dotychczasowy zapis. [Audyt](docs/RELEASE_AUDIT.md) · [Galeria i film](screenshots/0.9.0/README.md) · [Karta Google Play](release/play/README.md) · [Instrukcja wydania](docs/PLAY_CONSOLE_RC.md)
 
@@ -49,6 +49,7 @@ godot --headless --path . --script tests/desert_balance.gd
 godot --headless --path . --script tests/regional_checks.gd
 godot --headless --path . --script tests/campaign_balance.gd
 godot --headless --path . --script tests/monetization_checks.gd
+godot --headless --path . --script tests/commerce_window.gd
 godot --headless --path . --script tests/monetization_balance.gd
 godot --headless --path . --script tests/performance_checks.gd
 godot --headless --path . --script tests/fleet_profile.gd
@@ -70,6 +71,8 @@ godot --path . --script tests/performance_window.gd -- --capture-dir=/tmp/hbt-08
 godot --path . --script tests/quality_layout_window.gd -- --capture-dir=/tmp/hbt-080-layout
 godot --headless --path . --script tests/stability_run.gd -- --report=/tmp/hbt-080-endurance.json
 godot --path . --script tests/monetization_window.gd -- --capture-dir=/tmp/hbt-070-gallery
+godot --path . --script tests/commerce_window.gd -- --capture-dir=/tmp/hbt-092-shop
+godot --path . --write-movie /tmp/hbt-092-ad.avi --fixed-fps 20 --script tests/commerce_window.gd -- --record
 godot --path . --write-movie /tmp/hbt-070-boost.avi --fixed-fps 30 --script tests/monetization_recording.gd
 ```
 

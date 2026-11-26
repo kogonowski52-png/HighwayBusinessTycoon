@@ -1,6 +1,8 @@
 package pl.krystiandevelopment.highwaytycoon.ads;
 
 import android.app.Activity;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import com.google.android.gms.ads.AdError;
 import com.google.android.gms.ads.AdRequest;
@@ -15,26 +17,30 @@ import com.google.android.ump.ConsentInformation;
 import com.google.android.ump.ConsentRequestParameters;
 import com.google.android.ump.UserMessagingPlatform;
 
-import java.util.ArrayList;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 final class Ads {
     private static final String BREAK = "interstitial";
-    private static final long EXPIRATION = 50 * 60 * 1000;
-    private static final Set<String> PLACEMENTS = new java.util.HashSet<>(java.util.Arrays.asList("boost", "offline", "bonus"));
+    private static final long EXPIRATION = 50 * 60_000L;
+    private static final long LOAD_TIMEOUT = 25_000L;
+    private static final long[] RETRY = {3_000, 8_000, 20_000, 60_000, 120_000};
     private final HighwayRewarded bridge;
-    private final Set<String> loading = ConcurrentHashMap.newKeySet();
-    private final ConcurrentHashMap<String, Loaded> ready = new ConcurrentHashMap<>();
-    private final AtomicBoolean fullscreen = new AtomicBoolean();
+    private final Handler main = new Handler(Looper.getMainLooper());
+    private final Runnable scheduled = this::pump;
+    private final Map<String, Placement> placements = new LinkedHashMap<>();
+    private volatile Launch launch;
+    private volatile boolean running;
     private volatile boolean consentUpdating;
-    private boolean consentChecked;
+    private volatile boolean consentAllowed;
     private volatile boolean initializing;
     private volatile boolean initialized;
-    private int generation;
     private volatile boolean privacyRequired;
     private volatile String consentLabel = "idle";
+    private volatile String consentError = "";
+    // Request bookkeeping is owned by the UI thread.
+    private volatile boolean consentChecked;
+    private long consentRetryAt;
 
     private static final class Loaded {
         final Object ad;
@@ -42,200 +48,354 @@ final class Ads {
         Loaded(Object ad) { this.ad = ad; }
     }
 
-    Ads(HighwayRewarded bridge) { this.bridge = bridge; }
-    boolean fullscreen() { return fullscreen.get(); }
-    boolean privacyRequired() { return privacyRequired; }
-    boolean rewardLoading(String slot) { return loading.contains(slot); }
-    boolean rewardReady(String slot) { return PLACEMENTS.contains(slot) && usable(slot); }
-    boolean breakReady() { return usable(BREAK); }
-    String initializationStatus() {
-        return initialized ? "ready" : initializing || consentUpdating ? "loading" : "idle";
-    }
-    String consentStatus() { return consentUpdating ? "loading" : consentLabel; }
+    private static final class Placement {
+        final String name;
+        final String config;
+        volatile Loaded loaded;
+        volatile String phase = "unavailable";
+        volatile String error = "";
+        volatile long duration = -1;
+        long startedAt;
+        long retryAt;
+        int failures;
+        int requestId;
+        boolean requesting;
+        boolean previouslyLoaded;
 
-    void resume() {
-        Activity host = bridge.activity();
-        if (host != null && !loading.isEmpty() && !fullscreen()) {
-            host.runOnUiThread(() -> consentThenLoad(host));
+        Placement(String name) {
+            this.name = name;
+            config = BREAK.equals(name) ? name : "rewarded_" + name;
         }
     }
 
-    private boolean usable(String slot) {
-        Loaded item = ready.get(slot);
-        if (item == null) return false;
-        if (SystemClock.elapsedRealtime() < item.expires) return true;
-        ready.remove(slot, item);
-        return false;
+    private static final class Launch {
+        final Placement placement;
+        final Loaded loaded;
+        final String ticket;
+        boolean started;
+        boolean awarded;
+        boolean shown;
+
+        Launch(Placement placement, Loaded loaded, String ticket) {
+            this.placement = placement;
+            this.loaded = loaded;
+            this.ticket = ticket;
+        }
+    }
+
+    Ads(HighwayRewarded bridge) {
+        this.bridge = bridge;
+        for (String name : new String[]{"boost", "offline", "bonus", BREAK}) {
+            placements.put(name, new Placement(name));
+        }
+    }
+
+    boolean fullscreen() { return launch != null; }
+    boolean privacyRequired() { return privacyRequired; }
+
+    String initializationStatus() {
+        if (initialized) return "ready";
+        if (initializing || consentUpdating || running && !consentChecked) return "initializing";
+        return running ? "unavailable" : "idle";
+    }
+
+    String consentStatus() { return consentUpdating ? "loading" : consentLabel; }
+    String consentProblem() { return consentError; }
+
+    boolean rewardReady(String slot) {
+        return !BREAK.equals(slot) && "ready".equals(state(slot));
+    }
+    boolean rewardLoading(String slot) {
+        String state = state(slot);
+        return "loading".equals(state) || "reloading".equals(state) || "initializing".equals(state);
+    }
+    boolean breakReady() { return "ready".equals(state(BREAK)); }
+
+    String state(String name) {
+        Placement slot = placements.get(name);
+        if (slot == null || bridge.config(slot.config).isEmpty() || !running) return "unavailable";
+        Launch active = launch;
+        if (active != null && active.placement == slot) return "showing";
+        if (consentUpdating || !consentChecked || initializing) return "initializing";
+        if (!consentAllowed || bridge.suspended()) return "unavailable";
+        Loaded item = slot.loaded;
+        if (item != null && SystemClock.elapsedRealtime() < item.expires) return "ready";
+        return "ready".equals(slot.phase) ? "reloading" : slot.phase;
+    }
+
+    String diagnostic(String name) {
+        Placement slot = placements.get(name);
+        if (slot == null || bridge.config(slot.config).isEmpty()) return "unconfigured|-1|";
+        return state(name) + "|" + slot.duration + "|" + slot.error;
+    }
+
+    void start() {
+        running = true;
+        main.post(scheduled);
+    }
+
+    void resume() {
+        if (running) main.post(scheduled);
+    }
+
+    void stop() {
+        running = false;
+        main.removeCallbacks(scheduled);
     }
 
     void prepareReward(String slot) {
-        if (PLACEMENTS.contains(slot)) prepare(slot);
+        Placement placement = placements.get(slot);
+        if (placement == null || BREAK.equals(slot)) return;
+        running = true;
+        main.post(() -> {
+            // A fresh user request can retry sooner after an offline period.
+            if (!placement.requesting && SystemClock.elapsedRealtime() - placement.startedAt >= RETRY[0]) {
+                placement.retryAt = 0;
+            }
+            pump();
+        });
     }
 
-    void prepareBreak() { prepare(BREAK); }
+    void prepareBreak() { start(); }
 
-    private String unit(String slot) {
-        return bridge.config(BREAK.equals(slot) ? BREAK : "rewarded_" + slot);
-    }
-
-    private void prepare(String slot) {
+    private void pump() {
+        main.removeCallbacks(scheduled);
         Activity host = bridge.activity();
-        if (host == null || bridge.suspended() || fullscreen() || unit(slot).isEmpty() || usable(slot) || !loading.add(slot)) return;
-        host.runOnUiThread(() -> consentThenLoad(host));
-    }
-
-    private void consentThenLoad(Activity host) {
-        if (consentUpdating || bridge.suspended()) return;
-        ConsentInformation consent = UserMessagingPlatform.getConsentInformation(host);
-        if (consentChecked && consent.canRequestAds()) {
-            loadPermitted(host);
+        if (!running || host == null || bridge.suspended() || fullscreen() || consentUpdating) return;
+        long now = SystemClock.elapsedRealtime();
+        if (!consentChecked || !consentAllowed && consentRetryAt > 0) {
+            if (now < consentRetryAt) {
+                schedule(consentRetryAt - now);
+                return;
+            }
+            requestConsent(host);
             return;
         }
-        consentUpdating = true;
-        var parameters = new ConsentRequestParameters.Builder().build();
-        consent.requestConsentInfoUpdate(host, parameters, () ->
-            UserMessagingPlatform.loadAndShowConsentFormIfRequired(host, ignored -> afterConsent(host, consent)),
-            failure -> afterConsent(host, consent));
-    }
-
-    private void afterConsent(Activity host, ConsentInformation consent) {
-        consentUpdating = false;
-        consentChecked = true;
-        updatePrivacy(consent);
-        if (consent.canRequestAds() && bridge.activity() != null) {
-            loadPermitted(host);
-        } else {
-            loading.clear();
-            availability();
-        }
-    }
-
-    private void loadPermitted(Activity host) {
-        if (initializing || bridge.suspended()) return;
+        if (!consentAllowed || initializing) return;
         if (!initialized) {
             initializing = true;
-            MobileAds.initialize(host, result -> host.runOnUiThread(() -> {
+            availability();
+            MobileAds.initialize(host.getApplicationContext(), unused -> main.post(() -> {
                 initialized = true;
                 initializing = false;
-                if (UserMessagingPlatform.getConsentInformation(host).canRequestAds()) loadPermitted(host);
-                else { loading.clear(); availability(); }
+                availability();
+                pump();
             }));
             return;
         }
-        for (String slot : new ArrayList<>(loading)) load(host, slot);
+        long wakeAt = Long.MAX_VALUE;
+        for (Placement slot : placements.values()) {
+            if (bridge.config(slot.config).isEmpty()) continue;
+            if (slot.requesting) {
+                long deadline = slot.startedAt + LOAD_TIMEOUT;
+                if (now >= deadline) loaded(slot, null, "load:timeout", slot.requestId);
+                else wakeAt = Math.min(wakeAt, deadline);
+                continue;
+            }
+            Loaded item = slot.loaded;
+            if (item != null && now < item.expires) {
+                wakeAt = Math.min(wakeAt, item.expires);
+            } else if (now >= slot.retryAt) {
+                load(host, slot);
+                wakeAt = Math.min(wakeAt, now + LOAD_TIMEOUT);
+            } else {
+                wakeAt = Math.min(wakeAt, slot.retryAt);
+            }
+        }
+        if (wakeAt < Long.MAX_VALUE) schedule(wakeAt - now);
     }
 
-    private final Set<String> requesting = ConcurrentHashMap.newKeySet();
+    private void schedule(long delay) {
+        main.postDelayed(scheduled, Math.max(1, delay));
+    }
 
-    private void load(Activity host, String slot) {
-        if (!requesting.add(slot)) return;
-        int requestGeneration = generation;
+    private void requestConsent(Activity host) {
+        consentUpdating = true;
+        availability();
+        ConsentInformation consent = UserMessagingPlatform.getConsentInformation(host);
+        var parameters = new ConsentRequestParameters.Builder().build();
+        consent.requestConsentInfoUpdate(host, parameters, () -> {
+            if (bridge.activity() == null) return;
+            if (bridge.suspended()) {
+                consentUpdating = false;
+                return;
+            }
+            UserMessagingPlatform.loadAndShowConsentFormIfRequired(host,
+                problem -> afterConsent(consent, problem == null ? "" : Integer.toString(problem.getErrorCode())));
+        }, failure -> afterConsent(consent, Integer.toString(failure.getErrorCode())));
+    }
+
+    private void afterConsent(ConsentInformation consent, String error) {
+        consentError = error;
+        updatePrivacy(consent);
+        consentChecked = true;
+        consentRetryAt = !consentAllowed && !error.isEmpty() ? SystemClock.elapsedRealtime() + 30_000 : 0;
+        consentUpdating = false;
+        availability();
+        pump();
+    }
+
+    private void updatePrivacy(ConsentInformation consent) {
+        consentAllowed = consent.canRequestAds();
+        privacyRequired = consent.getPrivacyOptionsRequirementStatus()
+            == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED;
+        consentLabel = !consentAllowed ? "blocked" : privacyRequired ? "required"
+            : consent.getConsentStatus() == ConsentInformation.ConsentStatus.NOT_REQUIRED ? "not_required" : "allowed";
+    }
+
+    private void load(Activity host, Placement slot) {
+        synchronized (this) {
+            if (fullscreen() || bridge.suspended()) return;
+            slot.loaded = null;
+            slot.requesting = true;
+        }
+        slot.phase = slot.previouslyLoaded || slot.failures > 0 ? "reloading" : "loading";
+        slot.startedAt = SystemClock.elapsedRealtime();
+        availability();
+        int requestId = ++slot.requestId;
+        String id = bridge.config(slot.config);
         AdRequest request = new AdRequest.Builder().build();
-        if (BREAK.equals(slot)) {
-            InterstitialAd.load(host, unit(slot), request, new InterstitialAdLoadCallback() {
-                @Override public void onAdLoaded(InterstitialAd ad) { loaded(slot, ad, requestGeneration); }
-                @Override public void onAdFailedToLoad(LoadAdError problem) { loaded(slot, null, requestGeneration); }
-            });
-        } else {
-            RewardedAd.load(host, unit(slot), request, new RewardedAdLoadCallback() {
-                @Override public void onAdLoaded(RewardedAd ad) { loaded(slot, ad, requestGeneration); }
-                @Override public void onAdFailedToLoad(LoadAdError problem) { loaded(slot, null, requestGeneration); }
-            });
+        try {
+            if (BREAK.equals(slot.name)) {
+                InterstitialAd.load(host, id, request, new InterstitialAdLoadCallback() {
+                    @Override public void onAdLoaded(InterstitialAd ad) { loaded(slot, ad, "", requestId); }
+                    @Override public void onAdFailedToLoad(LoadAdError problem) { loaded(slot, null, "load:" + problem.getCode(), requestId); }
+                });
+            } else {
+                RewardedAd.load(host, id, request, new RewardedAdLoadCallback() {
+                    @Override public void onAdLoaded(RewardedAd ad) { loaded(slot, ad, "", requestId); }
+                    @Override public void onAdFailedToLoad(LoadAdError problem) { loaded(slot, null, "load:" + problem.getCode(), requestId); }
+                });
+            }
+        } catch (RuntimeException ignored) {
+            loaded(slot, null, "load:exception", requestId);
         }
     }
 
-    private void loaded(String slot, Object ad, int requestGeneration) {
-        if (generation != requestGeneration) return;
-        requesting.remove(slot);
-        loading.remove(slot);
-        if (ad != null) ready.put(slot, new Loaded(ad));
+    private void loaded(Placement slot, Object ad, String error, int requestId) {
+        if (!running || !slot.requesting || slot.requestId != requestId) return;
+        slot.requesting = false;
+        slot.duration = SystemClock.elapsedRealtime() - slot.startedAt;
+        if (ad != null) {
+            slot.previouslyLoaded = true;
+            slot.failures = 0;
+            slot.retryAt = 0;
+            slot.loaded = new Loaded(ad);
+            slot.phase = "ready";
+        } else {
+            slot.error = error;
+            slot.phase = "unavailable";
+            slot.retryAt = SystemClock.elapsedRealtime() + RETRY[Math.min(slot.failures, RETRY.length - 1)];
+            slot.failures = Math.min(slot.failures + 1, RETRY.length);
+        }
         availability();
+        main.post(scheduled);
     }
 
     boolean showRewarded(String slot, String ticket) {
-        return PLACEMENTS.contains(slot) && show(slot, ticket);
+        return !BREAK.equals(slot) && show(slot, ticket);
     }
 
     boolean showBreak(String ticket) { return show(BREAK, ticket); }
 
-    private boolean show(String slot, String ticket) {
-        Activity host = bridge.activity();
-        if (host == null || consentUpdating || !usable(slot) || !fullscreen.compareAndSet(false, true)) return false;
-        Loaded item = ready.remove(slot);
-        boolean isBreak = BREAK.equals(slot);
-        host.runOnUiThread(() -> {
-            if (item == null || bridge.activity() == null || !UserMessagingPlatform.getConsentInformation(host).canRequestAds()) {
-                close(ticket, isBreak);
-                return;
-            }
-            var shown = new AtomicBoolean();
-            var awarded = new AtomicBoolean();
-            var closed = new AtomicBoolean();
-            var callback = new FullScreenContentCallback() {
-                @Override public void onAdShowedFullScreenContent() {
-                    if (shown.compareAndSet(false, true)) {
-                        if (isBreak) bridge.dispatch("break_shown", ticket);
-                        else bridge.dispatch("ad_shown", slot);
-                    }
-                }
-                @Override public void onAdDismissedFullScreenContent() {
-                    if (closed.compareAndSet(false, true)) close(ticket, isBreak);
-                }
-                @Override public void onAdFailedToShowFullScreenContent(AdError failure) {
-                    if (closed.compareAndSet(false, true)) close(ticket, isBreak);
-                }
-            };
-            try {
-                if (isBreak) {
-                    InterstitialAd interstitial = (InterstitialAd) item.ad;
-                    interstitial.setFullScreenContentCallback(callback);
-                    interstitial.show(host);
-                } else {
-                    RewardedAd reward = (RewardedAd) item.ad;
-                    reward.setFullScreenContentCallback(callback);
-                    reward.show(host, itemAwarded -> {
-                        if (!closed.get() && awarded.compareAndSet(false, true)) bridge.dispatch("reward_earned", ticket);
-                    });
-                }
-            } catch (RuntimeException failure) {
-                if (closed.compareAndSet(false, true)) close(ticket, isBreak);
-            }
-        });
-        availability();
+    private synchronized boolean show(String name, String ticket) {
+        if (fullscreen() || !"ready".equals(state(name)) || bridge.activity() == null || bridge.checkoutOpen()) return false;
+        Placement slot = placements.get(name);
+        Loaded item = slot.loaded;
+        if (item == null || item.expires <= SystemClock.elapsedRealtime()) return false;
+        Launch selected = new Launch(slot, item, ticket);
+        launch = selected;
+        slot.loaded = null;
+        main.post(() -> display(selected));
         return true;
     }
 
-    private void close(String ticket, boolean isBreak) {
-        fullscreen.set(false);
-        bridge.dispatch(isBreak ? "break_closed" : "reward_closed", ticket);
-        availability();
+    synchronized boolean cancelRewarded(String ticket) {
+        Launch selected = launch;
+        if (selected == null || selected.started || !selected.ticket.equals(ticket)
+                || BREAK.equals(selected.placement.name)) return false;
+        selected.placement.loaded = selected.loaded;
+        launch = null;
+        main.post(scheduled);
+        return true;
     }
 
-    private void updatePrivacy(ConsentInformation consent) {
-        consentLabel = !consent.canRequestAds() ? "blocked"
-                : consent.getPrivacyOptionsRequirementStatus() == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED ? "required"
-                : consent.getConsentStatus() == ConsentInformation.ConsentStatus.NOT_REQUIRED ? "not_required" : "allowed";
-        privacyRequired = consent.getPrivacyOptionsRequirementStatus()
-                == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED;
+    private void display(Launch selected) {
+        synchronized (this) {
+            if (launch != selected) return;
+            selected.started = true;
+        }
+        Activity host = bridge.activity();
+        if (host == null || bridge.suspended() || !consentAllowed || bridge.checkoutOpen()
+                || selected.loaded.expires <= SystemClock.elapsedRealtime()) {
+            close(selected, "show:activity");
+            return;
+        }
+        boolean interstitial = BREAK.equals(selected.placement.name);
+        var callback = new FullScreenContentCallback() {
+            @Override public void onAdShowedFullScreenContent() {
+                if (launch != selected || selected.shown) return;
+                selected.shown = true;
+                bridge.dispatch(interstitial ? "break_shown" : "ad_shown",
+                    interstitial ? selected.ticket : selected.placement.name);
+            }
+            @Override public void onAdDismissedFullScreenContent() { close(selected, ""); }
+            @Override public void onAdFailedToShowFullScreenContent(AdError failure) {
+                close(selected, "show:" + failure.getCode());
+            }
+        };
+        try {
+            if (interstitial) {
+                InterstitialAd ad = (InterstitialAd) selected.loaded.ad;
+                ad.setFullScreenContentCallback(callback);
+                ad.show(host);
+            } else {
+                RewardedAd ad = (RewardedAd) selected.loaded.ad;
+                ad.setFullScreenContentCallback(callback);
+                ad.show(host, item -> {
+                    if (launch != selected || selected.awarded) return;
+                    selected.awarded = true;
+                    bridge.dispatch("reward_earned", selected.ticket);
+                });
+            }
+        } catch (RuntimeException ignored) {
+            close(selected, "show:exception");
+        }
+    }
+
+    private synchronized void close(Launch selected, String error) {
+        if (launch != selected) return;
+        var slot = selected.placement;
+        if (!error.isEmpty()) slot.error = error;
+        slot.phase = "reloading";
+        launch = null;
+        if (!running) return;
+        if (!BREAK.equals(slot.name) && !error.isEmpty()) bridge.dispatch("reward_show_failed", selected.ticket);
+        bridge.dispatch(BREAK.equals(slot.name) ? "break_closed" : "reward_closed", selected.ticket);
+        availability();
+        main.post(scheduled);
     }
 
     void privacy() {
         Activity host = bridge.activity();
         if (host == null || !privacyRequired || fullscreen()) return;
-        host.runOnUiThread(() -> {
-            if (consentUpdating || fullscreen()) return;
-            consentUpdating = true;
-            generation++;
-            ready.clear();
-            loading.clear();
-            requesting.clear();
-            UserMessagingPlatform.showPrivacyOptionsForm(host, ignored -> {
-                consentUpdating = false;
-                updatePrivacy(UserMessagingPlatform.getConsentInformation(host));
-                availability();
-            });
+        main.post(() -> {
+            synchronized (this) {
+                if (consentUpdating || fullscreen() || bridge.suspended()) return;
+                consentUpdating = true;
+                for (Placement slot : placements.values()) {
+                    slot.loaded = null;
+                    slot.requesting = false;
+                    slot.phase = "unavailable";
+                    slot.retryAt = 0;
+                }
+            }
+            availability();
+            UserMessagingPlatform.showPrivacyOptionsForm(host, problem -> afterConsent(
+                UserMessagingPlatform.getConsentInformation(host),
+                problem == null ? "" : Integer.toString(problem.getErrorCode())));
         });
     }
 
-    private void availability() { bridge.dispatch("reward_availability"); }
+    private void availability() { if (running) bridge.dispatch("reward_availability"); }
 }

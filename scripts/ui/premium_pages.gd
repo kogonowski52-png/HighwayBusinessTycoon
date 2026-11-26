@@ -5,8 +5,20 @@ const TREASURY := "res://assets/ui/premium/treasury.png"
 const GEMS := "res://assets/ui/premium/gems.png"
 const BUILDER := "res://assets/ui/premium/builder.png"
 const SEASON := "res://assets/ui/premium/season.png"
+const PACK_ART := "res://assets/ui/premium/offers/"
 
-const SHOP_TABS: Array[String] = ["shop_special", "shop_packs", "shop_free", "shop_season"]
+const SHOP_TABS: Array[String] = ["shop_special", "shop_free", "shop_gems", "shop_cash", "shop_directors",
+	"shop_business", "shop_boost", "shop_season", "shop_remove_ads"]
+const SHOP_TINTS := {
+	"shop_special": Color("#3b6574"), "shop_free": Color("#307968"), "shop_gems": Color("#634979"),
+	"shop_cash": Color("#795525"), "shop_directors": Color("#70466b"), "shop_business": Color("#315d79"),
+	"shop_boost": Color("#755527"), "shop_season": Color("#375e77"), "shop_remove_ads": Color("#3c6f61"),
+}
+const SHOP_SKINS := {
+	"shop_special": "petrol", "shop_free": "jade", "shop_gems": "plum",
+	"shop_cash": "amber", "shop_directors": "berry", "shop_business": "blue",
+	"shop_boost": "amber", "shop_season": "blue", "shop_remove_ads": "jade",
+}
 const PASS_TABS: Array[String] = ["pass_free", "pass_premium"]
 
 var panel: CanvasLayer
@@ -20,11 +32,33 @@ var pass_paid := false
 var clock_label: Label
 var boost_bar: ProgressBar
 var textures: Dictionary = {}
+var navigation: GridContainer
+var tabs := {}
+var slide_cards := false
 
 func bind(owner: CanvasLayer) -> void:
 	panel = owner
 	game = owner.controller
 	hud = owner.theme_source
+
+func setup_navigation(parent: Control) -> void:
+	navigation = GridContainer.new()
+	navigation.columns = 3
+	navigation.add_theme_constant_override("h_separation", 7)
+	navigation.add_theme_constant_override("v_separation", 7)
+	parent.add_child(navigation)
+	var icons := [hud.GIFT, hud.CALENDAR, hud.DIAMOND, hud.CASH, hud.NAV.managers, hud.UPGRADE_ART,
+		hud.BOLT, art(SEASON), art(PACK_ART + "quiet.png")]
+	for index in SHOP_TABS.size():
+		var id := SHOP_TABS[index]
+		var tab: Button = hud.action(navigation, 0, 70, false)
+		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		tab.add_theme_font_size_override("font_size", 23)
+		hud.button_art(tab, icons[index], 38)
+		tab.pressed.connect(choose_tab.bind(id))
+		tabs[id] = tab
+	navigation.hide()
 
 func show(page: String) -> bool:
 	match page:
@@ -42,20 +76,35 @@ func signature(page: String) -> String:
 		"boost":
 			var boost: HbtBoost = game.campaign.boost
 			return str([page, e.language, boost.earning(e.clock), boost.can_extend(e.clock),
-				game.ads.available(), game.ads.ready("boost"), game.ads.loading("boost"), game.ads.busy()])
+				ad_signature("boost"), game.purchases.busy()])
 		"shop":
 			return str([page, shop_tab, e.language, e.amount("diamond").decimal(), e.amount("event").decimal(),
 				e.recognition.vouchers, e.boost_until > e.clock, p.entitlements, p.play_session.is_empty(),
-				game.purchases.catalogue, game.purchases.status, game.purchases.busy(), game.ads.busy(),
-				game.ads.ready("gift"), p.allowed("gift", e.clock), e.levels, p.account])
+				purchase_signature(), ad_signature("gift"), ad_signature("boost"), e.levels, p.account,
+				shop_availability(), game.campaign.boost.can_extend(e.clock), game.campaign.boost.earning(e.clock)])
 		"pass":
 			var chosen := selected_pass()
 			return str([page, pass_index, pass_paid, e.language, p.pass_progress.get(chosen.get("sku"), {}),
-				p.entitlements, game.purchases.catalogue, game.purchases.status, e.clock >= chosen.get("end", 0), e.clock >= chosen.get("claim_end", 0)])
+				p.entitlements, purchase_signature(), e.clock >= chosen.get("end", 0), e.clock >= chosen.get("claim_end", 0)])
 		"reward_offer":
-			return str([page, offer, detail, e.language, game.ads.available(), game.ads.playable(offer, detail),
-				game.ads.ready(offer), game.ads.loading(offer), game.ads.busy()])
+			return str([page, offer, detail, e.language, game.ads.playable(offer, detail), ad_signature(offer), game.purchases.busy()])
 	return ""
+
+func purchase_signature() -> Array:
+	var store: Node = game.purchases
+	return [store.catalogue, store.catalog_status, store.status, store.verifier, store.busy(), store.pending_products]
+
+func ad_signature(id: String) -> Array:
+	return [game.ads.available(), game.ads.placement_status(id), game.ads.wait_offer, game.ads.displaying()]
+
+func shop_availability() -> Array:
+	var keys: Array = []
+	for id in ["gift", "cash", "manager", "vip", "delivery"]:
+		keys.append(game.ads.playable(id))
+	for id in Config.PRODUCTS:
+		keys.append(game.purchases.eligible(id))
+	keys.append(Config.season_at(game.economy.clock).get("sku", ""))
+	return keys
 
 func art(path: String) -> Texture2D:
 	if not textures.has(path):
@@ -94,88 +143,202 @@ func booster() -> void:
 	panel.box(text("boost_cap") % floori(Config.CAP_SECONDS / 60.0), text("boost_offline_copy"))
 
 func update_clock() -> void:
-	if panel.page != "boost" or not is_instance_valid(clock_label) or not is_instance_valid(boost_bar):
+	if panel.page != "boost" and (panel.page != "shop" or shop_tab != "shop_boost"):
+		return
+	if not is_instance_valid(clock_label) or not is_instance_valid(boost_bar):
 		return
 	var left: int = game.campaign.boost.remaining(game.economy.clock)
 	clock_label.text = "%s  ·  %s" % [text("boost_active"), game.boost_time(left)] if left > 0 else text("boost_off")
 	boost_bar.value = left
 
 func shop() -> void:
-	hero(art(TREASURY), text("shop_header"), text("premium_shop_copy"))
-	if game.purchases.catalogue.is_empty():
-		panel.box(text("store_play_price"))
-	panel.section_tabs(SHOP_TABS, shop_tab, choose_tab)
+	for id in SHOP_TABS:
+		var tab: Button = tabs[id]
+		tab.text = text(id)
+		tab.tooltip_text = tab.text
+		var current: bool = id == shop_tab
+		var face: Texture2D = hud.ACTION if current else hud.CREAM_BUTTON
+		var text_tint: Color = hud.CREAM if current else hud.INK
+		for state in ["normal", "hover", "pressed"]:
+			tab.add_theme_stylebox_override(state, hud.sculpted(face, 40, 11))
+		for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+			tab.add_theme_color_override(state, text_tint)
+	store_status()
 	match shop_tab:
 		"shop_special":
-			for id in ["starter_pack", "remove_ads"]:
-				product(id, art(TREASURY) if id == "starter_pack" else hud.BOLT)
-			shop_shortcuts()
-		"shop_packs":
-			panel.box(text("shop_gems_title"))
-			for id in Config.PRODUCTS:
-				if Config.PRODUCTS[id].section == "gems":
-					product(id, art(GEMS))
-			panel.box(text("shop_business_title"))
-			for id in ["manager_pack", "builder_pack", "workshop_pack", "wash_pack", "freight_pack", "coast_pack"]:
-				if game.purchases.eligible(id):
-					product(id, art(BUILDER) if id != "manager_pack" else panel.extra.portrait(Config.AD_MANAGER))
+			show_products("special")
+			panel.extra.shop()
 		"shop_free":
 			free_rewards()
+		"shop_gems":
+			show_products("gems")
+		"shop_cash":
+			reward_card("cash", art(TREASURY))
+			panel.box(text("shop_cash_title"), text("shop_cash_copy"))
+			show_products("cash")
+		"shop_directors":
+			show_products("directors")
+			reward_card("manager", panel.extra.portrait(Config.AD_MANAGER))
+		"shop_business":
+			show_products("business")
+		"shop_boost":
+			booster()
 		"shop_season":
-			panel.feature(art(SEASON), text("pass_header"), text("pass_shop_copy"))
-			panel.button(panel.rows, text("pass_view"), game.open_page.bind("pass"), false, true)
+			var pass_card := market_card(art(SEASON), text("pass_header"), text("pass_shop_copy"))
+			panel.button(pass_card, text("pass_view"), game.open_page.bind("pass"), false, true)
 			var season := Config.season_at(game.economy.clock)
 			if not season.is_empty():
 				product(season.sku, art(SEASON))
-	if game.purchases.verified_checkout():
-		panel.button(panel.rows, text("store_restore"), game.purchases.restore_purchases,
-			game.purchases.busy() or game.ads.busy())
-		panel.box(text(game.purchases.status))
-	elif game.purchases.configured():
-		panel.box(text("store_sandbox_info"))
+			else:
+				panel.box(text("pass_between"))
+		"shop_remove_ads":
+			product("remove_ads", art(PACK_ART + "quiet.png"))
 
-func shop_shortcuts() -> void:
-	panel.button(panel.rows, text("boost_header"), game.open_page.bind("boost"), false, true)
-	# The existing shop uses earned in-game currency and remains available offline.
-	panel.extra.shop()
+func store_status() -> void:
+	var store: Node = game.purchases
+	var status: String = store.catalog_status
+	var purchase_copy: String = store.status
+	var detail_copy := ""
+	if not store.verified_checkout() and store.configured():
+		detail_copy = text("store_no_verifier")
+	elif store.verified_checkout() and not store.checkout_ready():
+		detail_copy = text("store_checking_verifier" if store.verifier == "diagnostic_loading" else "store_verifier_unavailable")
+	if store.sideloaded() and status != "store_catalog":
+		detail_copy = "\n".join([detail_copy, text("store_sideload")]).strip_edges()
+	if purchase_copy != "store_local" and not purchase_copy.is_empty():
+		detail_copy = "\n".join([detail_copy, text(purchase_copy)]).strip_edges()
+	var title := text(status)
+	if status == "store_catalog" and not store.checkout_ready():
+		title = text("store_prices_only")
+	var narrow: VBoxContainer = panel.box(title, detail_copy)
+	if not store.configured():
+		return
+	if status != "store_catalog" or not store.checkout_ready():
+		var in_progress: bool = store.busy() or status == "store_connect" or store.verifier == "diagnostic_loading"
+		panel.button(narrow, text("store_retry"), store.open.bind(true), in_progress)
+	if store.checkout_ready() and not game.economy.storage.read_only:
+		panel.button(narrow, text("store_restore"), store.restore_purchases, store.busy() or game.ads.busy())
+
+func show_products(section: String) -> void:
+	for id: String in Config.PRODUCTS:
+		var spec: Dictionary = Config.PRODUCTS[id]
+		var matches: bool = spec.item.has("cash") if section == "cash" else spec.section == section and id != "remove_ads"
+		if matches and game.purchases.eligible(id):
+			product(id, product_art(id, spec.section))
+
+func product_art(id: String, section: String) -> Texture2D:
+	match section:
+		"gems":
+			return art(PACK_ART + id + ".png")
+		"directors":
+			return panel.extra.portrait(Config.AD_MANAGER)
+		"business":
+			var image := "res://assets/ui/business/north_%s.png"
+			if id == "wash_pack":
+				return art(image % "wash")
+			if id == "workshop_pack":
+				return art(image % "workshop")
+			if id == "freight_pack":
+				return art(image % "truck")
+			if id == "coast_pack":
+				return art("res://assets/ui/business/ocean_motel.png")
+			return art(BUILDER)
+	return art(PACK_ART + "starter.png")
 
 func choose_tab(id: String) -> void:
+	if shop_tab == id:
+		return
+	game.ads.cancel_wait()
+	game.purchases.cancel_selection()
 	shop_tab = id
 	panel.scroll.scroll_vertical = 0
+	slide_cards = game.motion_enabled()
 	panel.refresh()
+	slide_cards = false
 
 func free_rewards() -> void:
+	var calendar := market_card(hud.CALENDAR, text("calendar_header"), text("shop_calendar_copy"))
+	panel.button(calendar, text("shop_calendar_open"), game.open_page.bind("calendar"), false, true)
 	for id in ["gift", "cash", "manager", "vip", "delivery"]:
 		if id == "delivery" and game.economy.level("warehouse") == 0:
 			continue
-		var card: VBoxContainer = panel.feature(hud.GIFT if id != "manager" else panel.extra.portrait(Config.AD_MANAGER),
-			text("offer_" + id), text("offer_detail_" + id))
-		ad_action(card, id, {}, true)
-	panel.button(panel.rows, text("calendar_header"), game.open_page.bind("calendar"))
-	panel.button(panel.rows, text("boost_header"), game.open_page.bind("boost"), false, true)
+		var icon: Texture2D = hud.GIFT
+		match id:
+			"gift": icon = art(GEMS)
+			"cash": icon = art(TREASURY)
+			"delivery": icon = art(BUILDER)
+			"manager": icon = panel.extra.portrait(Config.AD_MANAGER)
+		reward_card(id, icon)
+
+func reward_card(id: String, icon: Texture2D) -> void:
+	var card := market_card(icon, text("offer_" + id), text("offer_detail_" + id))
+	ad_action(card, id, {}, true)
+
+func market_card(icon: Texture2D, title: String, copy: String) -> VBoxContainer:
+	var tile := PanelContainer.new()
+	panel.rows.add_child(tile)
+	var section := shop_tab if panel.page == "shop" else "shop_season"
+	var tint: Color = SHOP_TINTS[section]
+	tile.add_theme_stylebox_override("panel", hud.sculpted(art(PACK_ART + "tile_" + SHOP_SKINS[section] + ".png"), 35, 20))
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 13)
+	tile.add_child(column)
+	var art_row := HBoxContainer.new()
+	art_row.add_theme_constant_override("separation", 14)
+	column.add_child(art_row)
+	var frame := PanelContainer.new()
+	frame.add_theme_stylebox_override("panel", hud.style(tint, tint.lightened(.18), 27, 2))
+	art_row.add_child(frame)
+	var picture: TextureRect = hud.icon(frame, icon, 195)
+	var words := VBoxContainer.new()
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.alignment = BoxContainer.ALIGNMENT_CENTER
+	art_row.add_child(words)
+	var name_label: Label = hud.caption(words, 37, hud.CREAM, hud.HEAVY)
+	name_label.text = title
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note(words, copy, Color("#f6ddb0"))
+	if panel.animate_bars or slide_cards:
+		var reveal := tile.create_tween().set_parallel().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		tile.modulate.a = .50
+		picture.pivot_offset = Vector2(97, 97)
+		picture.scale = Vector2(.88, .88)
+		reveal.tween_property(tile, "modulate:a", 1.0, .22)
+		reveal.tween_property(picture, "scale", Vector2.ONE, .28)
+	return column
+
+func note(parent: Control, copy: String, tint: Color) -> void:
+	if copy.is_empty():
+		return
+	var label: Label = hud.caption(parent, 24, tint)
+	label.text = copy
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
 func product(id: String, icon: Texture2D) -> void:
 	var spec := Config.product(id)
 	var items: Dictionary = spec.item
 	var named := text("product_" + id) if spec.section != "season" else text("pass_premium")
 	var copy := "" if spec.section == "gems" else content(items) if not items.is_empty() else text("no_ads_scope" if id == "remove_ads" else "pass_scope")
-	var card := hero(icon, named, copy)
+	var card := market_card(icon, named, copy)
 	var premium: HbtPremiumState = game.campaign.premium
+	var store: Node = game.purchases
 	if game.economy.storage.read_only:
-		panel.box(text("store_save_read_only"))
+		note(card, text("store_save_read_only"), hud.CREAM)
 		return
 	if premium.entitlements.has(id):
-		panel.box(text("store_owned"))
+		note(card, text("store_owned"), Color("#b4e3ba"))
 		return
-	var current: Dictionary = game.purchases.catalogue.get(id, {})
+	if store.pending_products.has(id):
+		note(card, text("store_pending"), Color("#f5d88b"))
+		return
+	var current: Dictionary = store.catalogue.get(id, {})
 	var price := str(current.get("price", ""))
-	if price.is_empty():
-		return
-	if game.purchases.verified_checkout():
-		var cue := text("store_sign_in") + "  ·  " + price if premium.play_session.is_empty() else price
-		panel.button(card, cue, game.purchases.buy.bind(id), game.purchases.busy() or game.ads.busy(), true)
+	if store.purchasable(id):
+		var cue := text("store_sign_in_price" if premium.play_session.is_empty() else "store_buy_price") % price
+		var button: Button = panel.button(card, cue, store.buy.bind(id), store.busy() or game.ads.busy(), true)
+		hud.button_art(button, hud.CASH, 49)
 	else:
-		hud.caption(card, 29, hud.CREAM, hud.HEAVY).text = price
+		note(card, text("store_item_label") if price.is_empty() else text("store_price_no_checkout") % price, hud.CREAM)
 
 func content(items: Dictionary) -> String:
 	var line: PackedStringArray = []
@@ -201,21 +364,26 @@ func ad_offer() -> void:
 	ad_action(card, offer, detail, true)
 	panel.button(panel.rows, text("offer_decline"), panel.hide_page)
 
-func ad_action(parent: Control, id: String, ctx: Dictionary, dark := false) -> void:
+func ad_action(parent: Control, id: String, ctx: Dictionary, dark := false, action := "") -> void:
 	var ink: Color = hud.CREAM if dark else hud.INK
 	var active: bool = game.campaign.boost.earning(game.economy.clock)
 	var key := "boost_extend" if id == "boost" and active else "boost_watch" if id == "boost" else "offer_watch"
-	if not game.ads.playable(id, ctx):
-		hud.caption(parent, 22, ink).text = text("boost_max" if id == "boost" else "offer_cooldown")
+	if game.ads.waiting(id):
+		note(parent, text("ad_loading_wait"), ink)
+		panel.button(parent, text("ad_cancel_wait"), game.ads.cancel_wait)
+	elif not game.ads.playable(id, ctx):
+		note(parent, text("boost_max" if id == "boost" else "offer_cooldown"), ink)
 	elif not game.ads.available():
-		var message: Label = hud.caption(parent, 23, ink)
-		message.text = text("bonus_unavailable")
-		message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	elif game.ads.busy() or game.ads.loading(id):
-		hud.caption(parent, 23, ink).text = text("bonus_running" if game.ads.busy() else "ad_loading")
+		note(parent, text("bonus_unavailable"), ink)
+	elif game.ads.busy():
+		note(parent, text("bonus_running"), ink)
 	else:
-		var ready: bool = game.ads.ready(id)
-		panel.button(parent, text(key if ready else "ad_prepare"), game.offer_ad.bind(id, ctx), game.purchases.busy(), true)
+		var phase: String = game.ads.placement_status(id)
+		var status := "ad_ready" if phase == "ready" else "ad_loading" if phase in ["initializing", "loading", "reloading"] else "ad_wait_available"
+		note(parent, text(status), ink)
+		var button: Button = panel.button(parent, text(key) if action.is_empty() else action,
+			game.offer_ad.bind(id, ctx), game.purchases.busy(), true)
+		hud.button_art(button, hud.BOLT, 48)
 
 func selected_pass() -> Dictionary:
 	if pass_index >= 0 and pass_index < Config.SEASONS.size():
@@ -250,7 +418,7 @@ func season_pass() -> void:
 	panel.mission_bar(task, results.tasks, season.goal)
 	panel.section_tabs(PASS_TABS, "pass_premium" if pass_paid else "pass_free", change_track)
 	if pass_paid and not ledger.entitlements.has(season.sku) and game.economy.clock < season.end:
-		game.purchases.open()
+		store_status()
 		product(season.sku, art(SEASON))
 	var completed: Dictionary = results.premium if pass_paid else results.free
 	for tier in range(1, Config.SEASON_TIERS + 1):
@@ -263,11 +431,13 @@ func season_pass() -> void:
 			hud.caption(row, 21, hud.MINT).text = text("claimed")
 
 func change_season(index: int) -> void:
+	game.purchases.cancel_selection()
 	pass_index = index
 	panel.scroll.scroll_vertical = 0
 	panel.refresh()
 
 func change_track(id: String) -> void:
+	game.purchases.cancel_selection()
 	pass_paid = id == "pass_premium"
 	panel.scroll.scroll_vertical = 0
 	panel.refresh()

@@ -1,5 +1,20 @@
 # Raport testów
 
+## 0.9.2 · Pierwsze dotknięcie i sklep premium
+
+Próba wydania 0.9.1 potwierdziła mechanizm zgłoszony z telefonu. Pierwsze naciśnięcie zleciło ładowanie i nie otworzyło reklamy. Callback oznaczył jednostkę jako gotową, a drugie naciśnięcie otworzyło jedną reklamę. Przy odtworzeniu użyto odpowiedzi adaptera SDK w Godocie. [Szczegóły i zależności](docs/ANDROID_COMMERCE_092.md)
+
+| Próba | Wynik |
+| --- | --- |
+| Dotyk w Godot 4.7.2 i Compatibility na Linuksie | 70/70 w próbie galerii oraz 61/61 w oddzielnej próbie z układem EN na trzech proporcjach telefonu i tabletu. Gotowa reklama otwiera się przy pierwszym dotknięciu, a oczekująca po callbacku. Anulowanie, zamknięcie, zmiana zakładki, tło, brak wypełnienia i błąd wyświetlenia nie przyznają nagrody. Przetestowano też ponowne ładowanie, powrót do panelu i stan dźwięku. |
+| Sklep | Dotyk otwiera wszystkie dziewięć sekcji i przewija listę bez ruchu kamery. Sprawdzono pusty katalog, błąd sieci, ponowienie, cenę lokalną z odpowiedzi testowej Billing, zakup oczekujący, powrót po zalogowaniu i odmowę płatności bez prawidłowego HTTPS. |
+| Regresja | 20 zestawów testów Godota zaliczonych. Dotyk i budowa 60/60, ekonomia 70/70, regiony 93/93, reklamy i monetyzacja 89/89 wraz z dostawą do magazynu, kontrola aktualnego katalogu zasobów i języków 2475/2475. Backend 15/15. |
+| Zapis 0.9.1 | Oryginał 038fc08 wygenerował sześć regionów, stan BOOST, ustawienia i uprawnienie. Zapis 7/7, odczyt i odzyskanie w 0.9.2 6/6. |
+| Dowody wizualne | 12 zrzutów i 4,4 s zachowania prawdziwego panelu po pierwszym dotknięciu. Nagranie ma oznaczenie kontrolowanych callbacków i zaliczyło 3/3 warunki. |
+| Android | Kompilacja natywnego modułu i podpis gotowego APK zweryfikowane. Pakiet 9002, aktualizacja podpisem z 0.9.1, 119 942 564 bajty, ARM64 i wyrównanie 16 KiB. |
+
+Próba akceleracji emulatora zgłosiła brak KVM. Wyniki sklepu i reklam dotyczą testowych odpowiedzi adaptera, bez emisji filmu przez sieć AdMob i bez transakcji Google Play. Odtwarzanie po UMP, fizyczny dotyk, dźwięk i aktualizacja w miejscu wymagają Androida. [Galeria i film](screenshots/0.9.2/README.md) · [Scenariusze odbiorcze](docs/ANDROID_COMMERCE_092.md)
+
 ## 0.9.1 · Przewijanie i budowa na telefonie
 
 Próby w Godot 4.7.2 i Compatibility OpenGL na Linuksie. W wydaniu 0.9.0 pionowy gest nad kartami dał przesunięcie 0. Ten sam ciąg `InputEventScreenDrag` po zmianach przesunął listę o 71 jednostek. Test wspólnego panelu wprowadza surowe zdarzenia dotykowe przez Viewport oraz przez `Input.parse_input_event` z aktywną emulacją myszy. [Scenariusz](tests/mobile_input_window.gd) · [Kadry i film](screenshots/0.9.1/README.md)

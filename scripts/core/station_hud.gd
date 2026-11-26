@@ -85,6 +85,7 @@ var upgrade_pulse: Tween
 var ready_glow := false
 var boost_button: Button
 var boost_meter: ProgressBar
+var boost_status: Label
 var boost_pulse: Tween
 var boost_glow := false
 var wallet_motion: Dictionary = {}
@@ -173,10 +174,16 @@ func _ready() -> void:
 	boost_button.add_theme_stylebox_override("normal", sculpted(UPGRADE, 33, 10))
 	boost_button.add_theme_stylebox_override("hover", sculpted(UPGRADE, 33, 10))
 	boost_button.add_theme_stylebox_override("pressed", sculpted(CREAM_BUTTON, 33, 10))
-	button_art(boost_button, BOLT, 56)
+	button_art(boost_button, BOLT, 44)
 	boost_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
 	boost_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	boost_button.pressed.connect(func() -> void: page_requested.emit("boost"))
+	boost_status = caption(boost_button, 17, INK, HEAVY)
+	boost_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	boost_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	boost_status.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	boost_status.offset_top = -34
+	boost_status.offset_bottom = -13
 	boost_meter = ProgressBar.new()
 	boost_button.add_child(boost_meter)
 	boost_meter.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -341,11 +348,12 @@ func add_badge(button: Button, key: String) -> void:
 	pin.hide()
 	badges[key] = pin
 
-func set_boost(left: int, cap: int, time_text: String, active_text: String, motion: bool) -> void:
+func set_boost(left: int, cap: int, time_text: String, active_text: String, status: String, motion: bool) -> void:
 	if not is_instance_valid(boost_button):
 		return
 	boost_button.text = "×2  " + time_text if left > 0 else "BOOST ×2"
-	boost_button.tooltip_text = active_text + " · " + time_text if left > 0 else "BOOST ×2"
+	boost_status.text = status
+	boost_button.tooltip_text = "%s · %s" % [active_text + " · " + time_text if left > 0 else "BOOST ×2", status]
 	boost_meter.max_value = cap
 	boost_meter.value = left
 	cash.add_theme_color_override("font_color", Color("#9c5e19") if left > 0 else MINT)

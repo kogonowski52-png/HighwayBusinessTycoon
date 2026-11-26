@@ -25,6 +25,7 @@ func run() -> void:
 	game.free()
 	await process_frame
 	clean_save(save_path)
+	await check_delivery()
 	result("Monetization, saves and SDK boundaries")
 
 func clock_checks() -> void:
@@ -99,6 +100,43 @@ func watch(provider: Fixture, id: String, context: Dictionary = {}) -> bool:
 		provider.finish(true, true)
 	return began
 
+func check_delivery() -> void:
+	var path := "/tmp/hbt-delivery-ad-%s.cfg" % OS.get_process_id()
+	var north := HbtEconomy.new()
+	north.storage.path = path
+	var world := HbtCampaign.new(north)
+	world.restore(UTC)
+	var metro := HbtEconomy.new("metro")
+	metro.storage = world.storage
+	metro.global_boost = world.boost
+	metro.restore_profile({}, UTC, false)
+	world.districts.metro = metro
+	world.active = "metro"
+	game = load(CampaignRules.DESTINATIONS.metro.scene).instantiate()
+	game.campaign = world
+	game.wall_override = UTC
+	root.add_child(game)
+	current_scene = game
+	game.set_physics_process(false)
+	await process_frame
+	metro.credit("cash", HbtAmount.from(1_000_000))
+	metro.credit("reputation", HbtAmount.from(200))
+	metro.buy_levels("fuel", 25)
+	var opened := metro.unlock("logistics")
+	metro.buy_levels("logistics", 5)
+	expect(opened and metro.unlock("warehouse"), "test opens the real Metro warehouse")
+	var provider := Fixture.new()
+	game.ads.connect_provider(provider)
+	var loadout := metro.commerce.record("warehouse")
+	var before := int(loadout.stock)
+	expect(watch(provider, "delivery") and int(loadout.stock) == before + 1, "bonus delivery grants one real unit of stock")
+	metro.clock += Config.OFFERS.delivery[0] + 1
+	loadout.stock = metro.commerce.capacity("warehouse", metro.level("warehouse"))
+	expect(not watch(provider, "delivery"), "ad delivery suppressed when the real warehouse is full")
+	game.free()
+	await process_frame
+	clean_save(path)
+
 func boost_in_each_district() -> void:
 	var path := "/tmp/hbt-boost-estates-%d.cfg" % OS.get_process_id()
 	var estate := HbtEconomy.new()
@@ -129,8 +167,10 @@ func check_rewards(provider: Fixture) -> void:
 	var ads: Node = game.ads
 	var world: HbtCampaign = game.campaign
 	provider.loads = false
+	provider.ready.erase("boost")
 	ads.prepare("boost")
-	expect(not ads.request("boost"), "no fill is not rewarded")
+	expect(ads.request("boost") and ads.waiting("boost") and world.boost.remaining(UTC) == 0, "no fill waits without a reward")
+	ads.cancel_wait()
 	provider.loads = true
 	ads.prepare("boost")
 	expect(ads.request("boost"), "explicit ad placement starts")

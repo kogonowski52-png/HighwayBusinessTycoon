@@ -1,5 +1,11 @@
 # Stan projektu
 
+## 0.9.2 · Reklamy od pierwszego dotknięcia i sklep
+
+AdMob ładuje jednostki w tle po UMP. Pierwsze dotknięcie wyświetla gotową reklamę albo podejmuje jedną próbę oczekiwania do 12 s. Anulowanie i zamknięcie panelu kończą oczekiwanie. Nagroda pozostaje przypisana do jednego potwierdzenia SDK, a BOOST rozlicza te same przedziały co wcześniej.
+
+Sklep ma dziewięć sekcji, autorskie ilustracje, statusy katalogu Google Play, ponowienie żądania i blokadę zakupu bez weryfikacji HTTPS. Podpisany APK ARM64 ma kod 9002 i korzysta z testowych jednostek Google. Właściciel może sprawdzić reklamy na telefonie, a transakcje wymagają odpowiednio skonfigurowanej ścieżki Google Play. [Przyczyny i próby odbiorcze](docs/ANDROID_COMMERCE_092.md) · [Galeria](screenshots/0.9.2/README.md)
+
 ## 0.9.1 · Dotyk i rozbudowa
 
 Wspólny panel przewija całą powierzchnią, utrzymuje bezwładność po puszczeniu palca i rozróżnia ruch pionowy od regulacji suwaka. Rozbudowa sortuje gotowe inwestycje, ma cztery zakładki i umożliwia budowę z listy. Dotknięcie budynku albo znacznika otwiera jego własny panel. Pierwsza zmiana prowadzi do zakupu sklepu. Górny HUD zajmuje mniej miejsca, a dolny panel można zwinąć.

@@ -7,6 +7,17 @@ template="${HBT_ANDROID_TEMPLATE:?Set HBT_ANDROID_TEMPLATE to android_source.zip
 [[ "$output" = /* ]]
 [[ -f "$template" ]]
 
+require_verifier() {
+  local expected_mode="$1"
+  [[ "${HBT_PLAY_BACKEND:-}" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?(/[A-Za-z0-9/_-]*)?$ ]]
+  [[ "${HBT_GOOGLE_CLIENT_ID:-}" =~ ^[0-9]+-[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com$ ]]
+  if ! curl --proto '=https' --fail --silent --show-error --max-time 15 "${HBT_PLAY_BACKEND%/}/health" \
+      | python3 -c 'import json, sys; result=json.load(sys.stdin); sys.exit(result.get("status") != "ready" or result.get("mode") != sys.argv[1])' "$expected_mode" 2>/dev/null; then
+    printf 'The HTTPS purchase verifier must report ready in %s mode.\n' "$expected_mode" >&2
+    exit 2
+  fi
+}
+
 case "$mode" in
   test|test-x86)
     [[ "$output" = *.apk ]]
@@ -18,11 +29,22 @@ case "$mode" in
     mode=test
     export_flag=--export-debug
     ;;
-  production)
+  play-test|production)
     [[ "$output" = *.aab ]]
     : "${GODOT_ANDROID_KEYSTORE_RELEASE_PATH:?Use the registered Play upload keystore}"
     : "${GODOT_ANDROID_KEYSTORE_RELEASE_USER:?Set the upload key alias}"
     : "${GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD:?Supply the upload key password privately}"
+    target="Android Play"
+    export_flag=--export-release
+    if [[ "$mode" = play-test ]]; then
+      require_verifier sandbox
+      mode=test
+    fi
+    ;;
+  *) printf 'Mode must be test, test-x86, play-test or production\n' >&2; exit 2 ;;
+esac
+
+if [[ "$mode" = production ]]; then
     for key in HBT_ADMOB_APP_ID HBT_REWARDED_BOOST_ID HBT_REWARDED_OFFLINE_ID HBT_REWARDED_BONUS_ID HBT_PLAY_BACKEND HBT_GOOGLE_CLIENT_ID HBT_PRIVACY_URL; do
       if [[ -z "${!key:-}" || "${!key}" = ca-app-pub-3940256099942544* ]]; then
         printf 'Provide a valid production value for %s\n' "$key" >&2
@@ -37,19 +59,9 @@ case "$mode" in
       [[ "${HBT_INTERSTITIAL_ID:-}" =~ ^ca-app-pub-[0-9]{16}/[0-9]{10}$ ]]
       [[ "$HBT_INTERSTITIAL_ID" != ca-app-pub-3940256099942544* ]]
     fi
-    [[ "$HBT_PLAY_BACKEND" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?(/[A-Za-z0-9/_-]*)?$ ]]
-    [[ "$HBT_GOOGLE_CLIENT_ID" =~ ^[0-9]+-[a-zA-Z0-9_-]+\.apps\.googleusercontent\.com$ ]]
     [[ "$HBT_PRIVACY_URL" =~ ^https://[A-Za-z0-9.-]+(/[A-Za-z0-9/_.-]*)?$ ]]
-    if ! curl --proto '=https' --fail --silent --show-error --max-time 15 "${HBT_PLAY_BACKEND%/}/health" \
-        | python3 -c 'import json, sys; result=json.load(sys.stdin); sys.exit(result.get("status") != "ready" or result.get("mode") != "production")' 2>/dev/null; then
-      printf 'The HTTPS purchase verifier must report ready before a production export.\n' >&2
-      exit 2
-    fi
-    target="Android Play"
-    export_flag=--export-release
-    ;;
-  *) printf 'Mode must be test, test-x86 or production\n' >&2; exit 2 ;;
-esac
+    require_verifier production
+fi
 mkdir -p "$(dirname "$output")"
 mkdir -p android
 touch android/.gdignore

@@ -102,9 +102,9 @@ func diagnostics() -> void:
 	if game.ads.available():
 		panel.button(panel.rows, game.t("diagnostic_load_ad"), game.ads.prepare.bind("boost"), game.ads.busy() or game.ads.loading("boost"))
 	if game.purchases.configured():
-		panel.button(panel.rows, game.t("diagnostic_check_store"), game.purchases.open)
+		panel.button(panel.rows, game.t("diagnostic_check_store"), game.purchases.open.bind(true))
 	if game.purchases.verified_checkout():
-		panel.button(panel.rows, game.t("diagnostic_check_https"), monitor.check_verifier)
+		panel.button(panel.rows, game.t("diagnostic_check_https"), game.purchases.check_verifier.bind(true))
 
 func toggle_monitor() -> void:
 	game.diagnostics.toggle()

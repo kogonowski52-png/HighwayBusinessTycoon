@@ -69,3 +69,7 @@ Wariant `HighwayBusinessTycoon-0.9.0-RC.apk` ma kod `9000`. Weryfikator odczyta�
 ## Testowy APK 0.9.1
 
 `HighwayBusinessTycoon-0.9.1-test.apk` zawiera ABI ARM64 i ma kod 9001. Podpis, identyfikator pakietu i wzrost kodu potwierdzono względem 0.9.0 RC. Obie biblioteki ELF i wpisy ZIP zachowują wyrównanie 16 KiB. SHA-256 podpisanego pliku to `86d6c758951c17dbbb5ee9bcef533288a5e47df3d4f7c44a5d98c62551092e13`. Zapis 0.9.0 przetestowano oddzielnie w Godot 4.7.2. [Wyniki aktualizacji zapisu i dotyku](../TEST_REPORT.md)
+
+## Testowy APK 0.9.2
+
+Podpis pliku `HighwayBusinessTycoon-0.9.2-test.apk` i identyfikator `pl.krystiandevelopment.highwaytycoon` są zgodne z APK 0.9.1. Kod wzrósł z 9001 do 9002. ARM64, wyrównanie ZIP i ELF do 16 KiB oraz obecność natywnych AdMob, UMP i Billing potwierdzono na gotowym pliku. SHA-256 to `3803f62ff9e217c12d654f067783df3338d90f0414f9a7c90fdfffd2c8252b54`. [Próby na telefonie](ANDROID_COMMERCE_092.md) · [APK GitHub](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.2-rc.1)

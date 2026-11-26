@@ -42,6 +42,8 @@ final class Store {
     private List<QueryProductDetailsParams.Product> ids = java.util.Collections.emptyList();
     private volatile boolean connecting;
     private volatile boolean connectionAttempted;
+    private boolean queryingCatalog;
+    private int catalogGeneration;
 
     Store(HighwayRewarded bridge) { this.bridge = bridge; }
     boolean checkoutOpen() { return checkout.get() || identity.get(); }
@@ -57,6 +59,8 @@ final class Store {
             client = null;
         }
         products.clear();
+        queryingCatalog = false;
+        catalogGeneration++;
         connecting = false;
         checkout.set(false);
         identity.set(false);
@@ -64,7 +68,10 @@ final class Store {
 
     void connect(String input) {
         Activity host = bridge.activity();
-        if (host == null) return;
+        if (host == null) {
+            state("connect", BillingClient.BillingResponseCode.SERVICE_DISCONNECTED);
+            return;
+        }
         host.runOnUiThread(() -> {
             var requested = new ArrayList<QueryProductDetailsParams.Product>();
             for (String product : input.split(",", 40)) {
@@ -95,7 +102,7 @@ final class Store {
                 .setListener((result, purchases) -> {
                     checkout.set(false);
                     state("purchase", result.getResponseCode());
-                    if (purchases != null) sendPurchases(purchases);
+                    if (purchases != null) sendPurchases(purchases, false);
                 })
                 .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
                 .enableAutoServiceReconnection()
@@ -113,26 +120,35 @@ final class Store {
             @Override public void onBillingServiceDisconnected() {
                 connecting = false;
                 checkout.set(false);
+                queryingCatalog = false;
+                catalogGeneration++;
+                products.clear();
                 state("disconnect", BillingClient.BillingResponseCode.SERVICE_DISCONNECTED);
             }
         });
     }
 
     private void queryCatalog() {
-        if (ids.isEmpty()) return;
+        if (ids.isEmpty() || queryingCatalog) return;
+        queryingCatalog = true;
+        int generation = ++catalogGeneration;
         client.queryProductDetailsAsync(QueryProductDetailsParams.newBuilder().setProductList(ids).build(), (response, result) -> {
+            if (generation != catalogGeneration) return;
+            queryingCatalog = false;
             products.clear();
+            if (response.getResponseCode() != OK) {
+                state("catalog", response.getResponseCode());
+                return;
+            }
             var payload = new JSONObject();
-            if (response.getResponseCode() == OK) {
-                for (ProductDetails product : result.getProductDetailsList()) {
-                    var selected = baseOffer(product);
-                    if (selected == null) continue;
-                    products.put(product.getProductId(), product);
-                    try {
-                        payload.put(product.getProductId(), new JSONObject().put("price", selected.getFormattedPrice())
-                            .put("currency", selected.getPriceCurrencyCode()));
-                    } catch (JSONException ignored) { }
-                }
+            for (ProductDetails product : result.getProductDetailsList()) {
+                var selected = baseOffer(product);
+                if (selected == null) continue;
+                products.put(product.getProductId(), product);
+                try {
+                    payload.put(product.getProductId(), new JSONObject().put("price", selected.getFormattedPrice())
+                        .put("currency", selected.getPriceCurrencyCode()));
+                } catch (JSONException ignored) { }
             }
             bridge.dispatch("billing_catalog", payload.toString());
             state("catalog", response.getResponseCode());
@@ -142,7 +158,8 @@ final class Store {
     private ProductDetails.OneTimePurchaseOfferDetails baseOffer(ProductDetails product) {
         var offers = product.getOneTimePurchaseOfferDetailsList();
         if (offers != null) for (var offer : offers) {
-            if (offer.getOfferId() == null && offer.getRentalDetails() == null && offer.getPreorderDetails() == null) return offer;
+            if ((offer.getOfferId() == null || offer.getOfferId().isEmpty())
+                    && offer.getRentalDetails() == null && offer.getPreorderDetails() == null) return offer;
         }
         return null;
     }
@@ -150,11 +167,11 @@ final class Store {
     private void queryPurchases() {
         client.queryPurchasesAsync(QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build(), (result, purchases) -> {
             state("restore", result.getResponseCode());
-            if (result.getResponseCode() == OK) sendPurchases(purchases);
+            if (result.getResponseCode() == OK) sendPurchases(purchases, true);
         });
     }
 
-    private void sendPurchases(List<Purchase> purchases) {
+    private void sendPurchases(List<Purchase> purchases, boolean snapshot) {
         var payload = new JSONArray();
         for (Purchase purchase : purchases) {
             if (purchase.getProducts().size() != 1) continue;
@@ -163,7 +180,10 @@ final class Store {
                     .put("token", purchase.getPurchaseToken()).put("state", purchase.getPurchaseState()));
             } catch (JSONException ignored) { }
         }
-        bridge.dispatch("billing_purchases", payload.toString());
+        try {
+            bridge.dispatch("billing_purchases", snapshot
+                ? new JSONObject().put("owned", payload).toString() : payload.toString());
+        } catch (JSONException ignored) { }
     }
 
     boolean launch(String id, String account) {

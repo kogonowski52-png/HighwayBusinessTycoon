@@ -1,5 +1,13 @@
 # Historia zmian
 
+## 0.9.2 · Reklamy i sklep premium
+
+- Wstępne ładowanie reklam po UMP, uruchomienie przy pierwszym dotknięciu i anulowalne oczekiwanie we wszystkich miejscach reklamowych.
+- Jednorazowa nagroda po potwierdzeniu SDK, automatyczne uzupełnianie reklamy, powrót do panelu i wznowienie dźwięku.
+- Dziewięć przewijanych sekcji sklepu, karty z autorskimi ilustracjami, czytelne statusy płatności i ceny z katalogu Google Play.
+- Ponowienie katalogu po błędzie, osobny stan oczekującego produktu i kontynuacja wybranego zakupu po bezpiecznej synchronizacji.
+- Diagnostyka testowa pokazuje UMP, stany jednostek, czas ładowania, kody błędów, nagrody, Billing i HTTPS. Kod 9002, Android ARM64. [Raport](docs/ANDROID_COMMERCE_092.md)
+
 ## 0.9.1 · Dotyk i rozbudowa
 
 - Przewijanie paneli palcem, wygaszanie bezwładności i ochrona przycisków oraz kamery podczas gestu.
