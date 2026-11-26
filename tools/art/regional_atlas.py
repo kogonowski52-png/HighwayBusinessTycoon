@@ -301,56 +301,23 @@ def shelter(region, kind):
 
 
 def expansion(region, service, stage):
-    """Each step adds geometry in a different part of the business parcel."""
-    m = Model()
-    wall, trim, accent, tint, foundation = PALETTES[region]
-    large = service in ("logistics", "warehouse")
-    wide = service in ("motel", "dealership", "mall")
-    width = 9.5 if large else 5.0 if wide else 3.8
-    roof = {"fuel": 3.7, "logistics": 5.60, "warehouse": 5.02, "dealership": 4.07, "mall": 4.88,
-            "motel": 4.93 if region == "ocean" else 5.52, "restaurant": 3.44, "truck_park": 5.01}.get(service, 3.32)
-    if stage == 1:
-        x, z = -width-.72, -.48
-        if large:
-            deck(m,(x,.12,z),3.78,3.98,"8b999d")
-            for row in range(3):
-                for j in range(3):
-                    shade = ["ca8757","a17b65","bf9c72"][(row+j)%3]
-                    m.box((x+(j-1)*.55,.39+row*.48,z),(.52,.45,1.33),shade,.067)
-            for offset in (-1.02,1.02):
-                m.box((x+offset,.88,z),(.10,1.64,1.77),trim,.045,"Metal")
-        else:
-            deck(m,(x,.14,z),2.29,2.68)
-            for dz in (-.69,.57):
-                m.box((x,.52,z+dz),(1.40,.65,.87),foundation,.09)
-                for ix in (-.43,0,.43):
-                    m.orb((x+ix,.94,z+dz),(.33,.27,.37),"85a070" if region != "alpine" else "7c9d8d",10,6)
-    elif stage == 2:
-        x, z = width + 1.10, -.48
-        deck(m,(x,.11,z),2.73 if not large else 3.42,3.11)
-        for dx in (-.92,.92):
-            m.box((x+dx,1.02,z+.85),(.18,1.99,.20),foundation,.046,"Metal")
-        m.custom_box((x,2.18,z),(2.51 if not large else 3.16,.28,2.50),accent,.51,.08,"Paint")
-        m.box((x,1.14,z-.66),(1.9,1.57,.90),wall,.135)
-        glass(m,x,1.35,z-.165,1.42,.73,tint,foundation,True)
-        glowing(m,(x,2.02,z+1.06),(1.52,.061,.052))
-    elif stage == 3:
-        for x in (-1.85,0,1.85):
-            m.custom_box((x,roof+.21,-.49),(1.45,.36,2.15),foundation,.19,.068,"Metal")
-            m.custom_box((x,roof+.39,-.49),(1.36,.12,1.95),"537aa0",.17,.038,"Tint")
-            for j in range(5):
-                m.box((x,roof+.459,-1.24+j*.37),(1.20,.014,.024),"9ab7c0",.007,"Metal")
-            for dx in (-.23,.23):
-                m.box((x+dx,roof+.459,-.50),(.027,.014,1.80),"aac8cf",.008,"Metal")
-    else:
-        x, z = width*.40, .86
-        y = roof+.32
-        for dx in (-.68,.68):
-            m.pipe([(x+dx,y-.33,z),(x+dx,y+1.49,z)],.075,foundation,"Metal",8)
-        m.custom_box((x,y+1.36,z),(2.91,.91,.36),trim,.25,.10,"Paint")
-        glowing(m,(x,y+1.39,z+.208),(2.17,.09,.036),accent)
-        m.orb((x,y+1.63,z+.242),(.25,.25,.13),"ffda9e",12,7,"Light")
-    return m
+    from venue_works import KINDS, annex, roof_work
+
+    wall, trim, accent, _, base = PALETTES[region]
+    depth = 9.0 if service in ("logistics","warehouse") else 5.1 if service in ("mall","dealership","motel") else 3.85
+    roof = {"fuel":3.58,"logistics":5.59,"warehouse":5.02,"dealership":4.08,
+            "mall":4.87,"motel":5.0 if region=="ocean" else 5.63,
+            "restaurant":3.47,"truck_park":5.01}.get(service,3.32)
+    kind = KINDS[service]
+    if stage < 3:
+        return annex(kind, stage, -depth-.60 if stage==1 else depth+.65, -.51,
+                     wall, trim, accent, 2.68 if depth > 5 else 2.16)
+    model = Model()
+    roof_work(model, kind, stage, -.79 if stage==3 else depth*.41, roof, -.52, base, accent)
+    if stage == 4:
+        model.parts.extend(annex(kind, 4, -depth*.43, -3.86 if depth < 5 else -5.32,
+                                 wall, trim, accent, 2.32).parts)
+    return model
 
 
 def mountain(seed, snowy):

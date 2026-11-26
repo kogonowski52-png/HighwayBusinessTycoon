@@ -101,7 +101,7 @@ func update_sites(economy: HbtEconomy) -> void:
 			var fixture: Node3D = upgrades[id][index]
 			fixture.visible = index + 1 < stage
 			if fixture.visible and fixture.get_child_count() == 0:
-				Art.place(fixture, "desert", "upgrade_" + UPGRADES[index])
+				Art.place(fixture, "desert", "%s_works_%d" % [id, index + 1])
 	for index in chargers.size():
 		chargers[index].visible = index < economy.capacity("charge")
 

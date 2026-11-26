@@ -24,6 +24,12 @@ const ANNEXES := {
 	"wash": WASH_AT + Vector3(3.52, 0, -1.46),
 	"workshop": WORKSHOP_AT + Vector3(2.54, 0, -3.69),
 	"restaurant": KITCHEN_AT + Vector3(-4.57, 0, -.63),
+	"motel": MOTEL_AT + Vector3(-4.80, 0, -2.04),
+	"parking": PARKING_AT + Vector3(-4.64, 0, -2.57),
+	"truck": TRUCK_AT + Vector3(5.60, 0, -3.92),
+	"tires": TIRES_AT + Vector3(2.84, 0, -2.54),
+	"charge": CHARGE_AT + Vector3(-2.59, 0, -1.96),
+	"truck_park": TRUCK_PARK_AT + Vector3(3.90, 0, -3.11),
 }
 const ROOFS := {
 	"market": [Station.MARKET_AT, [Vector3(2.52, 3.07, 1.51), Vector3(-1.52, 3.51, 0.91),
