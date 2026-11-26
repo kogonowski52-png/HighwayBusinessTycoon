@@ -72,4 +72,11 @@ const BOXES := {
 	"luxury_restaurant": AABB(Vector3(-4.990, 0.000, -3.210), Vector3(9.980, 4.404, 7.470)),
 	"luxury_vip_park": AABB(Vector3(-4.390, 0.000, -2.560), Vector3(8.780, 3.720, 5.120)),
 	"luxury_tuning": AABB(Vector3(-4.740, 0.000, -3.160), Vector3(9.612, 5.045, 6.361)),
+	"japan_fuel": AABB(Vector3(-4.845, 0.000, -2.875), Vector3(9.690, 4.480, 5.790)),
+	"japan_tuning": AABB(Vector3(-5.195, 0.000, -3.225), Vector3(10.390, 4.885, 6.546)),
+	"japan_restaurant": AABB(Vector3(-4.245, -0.000, -2.775), Vector3(8.490, 4.310, 6.435)),
+	"japan_market": AABB(Vector3(-4.045, -0.003, -2.725), Vector3(8.090, 4.173, 6.008)),
+	"japan_wash": AABB(Vector3(-4.845, 0.000, -3.275), Vector3(9.690, 4.595, 6.654)),
+	"japan_charge": AABB(Vector3(-5.545, 0.000, -2.825), Vector3(11.090, 4.002, 5.682)),
+	"japan_parking": AABB(Vector3(-6.295, 0.000, -3.525), Vector3(12.590, 5.482, 7.648)),
 }
