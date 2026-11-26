@@ -65,4 +65,11 @@ const BOXES := {
 	"harbor_distribution": AABB(Vector3(-5.640, 0.000, -3.310), Vector3(11.280, 5.840, 6.675)),
 	"harbor_truck_wash": AABB(Vector3(-4.940, 0.000, -3.610), Vector3(9.880, 5.455, 7.304)),
 	"harbor_transport": AABB(Vector3(-5.290, 0.000, -2.760), Vector3(10.580, 4.955, 5.523)),
+	"luxury_fuel": AABB(Vector3(-5.340, 0.000, -2.810), Vector3(10.680, 4.125, 5.627)),
+	"luxury_dealership": AABB(Vector3(-5.740, 0.000, -3.410), Vector3(11.480, 5.074, 7.543)),
+	"luxury_detail": AABB(Vector3(-4.540, 0.000, -3.060), Vector3(9.080, 4.325, 6.151)),
+	"luxury_motel": AABB(Vector3(-6.340, 0.000, -3.410), Vector3(14.699, 6.940, 7.417)),
+	"luxury_restaurant": AABB(Vector3(-4.990, 0.000, -3.210), Vector3(9.980, 4.404, 7.470)),
+	"luxury_vip_park": AABB(Vector3(-4.390, 0.000, -2.560), Vector3(8.780, 3.720, 5.120)),
+	"luxury_tuning": AABB(Vector3(-4.740, 0.000, -3.160), Vector3(9.612, 5.045, 6.361)),
 }

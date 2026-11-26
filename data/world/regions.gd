@@ -7,6 +7,8 @@ const RouteSixtySix = preload("res://data/world/frontier/route66.gd")
 
 const Harbor = preload("res://data/world/frontier/harbor.gd")
 
+const Luxury = preload("res://data/world/frontier/luxury.gd")
+
 const LAYOUTS := {
 	"valley": {
 		"family": "valley", "center": Vector3(-8, 0, -2), "width": 34.0, "ambient": 15.5,
@@ -69,6 +71,7 @@ const LAYOUTS := {
 	"tropical": Tropical.LAYOUT,
 	"route66": RouteSixtySix.LAYOUT,
 	"harbor": Harbor.LAYOUT,
+	"luxury": Luxury.LAYOUT,
 }
 
 # id, names, base invoice, first improvement, duration, unlock, preceding
@@ -105,6 +108,7 @@ const SERVICES := {
 	"tropical": Tropical.SERVICES,
 	"route66": RouteSixtySix.SERVICES,
 	"harbor": Harbor.SERVICES,
+	"luxury": Luxury.SERVICES,
 }
 
 const ECONOMICS := {
@@ -115,6 +119,7 @@ const ECONOMICS := {
 	"tropical": Tropical.ECONOMICS,
 	"route66": RouteSixtySix.ECONOMICS,
 	"harbor": Harbor.ECONOMICS,
+	"luxury": Luxury.ECONOMICS,
 }
 
 const LOCAL_CONTRACTS := {
@@ -125,12 +130,14 @@ const LOCAL_CONTRACTS := {
 	"tropical": Tropical.CONTRACT,
 	"route66": RouteSixtySix.CONTRACT,
 	"harbor": Harbor.CONTRACT,
+	"luxury": Luxury.CONTRACT,
 }
 
 const FRONTIERS := {
 	"tropical": Tropical,
 	"route66": RouteSixtySix,
 	"harbor": Harbor,
+	"luxury": Luxury,
 }
 
 static func art_for(district: String) -> Dictionary:
