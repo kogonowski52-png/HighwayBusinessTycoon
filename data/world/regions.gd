@@ -3,6 +3,8 @@ extends RefCounted
 
 const Tropical = preload("res://data/world/frontier/tropical.gd")
 
+const RouteSixtySix = preload("res://data/world/frontier/route66.gd")
+
 const LAYOUTS := {
 	"valley": {
 		"family": "valley", "center": Vector3(-8, 0, -2), "width": 34.0, "ambient": 15.5,
@@ -63,6 +65,7 @@ const LAYOUTS := {
 		"weights": {"trucker": 2.9, "electric": 1.9, "business": 1.8},
 	},
 	"tropical": Tropical.LAYOUT,
+	"route66": RouteSixtySix.LAYOUT,
 }
 
 # id, names, base invoice, first improvement, duration, unlock, preceding
@@ -97,6 +100,7 @@ const SERVICES := {
 		["truck_park", "Parking TIR Freight Exchange", "Freight Exchange Truck Park", 685, 2090, 5.9, 22500, "logistics", 6, 48, 1230, [1, 19], "truck", "attendant", "service"],
 	],
 	"tropical": Tropical.SERVICES,
+	"route66": RouteSixtySix.SERVICES,
 }
 
 const ECONOMICS := {
@@ -105,6 +109,7 @@ const ECONOMICS := {
 	"ocean": [3050, 3.7, 1.55, 110, 110, "vip_park", "ines"],
 	"metro": [4300, 2.85, 1.25, 111, 111, "logistics", "dev"],
 	"tropical": Tropical.ECONOMICS,
+	"route66": RouteSixtySix.ECONOMICS,
 }
 
 const LOCAL_CONTRACTS := {
@@ -113,10 +118,12 @@ const LOCAL_CONTRACTS := {
 	"ocean": {"field": "sales_vip_park", "count": 8, "time": 1500, "cash": 6900, "pl": "Weekend w marinie", "en": "Marina weekend"},
 	"metro": {"field": "deliveries", "count": 24, "time": 1800, "cash": 10200, "pl": "Łańcuch dostaw", "en": "Supply chain"},
 	"tropical": Tropical.CONTRACT,
+	"route66": RouteSixtySix.CONTRACT,
 }
 
 const FRONTIERS := {
 	"tropical": Tropical,
+	"route66": RouteSixtySix,
 }
 
 static func art_for(district: String) -> Dictionary:

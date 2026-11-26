@@ -51,4 +51,10 @@ const BOXES := {
 	"tropical_market": AABB(Vector3(-3.745, -0.005, -2.625), Vector3(7.490, 3.885, 5.808)),
 	"tropical_parking": AABB(Vector3(-4.795, 0.000, -2.725), Vector3(9.590, 3.386, 5.450)),
 	"tropical_wash": AABB(Vector3(-4.295, 0.000, -3.025), Vector3(8.590, 4.125, 6.050)),
+	"route66_fuel": AABB(Vector3(-5.190, 0.000, -2.610), Vector3(10.380, 4.065, 5.220)),
+	"route66_restaurant": AABB(Vector3(-4.990, 0.000, -2.760), Vector3(9.980, 4.254, 6.570)),
+	"route66_motel": AABB(Vector3(-6.540, 0.000, -3.010), Vector3(13.080, 6.035, 6.574)),
+	"route66_workshop": AABB(Vector3(-4.190, 0.000, -3.060), Vector3(8.380, 3.745, 6.151)),
+	"route66_parts": AABB(Vector3(-3.690, -0.005, -2.660), Vector3(7.380, 3.360, 6.043)),
+	"route66_restoration": AABB(Vector3(-5.290, 0.000, -3.360), Vector3(10.580, 5.505, 6.780)),
 }
