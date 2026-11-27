@@ -1,0 +1,77 @@
+name: Publish approved Play publishing kit
+
+on:
+  push:
+    branches: [android-play-publishing-beta2]
+    paths: [.github/workflows/publish-approved-play-kit.yml]
+
+concurrency: highway-business-tycoon-1.0.0-beta.2
+
+jobs:
+  publish:
+    if: github.repository == 'kogonowski52-png/HighwayBusinessTycoon'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      HBT_TAG: v1.0.0-beta.2
+      HBT_SOURCE: 5a5108e08aa28270607c359173f576b275b9f52e
+      HBT_38542b5bc0ea13bbe0f358b6ff765a312e94178cdb2b6e51299a0df52c711cc4256: 38542b5bc0ea13bbe0f358b6ff765a312e94178cdb2b6e51299a0df52c711cc4
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: 5a5108e08aa28270607c359173f576b275b9f52e
+      - name: Fetch the verified Android artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          while read -r name digest size; do
+            file="$RUNNER_TEMP/$name"
+            printf 'version https://git-lfs.github.com/spec/v1\noid sha256:%s\nsize %s\n' "$digest" "$size" |
+              GIT_LFS_SKIP_SMUDGE=0 git lfs smudge "$name" > "$file"
+            test "$(wc -c < "$file")" = "$size"
+            printf '%s  %s\n' "$digest" "$file" | sha256sum -c
+            unzip -tq "$file"
+          done <<'FILES'
+          HighwayBusinessTycoon-1.0.0-beta.2-test.apk d4ec9b2d72198ca353f374a7e7ba10ba8d26a0da6d3621deacc0c38e7f72b1ca 162206199
+          HighwayBusinessTycoon-1.0.0-beta.2-unsigned.aab 24f94e90be9ae367d2339611de3b1f0dbdc3bd04d5e9606a31ca9568b3aa8f62 107174409
+          FILES
+      - name: Reproduce the checked archive and collect download files
+        shell: bash
+        run: |
+          set -euo pipefail
+          kit=release/GOOGLE_PLAY_READY
+          zip="$RUNNER_TEMP/HighwayBusinessTycoon_GOOGLE_PLAY_READY.zip"
+          python3 tools/release/archive_publishing_kit.py "$kit" "$RUNNER_TEMP" "$zip"
+          printf '%s  %s\n' "$HBT_38542b5bc0ea13bbe0f358b6ff765a312e94178cdb2b6e51299a0df52c711cc4256" "$zip" | sha256sum -c
+          unzip -tq "$zip"
+          cp "$kit/04_IKONA/app_icon_512.png" "$kit/05_GRAFIKA_PROMOCYJNA/feature_graphic_1024x500.png" "$RUNNER_TEMP/"
+          cp "$kit/00_START/START_TUTAJ_GOOGLE_PLAY.md" "$kit/PODGLAD/podglad_wszystkich.jpg" "$RUNNER_TEMP/"
+          cd "$RUNNER_TEMP"
+          sha256sum HighwayBusinessTycoon_GOOGLE_PLAY_READY.zip HighwayBusinessTycoon-1.0.0-beta.2-test.apk \
+            HighwayBusinessTycoon-1.0.0-beta.2-unsigned.aab app_icon_512.png feature_graphic_1024x500.png \
+            START_TUTAJ_GOOGLE_PLAY.md podglad_wszystkich.jpg > SHA256SUMS.txt
+      - name: Publish the closed-test preparations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes="$RUNNER_TEMP/release-notes.md"
+          cat > "$notes" <<'NOTES'
+          **Android ARM64** · 1.0.0-beta.2 · `versionCode 10002` · `pl.krystiandevelopment.highwaytycoon`
+
+          - **HighwayBusinessTycoon_GOOGLE_PLAY_READY.zip** — 32 kadry z Godota w PL i EN, trzy warianty ikony, grafika sklepu, zwiastun, opisy, polityka prywatności, formularze i instrukcja zamkniętego testu.
+          - **APK testowe** — podpis zgodny z APK beta.1. Służy do bezpośredniej instalacji i aktualizacji na telefonie.
+          - **AAB release do podpisania** — zweryfikowany przez bundletool. API 36, ARM64, wyrównanie 16 KiB. Przesłanie w Play Console wymaga właściwego klucza upload. Testowe reklamy Google, płatności wyłączone.
+
+          [Instrukcja krok po kroku](https://github.com/kogonowski52-png/HighwayBusinessTycoon/blob/v1.0.0-beta.2/release/GOOGLE_PLAY_READY/00_START/START_TUTAJ_GOOGLE_PLAY.md) · [Weryfikacja i podpis upload](https://github.com/kogonowski52-png/HighwayBusinessTycoon/blob/v1.0.0-beta.2/release/GOOGLE_PLAY_READY/01_AAB/RAPORT_WERYFIKACJI.md)
+          NOTES
+          cd "$RUNNER_TEMP"
+          gh release create "$HBT_TAG" \
+            HighwayBusinessTycoon_GOOGLE_PLAY_READY.zip HighwayBusinessTycoon-1.0.0-beta.2-test.apk \
+            HighwayBusinessTycoon-1.0.0-beta.2-unsigned.aab app_icon_512.png feature_graphic_1024x500.png \
+            START_TUTAJ_GOOGLE_PLAY.md podglad_wszystkich.jpg SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --target "$HBT_SOURCE" --prerelease --latest=false \
+            --title 'Highway Business Tycoon 1.0.0-beta.2 · Google Play Publishing Kit' --notes-file "$notes"
