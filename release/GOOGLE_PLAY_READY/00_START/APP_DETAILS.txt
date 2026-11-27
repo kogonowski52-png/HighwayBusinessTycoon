@@ -1,0 +1,22 @@
+Nazwa aplikacji: Highway Business Tycoon
+Nazwa pakietu: pl.krystiandevelopment.highwaytycoon
+Application ID: pl.krystiandevelopment.highwaytycoon
+Deweloper: Krystian Development
+Typ: Gra
+Kategoria: Symulacyjne (Simulation)
+Tagi: kandydaci do wyszukania w Manage tags w pliku ASO_I_NAZWA.md
+Język domyślny karty: polski (pl-PL)
+Języki gry: polski i angielski
+Dystrybucja: proponowana bezpłatna; kraje i grupy do zatwierdzenia
+Reklamy: Tak; testowe Rewarded oraz Interstitial
+Zakupy: wyłączone w AAB closed; Billing 9.1.0 spakowany
+Kontakt: kogonowski52@gmail.com
+Strona: https://warszawa-uslugi.pl/
+Polityka prywatności: https://warszawa-uslugi.pl/highway-business-tycoon-privacy.html (adres docelowy; publikacja i test HTTPS do potwierdzenia)
+VersionName: 1.0.0-beta.2
+VersionCode: 10002
+Minimum: Android 7.0 / API 24
+Target SDK: API 36
+Architektura AAB i APK: arm64-v8a
+AAB release do podpisania: HighwayBusinessTycoon-1.0.0-beta.2-unsigned.aab — 107174409 bajtów
+APK testowe podpisane: HighwayBusinessTycoon-1.0.0-beta.2-test.apk — 162206199 bajtów

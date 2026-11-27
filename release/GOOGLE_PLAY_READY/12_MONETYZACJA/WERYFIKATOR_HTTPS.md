@@ -1,0 +1,11 @@
+# Weryfikator HTTPS · instrukcja dla operatora
+
+Podstawowe zamknięte testy używają `closed` i nie potrzebują tego wdrożenia. Po stronie gry już istnieje kontrola dostępności bezpiecznego checkoutu. Projekt źródłowy zawiera usługę Python WSGI w `backend/play/` oraz szablony konfiguracji hostingu. [Instalacja w repozytorium](https://github.com/kogonowski52-png/HighwayBusinessTycoon/blob/main/docs/HTTPS_VERIFIER.md)
+
+1. Przygotuj publiczny HTTPS ze stałą domeną i ważnym certyfikatem. Reverse proxy przekazuje wyłącznie potrzebne trasy do prywatnego portu usługi WSGI. Ustaw ograniczenie rozmiaru i częstotliwości żądań. Loguj status i błędy bez tokenów i treści żądań.
+2. Powiąż Google Play z właściwym projektem Google Cloud, włącz Android Publisher API i nadaj tożsamości serwera minimalne uprawnienia do zamówień tej aplikacji. Skonfiguruj identyfikator OAuth Web Client do weryfikacji tokena i klienta Android powiązanego z faktycznym certyfikatem dystrybucji Play. Zastosuj ADC lub autoryzowaną tożsamość serwera.
+3. Zainstaluj `backend/play/requirements.txt` na serwerze. Ustaw `HBT_GOOGLE_CLIENT_ID`, `HBT_PLAY_DB` dla trwałego woluminu i `HBT_ACCOUNT_SECRET` z prywatnego sejfu. Dokument źródłowy opisuje uruchomienie `gunicorn`, `GET /health`, backup i wznowienie finalizacji. Rozdziel sandbox `HBT_PLAY_TEST=1` od produkcji `HBT_PLAY_TEST=0`.
+4. Sprawdź wynik `/health`. Testowy build licencyjny oczekuje komunikatu `ready` i trybu `sandbox`. Produkcyjny build sprawdza `ready` w trybie `production`. W parametrach eksportu `HBT_PLAY_BACKEND` i `HBT_GOOGLE_CLIENT_ID` mogą znaleźć się publiczny adres i publiczny identyfikator. Prywatne dane Google i sekret HMAC pozostają po stronie serwera.
+5. Zaplanuj trwałość bazy, szyfrowane kopie i zadania `retry` oraz `reconcile` zgodnie z instrukcją źródłową. Porównaj rzeczywistą retencję i dane procesora z informacją ujawnianą użytkownikowi. Brak działającego serwera pozostawia płatności wyłączone.
+
+Katalog SKU jest wspólny dla aplikacji i backendu. Token zakupu jest weryfikowany w Android Publisher API. Idempotencja, kolejka finalizacji i unieważnienia wymagają sprawdzenia z prawdziwą licencją przed uruchomieniem produkcyjnym. [Katalog](PRODUKTY_PL_EN.tsv) · [Dokument bezpieczeństwa projektu](https://github.com/kogonowski52-png/HighwayBusinessTycoon/blob/main/docs/PLAY_BILLING.md)

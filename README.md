@@ -1,5 +1,7 @@
 # Highway Business Tycoon
 
+**1.0.0-beta.2 · Google Play Publishing Kit** obejmuje podpisane APK ARM64 z kodem `10002`, zweryfikowany kandydat AAB, 32 kadry PL i EN, zwiastun, ikonę adaptacyjną oraz komplet instrukcji i formularzy do toru zamkniętego. AAB wymaga klucza upload z Play Console. [Wydanie na GitHubie](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v1.0.0-beta.2) · [Instrukcja Google Play](release/GOOGLE_PLAY_READY/00_START/START_TUTAJ_GOOGLE_PLAY.md) · [Weryfikacja](release/GOOGLE_PLAY_READY/01_AAB/RAPORT_WERYFIKACJI.md)
+
 **1.0.0-beta.1 · Monetyzacja 2.0** wprowadza Centrum nagród, odświeżone oferty, krótkie ścieżki do pakietów oraz nowy panel BOOST. Podpisane APK z kodem 10001 służy do aktualizacji testowej na telefonie. Kandydat AAB w trybie release wymaga podpisu upload. [Wydanie na GitHubie](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v1.0.0-beta.1) · [Weryfikacja](docs/BETA_VERIFICATION.md) · [Zamknięte testy Google Play](docs/PLAY_CLOSED_BETA.md)
 
 **0.9.5 RC · Advanced Gameplay** dodaje własną flotę i 60 tras dostaw, Centrum imperium, trzy mini-gry, dziewięć przekrojów wnętrz oraz personalizację i rozbudowę placów. Podpisane APK ARM64 ma kod 9005. [Wydanie na GitHubie](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.5-rc.1) · [Przewodnik po mechanikach](docs/ADVANCED_GAMEPLAY.md) · [Galeria i filmy](screenshots/0.9.5/README.md)

@@ -1,5 +1,11 @@
 # Raport testów
 
+## 1.0.0-beta.2 · Pakiet Google Play
+
+- 41/41 prób galerii i prywatności w dwóch językach, 65/65 prób dotykowych oraz 4/4 kontroli migracji z profilu zapisanego w beta.1.
+- 4135/4135 prób zasobów i lokalizacji, 468/468 prób ruchu i cyklu życia, 120/120 prób monetyzacji oraz 15/15 prób backendu w izolacji.
+- AAB przeszedł bundletool i kontrolę 16 KiB. Podpis APK i kod wersji są zgodne z aktualizacją z beta.1. Fizyczny Android, podpis upload i rzeczywisty tor Google Play pozostają do odbioru. [Raport testów](release/GOOGLE_PLAY_READY/14_RAPORTY/RAPORT_TESTOW.md) · [Pomiary Linuksa](release/GOOGLE_PLAY_READY/14_RAPORTY/RAPORT_WYDAJNOSCI.md)
+
 ## 1.0.0-beta.1 · Monetyzacja 2.0
 
 | Próba | Wynik |

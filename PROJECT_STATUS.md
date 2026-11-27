@@ -1,5 +1,9 @@
 # Stan projektu
 
+## 1.0.0-beta.2 · Pakiet Google Play
+
+Eksport ARM64 `10002` zachowuje certyfikat testowego APK z beta.1. AAB release ma API 36 i wyrównanie 16 KiB. Oczekuje na klucz upload. Materiały obejmują 32 odrębne kadry z Godota, trzy warianty ikony, grafikę promocyjną, zwiastun oraz instrukcje deklaracji i testów zamkniętych. Ustawienia gry pokazują zaktualizowaną treść prywatności w obu językach. Polityka HTML czeka na potwierdzenie danych administratora i umieszczenie na witrynie. [Pakiet Google Play](release/GOOGLE_PLAY_READY/00_START/START_TUTAJ_GOOGLE_PLAY.md) · [Blokery](release/GOOGLE_PLAY_READY/00_START/BLOKERY_PUBLIKACJI.md)
+
 ## 1.0.0-beta.1 · Monetyzacja 2.0
 
 Centrum darmowych nagród, polecane oferty, skróty w HUD i przeprojektowany BOOST są zintegrowane z potwierdzaniem reklam oraz istniejącym zapisem. Android ARM64 `10001` ma podpisane APK do bezpośredniej aktualizacji. Zweryfikowany AAB do zamkniętych testów oczekuje na podpis upload. Płatności w tej konfiguracji są wyłączone. [Mechaniki](docs/MONETIZATION_2.md) · [Weryfikacja plików](docs/BETA_VERIFICATION.md) · [Materiały Play](release/play-beta/README.md)

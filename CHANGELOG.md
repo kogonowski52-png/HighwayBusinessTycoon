@@ -1,5 +1,12 @@
 # Historia zmian
 
+## 1.0.0-beta.2 · Pakiet Google Play
+
+- Nowa ikona stacji i samochodu oraz dwie warstwy adaptacyjne osadzone w aplikacji Android.
+- Zaktualizowany opis prywatności w ustawieniach, z informacjami o lokalnym zapisie, zakupach, reklamach i kontaktem do dewelopera.
+- Trzy kompozycje ikony, 32 kadry z bieżącej gry, grafika promocyjna, zwiastun, karta PL i EN oraz dokumenty do wypełnienia w Play Console.
+- APK testowy ARM64 `10002` i zweryfikowany AAB release do podpisania właściwym kluczem upload. [Raport wydania](release/GOOGLE_PLAY_READY/01_AAB/RAPORT_WERYFIKACJI.md)
+
 ## 1.0.0-beta.1 · Monetyzacja 2.0
 
 - Skróty do ofert, nagród, diamentów i gotówki bezpośrednio na mapie. Nowa plansza Polecane oraz osobne Centrum darmowych nagród.

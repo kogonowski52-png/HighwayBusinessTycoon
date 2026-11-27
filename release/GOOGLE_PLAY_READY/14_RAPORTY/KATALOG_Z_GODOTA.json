@@ -1,0 +1,451 @@
+{
+  "lokalizacje": 12,
+  "obiekty_uslugowe": 84,
+  "modele_pojazdow": 48,
+  "menedzerowie": 33,
+  "produkty": 19,
+  "managers": [
+    "ada",
+    "iga",
+    "maks",
+    "mira",
+    "leon",
+    "nina",
+    "tom",
+    "zofia",
+    "arun",
+    "lena",
+    "ben",
+    "olu",
+    "alina",
+    "vera",
+    "jo",
+    "tess",
+    "roan",
+    "ines",
+    "dev",
+    "mila",
+    "ren",
+    "ellis",
+    "noa",
+    "talia",
+    "mona",
+    "iman",
+    "hugo",
+    "selene",
+    "akio",
+    "soren",
+    "sana",
+    "reese",
+    "rhea"
+  ],
+  "products": {
+    "builder_pack": {
+      "item": {
+        "cash": 7800,
+        "diamond": 420,
+        "voucher": 6
+      },
+      "kind": "entitlement",
+      "label": [
+        "Pakiet rozbudowy",
+        "Builder Pack"
+      ],
+      "price_pln": 3999,
+      "section": "business"
+    },
+    "coast_pack": {
+      "district": "ocean",
+      "item": {
+        "cash": 9000,
+        "diamond": 260,
+        "voucher": 5
+      },
+      "kind": "entitlement",
+      "label": [
+        "Pakiet luksusowego wybrzeża",
+        "Coastal Luxury Pack"
+      ],
+      "price_pln": 2499,
+      "section": "business"
+    },
+    "freight_pack": {
+      "gate": "truck",
+      "item": {
+        "cash": 6400,
+        "diamond": 200,
+        "voucher": 4
+      },
+      "kind": "entitlement",
+      "label": [
+        "Pakiet ciężarowy",
+        "Freight Pack"
+      ],
+      "price_pln": 1999,
+      "section": "business"
+    },
+    "gems_100": {
+      "item": {
+        "diamond": 100
+      },
+      "kind": "consumable",
+      "label": [
+        "100 diamentów",
+        "100 Gems"
+      ],
+      "price_pln": 499,
+      "section": "gems"
+    },
+    "gems_1200": {
+      "item": {
+        "diamond": 1200
+      },
+      "kind": "consumable",
+      "label": [
+        "1 200 diamentów",
+        "1,200 Gems"
+      ],
+      "price_pln": 3999,
+      "section": "gems"
+    },
+    "gems_2500": {
+      "item": {
+        "diamond": 2500
+      },
+      "kind": "consumable",
+      "label": [
+        "2 500 diamentów",
+        "2,500 Gems"
+      ],
+      "price_pln": 7999,
+      "section": "gems"
+    },
+    "gems_550": {
+      "item": {
+        "diamond": 550
+      },
+      "kind": "consumable",
+      "label": [
+        "550 diamentów",
+        "550 Gems"
+      ],
+      "price_pln": 1999,
+      "section": "gems"
+    },
+    "gems_6500": {
+      "item": {
+        "diamond": 6500
+      },
+      "kind": "consumable",
+      "label": [
+        "6 500 diamentów",
+        "6,500 Gems"
+      ],
+      "price_pln": 19999,
+      "section": "gems"
+    },
+    "manager_pack": {
+      "item": {
+        "card": "reese",
+        "diamond": 250,
+        "voucher": 4
+      },
+      "kind": "entitlement",
+      "label": [
+        "Pakiet menedżera",
+        "Manager Pack"
+      ],
+      "price_pln": 2999,
+      "section": "directors"
+    },
+    "remove_ads": {
+      "item": {},
+      "kind": "entitlement",
+      "label": [
+        "Bez reklam przerywnikowych",
+        "Remove Interstitial Ads"
+      ],
+      "price_pln": 2499,
+      "section": "special"
+    },
+    "season_pass_2026_holiday": {
+      "end": 1797811200,
+      "item": {},
+      "kind": "entitlement",
+      "label": [
+        "Przepustka · Świąteczne imperium",
+        "Holiday Empire Pass"
+      ],
+      "price_pln": 2499,
+      "section": "season",
+      "start": 1796601600
+    },
+    "season_pass_2026_snow": {
+      "end": 1796601600,
+      "item": {},
+      "kind": "entitlement",
+      "label": [
+        "Przepustka · Zimowa autostrada",
+        "Winter Highway Pass"
+      ],
+      "price_pln": 2499,
+      "section": "season",
+      "start": 1795392000
+    },
+    "season_pass_2026_sport": {
+      "end": 1799020800,
+      "item": {},
+      "kind": "entitlement",
+      "label": [
+        "Przepustka · Festiwal sportowy",
+        "Sports Festival Pass"
+      ],
+      "price_pln": 2499,
+      "section": "season",
+      "start": 1797811200
+    },
+    "season_pass_2027_green": {
+      "end": 1802649600,
+      "item": {},
+      "kind": "entitlement",
+      "label": [
+        "Przepustka · Ekologiczna autostrada",
+        "Green Highway Pass"
+      ],
+      "price_pln": 2499,
+      "section": "season",
+      "start": 1801440000
+    },
+    "season_pass_2027_summer": {
+      "end": 1801440000,
+      "item": {},
+      "kind": "entitlement",
+      "label": [
+        "Przepustka · Wakacyjny kurort",
+        "Summer Resort Pass"
+      ],
+      "price_pln": 2499,
+      "section": "season",
+      "start": 1800230400
+    },
+    "season_pass_2027_truck": {
+      "end": 1800230400,
+      "item": {},
+      "kind": "entitlement",
+      "label": [
+        "Przepustka · Tydzień ciężarówek",
+        "Truck Week Pass"
+      ],
+      "price_pln": 2499,
+      "section": "season",
+      "start": 1799020800
+    },
+    "starter_pack": {
+      "item": {
+        "card": "sana",
+        "cash": 2400,
+        "decor": "gold_gate",
+        "diamond": 200,
+        "voucher": 3
+      },
+      "kind": "entitlement",
+      "label": [
+        "Pakiet otwarcia stacji",
+        "Station Starter Pack"
+      ],
+      "price_pln": 999,
+      "section": "special"
+    },
+    "wash_pack": {
+      "gate": "wash",
+      "item": {
+        "cash": 2800,
+        "diamond": 140,
+        "voucher": 3
+      },
+      "kind": "entitlement",
+      "label": [
+        "Pakiet myjni",
+        "Car Wash Pack"
+      ],
+      "price_pln": 1499,
+      "section": "business"
+    },
+    "workshop_pack": {
+      "gate": "workshop",
+      "item": {
+        "cash": 3200,
+        "diamond": 120,
+        "voucher": 4
+      },
+      "kind": "entitlement",
+      "label": [
+        "Pakiet warsztatu",
+        "Workshop Pack"
+      ],
+      "price_pln": 1499,
+      "section": "business"
+    }
+  },
+  "services": {
+    "alpine": [
+      "fuel",
+      "restaurant",
+      "motel",
+      "parking"
+    ],
+    "desert": [
+      "fuel",
+      "cafe",
+      "restrooms",
+      "vip_park",
+      "truck",
+      "showers",
+      "motel",
+      "truck_park",
+      "drive_through",
+      "charge"
+    ],
+    "harbor": [
+      "fuel",
+      "terminal",
+      "transfer",
+      "coldstore",
+      "truck_service",
+      "distribution",
+      "truck_wash",
+      "transport"
+    ],
+    "japan": [
+      "fuel",
+      "tuning",
+      "restaurant",
+      "market",
+      "wash",
+      "charge",
+      "parking"
+    ],
+    "luxury": [
+      "fuel",
+      "dealership",
+      "detail",
+      "motel",
+      "restaurant",
+      "vip_park",
+      "tuning"
+    ],
+    "metro": [
+      "fuel",
+      "logistics",
+      "warehouse",
+      "dealership",
+      "mall",
+      "charge",
+      "truck_park"
+    ],
+    "north": [
+      "fuel",
+      "market",
+      "parking",
+      "wash",
+      "truck",
+      "workshop",
+      "restaurant",
+      "tires",
+      "truck_park",
+      "motel",
+      "charge"
+    ],
+    "ocean": [
+      "fuel",
+      "restaurant",
+      "motel",
+      "vip_park",
+      "wash"
+    ],
+    "route66": [
+      "fuel",
+      "restaurant",
+      "motel",
+      "workshop",
+      "parts",
+      "restoration"
+    ],
+    "tropical": [
+      "fuel",
+      "rent",
+      "resort",
+      "restaurant",
+      "scooters",
+      "market",
+      "parking",
+      "wash"
+    ],
+    "valley": [
+      "fuel",
+      "restaurant",
+      "workshop",
+      "market"
+    ],
+    "wilderness": [
+      "fuel",
+      "logging",
+      "workshop",
+      "haulage",
+      "rent",
+      "motel",
+      "truck_service"
+    ]
+  },
+  "vehicles": [
+    "sprint",
+    "loop",
+    "meridian",
+    "crest",
+    "trail",
+    "coast",
+    "pine",
+    "summit",
+    "range",
+    "mesa",
+    "kestrel",
+    "vela",
+    "regency",
+    "orion",
+    "parcel",
+    "post",
+    "atlas",
+    "cargo",
+    "horizon",
+    "pulse",
+    "cove",
+    "sable",
+    "brook",
+    "ridgeback",
+    "courier",
+    "sundown",
+    "arrow",
+    "solstice",
+    "switchback",
+    "petrel",
+    "sunray",
+    "reefvan",
+    "dune_buggy",
+    "oxbow",
+    "velvet",
+    "roamer",
+    "container",
+    "cooler",
+    "forklift",
+    "onyx",
+    "lumen",
+    "sovereign",
+    "akari",
+    "bento",
+    "ion",
+    "timber",
+    "boreal",
+    "tandem"
+  ],
+  "version": "1.0.0-beta.2"
+}

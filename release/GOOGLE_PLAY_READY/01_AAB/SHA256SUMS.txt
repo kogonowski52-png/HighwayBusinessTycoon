@@ -1,0 +1,2 @@
+24f94e90be9ae367d2339611de3b1f0dbdc3bd04d5e9606a31ca9568b3aa8f62  HighwayBusinessTycoon-1.0.0-beta.2-unsigned.aab
+d4ec9b2d72198ca353f374a7e7ba10ba8d26a0da6d3621deacc0c38e7f72b1ca  HighwayBusinessTycoon-1.0.0-beta.2-test.apk

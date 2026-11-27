@@ -1,5 +1,7 @@
 # Licencje zasobów
 
+Materiały beta.2 wykorzystują autorskie modele, logo i utwór dzienny projektu oraz używaną już czcionkę Open Sans na licencji Apache 2.0. [Wykaz zasobów karty Google Play](release/GOOGLE_PLAY_READY/14_RAPORTY/LICENCJE_ZASOBOW.md)
+
 ## Zasoby 1.0.0-beta.1
 
 Ilustracje Polecane, nagród i BOOST korzystają z własnych renderów skrzyń, monet i diamentów. Ikona wideo powstała w autorskim skrypcie oferty. Grafika promocyjna wykorzystuje rzeczywisty render Stacji Północ i dotychczasowe fonty. [Generator ilustracji](tools/art/premium_offer_art.py) · [Materiały](release/play-beta/README.md)

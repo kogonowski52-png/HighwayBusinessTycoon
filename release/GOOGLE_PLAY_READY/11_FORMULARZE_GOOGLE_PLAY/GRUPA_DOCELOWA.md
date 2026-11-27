@@ -1,0 +1,7 @@
+# Grupa docelowa · decyzja właściciela
+
+W **App content → Target audience and content** potwierdź realną grupę odbiorców. Mechaniki polegają na obsłudze klientów, prowadzeniu kilku biznesów, rozliczaniu dostaw i planowaniu floty. Interfejs wymaga czytania opisów i porównania kosztów. Grywalna oprawa jest stylizowana. Kolorowa estetyka może być atrakcyjna także dla dzieci i sama nie przesądza o deklaracji.
+
+**Propozycja do zatwierdzenia** to `16–17` oraz `18 i więcej`, jeżeli kampania i sklep są faktycznie skierowane do starszych nastolatków i dorosłych zainteresowanych symulacją. Gra nie sprawdza wieku przy starcie. Dla rzeczywistej grupy `13–15` lub młodszej dostosuj deklarację do projektu, materiałów i konfiguracji reklam. Wybór grupy nie jest narzędziem do unikania zasad Google.
+
+Jeśli kierujesz grę do dzieci, sprawdź wymagania Families, dozwolone samocertyfikowane wersje SDK, ustawienia oznaczania reklam dla dzieci, dobór treści i ograniczenia identyfikatorów. W grupie mieszanej może być potrzebny neutralny ekran wieku. Obecne `ConsentRequestParameters.Builder()` nie ustawia osobnego flagowania dziecka lub użytkownika poniżej wieku zgody. Przed obietnicą, że wydanie jest gotowe dla dzieci, audytuj rzeczywisty kod i konfigurację produkcyjną. Nawet przy starszej grupie potwierdź właściwe obowiązki w objętych krajach. [Grupa docelowa Google Play](https://support.google.com/googleplay/android-developer/answer/9285070) · [Families](https://support.google.com/googleplay/android-developer/answer/9893335)
