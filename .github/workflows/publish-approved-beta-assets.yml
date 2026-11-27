@@ -1,0 +1,67 @@
+name: Publish approved Monetization beta files
+
+on:
+  push:
+    branches: [android-beta-1.0.0]
+    paths:
+      - .github/workflows/publish-approved-beta-assets.yml
+
+concurrency: highway-business-tycoon-1.0.0-beta.1
+
+jobs:
+  publish:
+    if: github.repository == 'kogonowski52-png/HighwayBusinessTycoon'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      HBT_TAG: v1.0.0-beta.1
+      HBT_SOURCE: 535aa9455ffadf2d556d0b17a52f49ea1f375974
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: 535aa9455ffadf2d556d0b17a52f49ea1f375974
+      - name: Verify beta files and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          sums="$RUNNER_TEMP/SHA256SUMS.txt"
+          : > "$sums"
+          while read -r name digest size; do
+            file="$RUNNER_TEMP/$name"
+            printf 'version https://git-lfs.github.com/spec/v1\noid sha256:%s\nsize %s\n' "$digest" "$size" |
+              GIT_LFS_SKIP_SMUDGE=0 git lfs smudge "$name" > "$file"
+            test "$(wc -c < "$file")" = "$size"
+            printf '%s  %s\n' "$digest" "$file" | sha256sum -c
+            printf '%s  %s\n' "$digest" "$name" >> "$sums"
+            unzip -tq "$file"
+          done <<'FILES'
+          HighwayBusinessTycoon-1.0.0-beta.1-test.apk 04022a85dbff20bb3855e3f25e3bbbdb8cb94c650fb384116ac8269bd371e058 162679755
+          HighwayBusinessTycoon-1.0.0-beta.1-unsigned.aab 085e364aedc32dffdcea0f9941cf68d74bcba7b02bd714ac6c151681b103bc26 107647868
+          HighwayBusinessTycoon-1.0.0-beta.1-PlayKit.zip e54bb81bd4cb285f08e553e4b19e0d78da4964c7ca7ec0a0c2889d3ef2954424 3374135
+          FILES
+      - name: Publish beta files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes="$RUNNER_TEMP/hbt-beta-notes.md"
+          cat > "$notes" <<'NOTES'
+          Android ARM64, `versionCode 10001`, pakiet `pl.krystiandevelopment.highwaytycoon`.
+
+          - **APK testowe** jest podpisane tym samym certyfikatem co 0.9.5. Służy do bezpośredniej instalacji i aktualizacji testowej.
+          - **AAB unsigned** przeszedł walidację bundletool, API 36 i 16 KiB. Wymaga właściwego klucza upload przed wysłaniem do Google Play. Płatności są wyłączone, jednostki reklam są testowe.
+          - **PlayKit** zawiera aktualną ikonę, grafikę promocyjną, 12 zrzutów, opisy PL i EN, politykę prywatności oraz instrukcje.
+          - Monetyzacja 2.0 dodaje Centrum darmowych nagród, skróty sklepu i nowy panel BOOST ×2.
+
+          [Raport i sumy](https://github.com/kogonowski52-png/HighwayBusinessTycoon/blob/v1.0.0-beta.1/docs/BETA_VERIFICATION.md) · [Klucz upload i zamknięty test](https://github.com/kogonowski52-png/HighwayBusinessTycoon/blob/v1.0.0-beta.1/docs/PLAY_CLOSED_BETA.md) · [Testy i materiały](https://github.com/kogonowski52-png/HighwayBusinessTycoon/blob/v1.0.0-beta.1/TEST_REPORT.md)
+          NOTES
+          gh release create "$HBT_TAG" \
+            "$RUNNER_TEMP/HighwayBusinessTycoon-1.0.0-beta.1-test.apk" \
+            "$RUNNER_TEMP/HighwayBusinessTycoon-1.0.0-beta.1-unsigned.aab" \
+            "$RUNNER_TEMP/HighwayBusinessTycoon-1.0.0-beta.1-PlayKit.zip" \
+            "$RUNNER_TEMP/SHA256SUMS.txt" --repo "$GITHUB_REPOSITORY" --target "$HBT_SOURCE" \
+            --title 'Highway Business Tycoon 1.0.0-beta.1 · Monetization 2.0' \
+            --notes-file "$notes" --prerelease --latest=false
