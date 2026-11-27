@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       unsigned_sha256:
-        description: SHA-256 from the beta.1 verification report
+        description: SHA-256 from the beta.2 verification report
         required: true
         type: string
 
@@ -18,7 +18,7 @@ jobs:
     environment: play-upload
     timeout-minutes: 10
     env:
-      BUNDLE_NAME: HighwayBusinessTycoon-1.0.0-beta.1
+      BUNDLE_NAME: HighwayBusinessTycoon-1.0.0-beta.2
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -32,7 +32,7 @@ jobs:
           export HBT_BUNDLETOOL_JAR="$RUNNER_TEMP/bundletool.jar"
           printf 'HBT_BUNDLETOOL_JAR=%s\n' "$HBT_BUNDLETOOL_JAR" >> "$GITHUB_ENV"
           [[ "$EXPECTED_SHA256" =~ ^[0-9a-f]{64}$ ]]
-          gh release download v1.0.0-beta.1 --repo "$GITHUB_REPOSITORY" \
+          gh release download v1.0.0-beta.2 --repo "$GITHUB_REPOSITORY" \
             --pattern "${BUNDLE_NAME}-unsigned.aab" --dir "$RUNNER_TEMP"
           printf '%s  %s\n' "$EXPECTED_SHA256" "$RUNNER_TEMP/${BUNDLE_NAME}-unsigned.aab" | sha256sum -c
           curl -fsSL --retry 2 https://github.com/google/bundletool/releases/download/1.18.2/bundletool-all-1.18.2.jar \
@@ -57,9 +57,9 @@ jobs:
           tools/android/verify-play-bundle.sh "$RUNNER_TEMP/$BUNDLE_NAME.aab" signed | tee "$RUNNER_TEMP/verification.txt"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: HighwayBusinessTycoon-1.0.0-beta.1-play-upload
+          name: HighwayBusinessTycoon-1.0.0-beta.2-play-upload
           path: |
-            ${{ runner.temp }}/HighwayBusinessTycoon-1.0.0-beta.1.aab
+            ${{ runner.temp }}/HighwayBusinessTycoon-1.0.0-beta.2.aab
             ${{ runner.temp }}/verification.txt
           if-no-files-found: error
           retention-days: 14

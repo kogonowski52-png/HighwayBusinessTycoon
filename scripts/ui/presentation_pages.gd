@@ -388,7 +388,15 @@ func help() -> void:
 func privacy() -> void:
 	panel.feature(hud.HELP, game.t("privacy_header"))
 	panel.box(game.t("privacy_save"), game.t("privacy_save_body"))
-	panel.box(game.t("privacy_services"), game.t("store_privacy"))
+	if game.ads.available():
+		var advertising: VBoxContainer = panel.box(game.t("ad_privacy"), game.t("privacy_ad_processing"))
+		if game.ads.privacy_required():
+			panel.button(advertising, game.t("ad_privacy"), game.ads.privacy)
+	panel.box(game.t("privacy_purchases_title"),
+		game.t("privacy_purchases_enabled" if game.purchases.verified_checkout() else "privacy_purchases_disabled"))
+	var contact: VBoxContainer = panel.box(game.t("privacy_contact_title"), game.t("privacy_contact_body"))
+	panel.button(contact, "kogonowski52@gmail.com",
+		func() -> void: OS.shell_open("mailto:kogonowski52@gmail.com"))
 	var policy: String = game.purchases.privacy_url()
 	if not policy.is_empty():
 		panel.button(panel.rows, game.t("privacy_read_online"), func() -> void: OS.shell_open(policy))

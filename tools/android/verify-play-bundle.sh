@@ -6,8 +6,8 @@ tools_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 bundle=${1:?Provide an AAB}
 signature_mode=${2:?Pass signed or unsigned}
 bundletool=${HBT_BUNDLETOOL_JAR:?Provide the official bundletool-all JAR}
-version_name=${HBT_RELEASE_VERSION:-1.0.0-beta.1}
-version_code=${HBT_EXPECTED_VERSION_CODE:-10001}
+version_name=${HBT_RELEASE_VERSION:-1.0.0-beta.2}
+version_code=${HBT_EXPECTED_VERSION_CODE:-10002}
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
