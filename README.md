@@ -1,5 +1,7 @@
 # Highway Business Tycoon
 
+**1.0.0-beta.1 · Monetyzacja 2.0** wprowadza Centrum nagród, odświeżone oferty, krótkie ścieżki do pakietów oraz nowy panel BOOST. Podpisane APK z kodem 10001 służy do aktualizacji testowej na telefonie. Kandydat AAB w trybie release wymaga podpisu upload. [Wydanie na GitHubie](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v1.0.0-beta.1) · [Weryfikacja](docs/BETA_VERIFICATION.md) · [Zamknięte testy Google Play](docs/PLAY_CLOSED_BETA.md)
+
 **0.9.5 RC · Advanced Gameplay** dodaje własną flotę i 60 tras dostaw, Centrum imperium, trzy mini-gry, dziewięć przekrojów wnętrz oraz personalizację i rozbudowę placów. Podpisane APK ARM64 ma kod 9005. [Wydanie na GitHubie](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.5-rc.1) · [Przewodnik po mechanikach](docs/ADVANCED_GAMEPLAY.md) · [Galeria i filmy](screenshots/0.9.5/README.md)
 
 **0.9.4 RC · World Expansion** rozszerza kampanię do dwunastu grywalnych lokalizacji, 84 biznesów i 48 modeli pojazdów. W drugim rozdziale atlasu można odblokować sześć nowych kompleksów, prowadzić wypożyczalnie i terminale oraz wracać do poprzednich lokalizacji. Podpisane APK ARM64 ma kod 9004. [APK w GitHub Releases](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.4-rc.1) · [Mapa funkcji](docs/WORLD_EXPANSION.md) · [Galeria i film](screenshots/0.9.4/README.md)

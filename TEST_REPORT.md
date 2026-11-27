@@ -1,5 +1,20 @@
 # Raport testów
 
+## 1.0.0-beta.1 · Monetyzacja 2.0
+
+| Próba | Wynik |
+| --- | --- |
+| Monetyzacja Godot | 120/120. Pełny BOOST ×2 w 12 regionach, kontekstowa gotówka, dostawa, diamenty na osobnej jednostce, limity, zapis i kontrolowane potwierdzenia SDK. |
+| Sklep i dotyk | 54/54 w trybie headless oraz 72/72 w renderowanym Godocie. Dotknięcie skrótów, 10 sekcji, gest przewijania, anulowanie oczekiwania, przejście do tła, odtworzenie panelu oraz niedostępne i oczekujące produkty z adaptera Play. |
+| Karta Play | 12/12 rzeczywistych renderów. 8 kadrów telefonu i po 2 dla układów tabletów 7″ i 10″. [Karta aplikacji](release/play-beta/README.md) |
+| Gesty i funkcje gry | 62/62 gesty i budowanie, 27/27 stacja, 104/104 flota, 22/22 mini-gry i 95/95 infrastruktura. |
+| Zapis | 14/14 przy zapisie w rzeczywistym 9005 i 4/4 po wczytaniu w beta.1. Porównano wszystkie 12 regionów, flotę, historię nagród, ustawienia, BOOST, przepustkę i stan usunięcia przerywników. [Próba migracji](tests/migration_beta.gd) |
+| Zasoby i obciążenie | 4121/4121 zasoby i lokalizacja, 468/468 symulacja, ruch i cykl życia. [Pomiary porównawcze](docs/BETA_PERFORMANCE.md) |
+| Backend | 15/15. Weryfikacja i transakcje w izolacji. |
+| Android | Podpis APK, zgodność z 9005, test `bundletool`, ABI i wyrównanie 16 KB. [Raport plików](docs/BETA_VERIFICATION.md) |
+
+Testy dotyku przekazują zdarzenia `ScreenTouch` i `ScreenDrag`. Próby rejestrują anulowanie, ponawianie po braku filmu, brak dodatkowej wypłaty przy ponowionym potwierdzeniu i blokadę zakupów przy niedostępnym serwerze. Na Androidzie pozostają natywne próby reklam, zgód UMP i instalacji na telefonie oraz sprawdzenie podpisanego AAB w konsoli. [Galeria Godota](screenshots/1.0.0-beta.1/README.md)
+
 ## 0.9.5 RC · Advanced Gameplay
 
 ### Próby w renderowanym Godocie

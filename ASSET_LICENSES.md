@@ -1,5 +1,9 @@
 # Licencje zasobów
 
+## Zasoby 1.0.0-beta.1
+
+Ilustracje Polecane, nagród i BOOST korzystają z własnych renderów skrzyń, monet i diamentów. Ikona wideo powstała w autorskim skrypcie oferty. Grafika promocyjna wykorzystuje rzeczywisty render Stacji Północ i dotychczasowe fonty. [Generator ilustracji](tools/art/premium_offer_art.py) · [Materiały](release/play-beta/README.md)
+
 ## Zasoby 0.9.5
 
 Baza transportowa, cysterna, naczepy, przekroje dziewięciu wnętrz, elementy małej architektury i kafelki gier są autorskimi zasobami Highway Business Tycoon. Palety istniejących modeli powstały z ich pierwotnych parametrów i kolorów. Nagrania korzystają z renderów Godota i dotychczasowych dźwięków gry. [Baza i naczepy](tools/art/transport_yard.py) · [Wnętrza](tools/art/interiors.py) · [Elementy personalizacji](tools/art/estate_decor.py)

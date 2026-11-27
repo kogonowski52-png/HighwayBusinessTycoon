@@ -10,6 +10,7 @@
 8. **Wydanie** · urządzeniowe testy AdMob i transakcji licencyjnych, konfiguracja produkcyjna właściciela, optymalizacja, Android App Bundle oraz osobny eksport i walidacja iOS.
 9. **World Expansion** · dwanaście grywalnych lokalizacji, 84 biznesy, drugi rozdział atlasu, nowe trasy i długoterminowa progresja. [Stan wydania 0.9.4](docs/WORLD_EXPANSION.md) · [Testy](TEST_REPORT.md)
 10. **Advanced Gameplay** · flota, kontrakty, trzy mini-gry, wnętrza, personalizacja i infrastruktura. Pozostałe cztery mini-gry i fizyczny odbiór Androida pozostają w planach. [Stan wydania 0.9.5](docs/ADVANCED_GAMEPLAY.md)
+11. **Monetyzacja 2.0** · Centrum nagród, nowe ścieżki sklepu i pakiet zamknięty release 10001. Do wgrania AAB potrzebny jest podpis upload. [Google Play beta](docs/PLAY_CLOSED_BETA.md)
 
 
 ## Przed publikacją Google Play

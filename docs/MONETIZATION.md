@@ -30,12 +30,12 @@ export HBT_ANDROID_TEMPLATE=/pełna/ścieżka/android_source.zip
 tools/android/build-monetization.sh test /pełna/ścieżka/HighwayBusinessTycoon-0.9.2-test.apk
 ```
 
-Środowisko eksportu musi otrzymać dotychczasowe zmienne `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER`, `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`. Plik APK można porównać z poprzednim testowym APK poleceniem `tools/android/verify-monetization-apk.sh NEW.apk OLD.apk` po ustawieniu `ANDROID_BUILD_TOOLS_DIR`. [Stały certyfikat](ANDROID_SIGNING.md)
+Środowisko eksportu APK musi otrzymać dotychczasowe zmienne `GODOT_ANDROID_KEYSTORE_DEBUG_PATH`, `GODOT_ANDROID_KEYSTORE_DEBUG_USER`, `GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD`. Plik APK można porównać z poprzednim testowym APK poleceniem `tools/android/verify-monetization-apk.sh NEW.apk OLD.apk` po ustawieniu `ANDROID_BUILD_TOOLS_DIR`. Wydanie zamknięte korzysta z trybu `play-closed` z kluczem upload albo z `play-unsigned` do ręcznego podpisania. Używa testowych jednostek i wyłącza płatności. [Stały certyfikat](ANDROID_SIGNING.md) · [Podpis i testy zamknięte](PLAY_CLOSED_BETA.md)
 
 ## Konfiguracja AdMob na koncie właściciela
 
 1. W AdMob dodaj lub wybierz istniejącą aplikację Android o identyfikatorze `pl.krystiandevelopment.highwaytycoon`. Skopiuj jej App ID do `HBT_ADMOB_APP_ID`.
-2. Utwórz trzy jednostki **Rewarded**. Wprowadź identyfikatory jako `HBT_REWARDED_BOOST_ID`, `HBT_REWARDED_OFFLINE_ID` i `HBT_REWARDED_BONUS_ID`. Ich nazwy w konsoli powinny wskazywać miejsca emisji. Kwoty dla gracza ustala konfiguracja w grze.
+2. Utwórz cztery jednostki **Rewarded**. Wprowadź identyfikatory jako `HBT_REWARDED_BOOST_ID`, `HBT_REWARDED_OFFLINE_ID`, `HBT_REWARDED_GEMS_ID` i `HBT_REWARDED_BONUS_ID`. Ich nazwy w konsoli powinny wskazywać miejsca emisji. Kwoty dla gracza ustala konfiguracja w grze.
 3. Opcjonalnie utwórz jednostkę **Interstitial** i użyj `HBT_INTERSTITIAL_ID`. `HBT_INTERSTITIALS=off` całkowicie wyłącza ten format w danej kompilacji.
 4. W AdMob **Privacy & messaging** opublikuj właściwy komunikat zgody dla aplikacji i testuj także możliwość ponownego otwarcia formularza. Dopiero `canRequestAds()` pozwala inicjalizować SDK i pobrać reklamę. Gdy Google wymaga zgody, formularz może pojawić się po wejściu na mapę.
 5. Na urządzeniach wewnętrznych użyj wyłącznie testowego presetu lub skonfigurowanych urządzeń testowych. Testowy preset automatycznie wybiera publiczny App ID `ca-app-pub-3940256099942544~3347511713`, Rewarded `ca-app-pub-3940256099942544/5224354917` dla każdego miejsca i Interstitial `ca-app-pub-3940256099942544/1033173712`.
@@ -51,6 +51,7 @@ Zmiennych nie trzeba wpisywać do GDScriptu. `tools/android/build-monetization.s
 | `HBT_ADMOB_APP_ID` | `com.google.android.gms.ads.APPLICATION_ID` |
 | `HBT_REWARDED_BOOST_ID` | `highwaytycoon.rewarded_boost` |
 | `HBT_REWARDED_OFFLINE_ID` | `highwaytycoon.rewarded_offline` |
+| `HBT_REWARDED_GEMS_ID` | `highwaytycoon.rewarded_gems` |
 | `HBT_REWARDED_BONUS_ID` | `highwaytycoon.rewarded_bonus` |
 | `HBT_INTERSTITIAL_ID` | `highwaytycoon.interstitial` |
 | `HBT_PLAY_BACKEND` | `highwaytycoon.backend` |

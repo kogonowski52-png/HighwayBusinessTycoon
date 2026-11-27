@@ -1,5 +1,9 @@
 # Podpisywanie testowych wydań Androida
 
+## 1.0.0-beta.1
+
+APK do testów bezpośrednich ma kod `10001`, ARM64 i certyfikat porównany z `9005`. AAB do zamkniętego testu został wyeksportowany w trybie release. Do jego podpisania wymagany jest właściwy klucz upload. Rozmiary i SHA-256 obu plików są w raporcie. [Raport](BETA_VERIFICATION.md) · [Podpis i ścieżka zamknięta](PLAY_CLOSED_BETA.md)
+
 ## Testowy APK 0.9.5
 
 HighwayBusinessTycoon-0.9.5-test.apk ma kod 9005 i identyfikator `pl.krystiandevelopment.highwaytycoon`. Porównanie z 9004 potwierdziło identyczny certyfikat, ARM64 i rosnący kod wersji. Eksport zawiera natywny mostek, AdMob w trybie testowym, UMP i Play Billing. Wyrównanie bibliotek oraz wpisów ZIP wynosi 16 KiB.

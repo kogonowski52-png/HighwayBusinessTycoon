@@ -1,5 +1,12 @@
 # Historia zmian
 
+## 1.0.0-beta.1 · Monetyzacja 2.0
+
+- Skróty do ofert, nagród, diamentów i gotówki bezpośrednio na mapie. Nowa plansza Polecane oraz osobne Centrum darmowych nagród.
+- Czytelny licznik i aktywna oprawa BOOST. Ograniczone ponowienia reklam, osobna jednostka diamentów oraz konkretne komunikaty o dostępności.
+- 5 diamentów za film, do pięciu odbiorów dziennie. Premia gotówki zależy od dochodu regionu. Dodano lokalną premię dla nowego regionu, skrzynie i dostawy paliwa na mapie.
+- Podpisane APK ARM64 `10001` i zweryfikowany AAB release ARM64 do podpisania certyfikatem upload. [Raport plików](docs/BETA_VERIFICATION.md) · [Wyniki](TEST_REPORT.md)
+
 ## 0.9.5 RC · Advanced Gameplay
 
 - Własna flota z kierowcami, szkoleniem, przeglądami, naczepami i 60 kontraktami. Dostawy rozliczają się również po zmianie regionu lub zamknięciu gry.

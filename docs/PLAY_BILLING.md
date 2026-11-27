@@ -39,7 +39,8 @@ Gotowa konfiguracja systemd, HTTPS i kopii zapasowych jest opisana w instrukcji 
 2. W Play Console nadaj tożsamości usługi weryfikacyjnej dostęp do zamówień tej aplikacji. Włącz Android Publisher API w projekcie właściciela. Serwer korzysta z Application Default Credentials. Użyj tożsamości infrastruktury lub pliku konta usługi przechowanego poza repozytorium i aplikacją.
 3. W odizolowanym środowisku zainstaluj `backend/play/requirements.txt`. Skonfiguruj `HBT_GOOGLE_CLIENT_ID`, `HBT_PLAY_DB` na trwałym woluminie z backupem i `HBT_ACCOUNT_SECRET` z sejfu. Sekret ma co najmniej 32 losowe bajty i służy do pseudonimizacji identyfikatora oraz szyfrowania oczekujących tokenów.
 4. Uruchom usługę za HTTPS z ograniczeniem rozmiaru i częstotliwości zapytań. Backend WSGI nasłuchuje na prywatnym porcie, a reverse proxy udostępnia cztery operacje `/v1/*`. Dla produkcji użyj `HBT_PLAY_TEST=0`. Osobne środowisko licencyjne używa `HBT_PLAY_TEST=1`.
-5. W kopii konfiguracji Android ustaw publiczne `HBT_GOOGLE_CLIENT_ID` i `HBT_PLAY_BACKEND`. Do eksportu AAB użyj zarejestrowanego klucza upload przez `GODOT_ANDROID_KEYSTORE_RELEASE_PATH`, `GODOT_ANDROID_KEYSTORE_RELEASE_USER` i `GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD`.
+5. W kopii konfiguracji Android ustaw publiczne `HBT_GOOGLE_CLIENT_ID` i `HBT_PLAY_BACKEND`. Podpis porównuje odcisk klucza upload z `HBT_PLAY_UPLOAD_SHA256`. [Pola podpisu](PLAY_CLOSED_BETA.md#podpis-upload)
+6. W **Play Console → Setup → License testing** wskaż konta licencyjne. Dodaj te konta również do listy testerów odpowiedniego toru i przejdź przez instalację z linku opt-in. Zamknięta beta może ruszyć z wyłączonymi płatnościami. Do prób zakupów przygotuj osobny AAB `play-test` po skonfigurowaniu serwera weryfikacji. [Licencyjne próby Billing](https://developer.android.com/google/play/billing/test)
 
 ```bash
 cd backend/play

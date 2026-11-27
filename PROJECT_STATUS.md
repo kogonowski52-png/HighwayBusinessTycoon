@@ -1,5 +1,9 @@
 # Stan projektu
 
+## 1.0.0-beta.1 · Monetyzacja 2.0
+
+Centrum darmowych nagród, polecane oferty, skróty w HUD i przeprojektowany BOOST są zintegrowane z potwierdzaniem reklam oraz istniejącym zapisem. Android ARM64 `10001` ma podpisane APK do bezpośredniej aktualizacji. Zweryfikowany AAB do zamkniętych testów oczekuje na podpis upload. Płatności w tej konfiguracji są wyłączone. [Mechaniki](docs/MONETIZATION_2.md) · [Weryfikacja plików](docs/BETA_VERIFICATION.md) · [Materiały Play](release/play-beta/README.md)
+
 ## 0.9.5 RC · Advanced Gameplay
 
 Flota, dostawy i rozliczenia działają w dwunastu regionach. Centrum imperium prowadzi do infrastruktury, marketingu, personalizacji i inspekcji. Ukończono mini-gry tankowania, mycia i załadunku oraz dziewięć wnętrz. Eksport 9005 przeszedł sprawdzenie podpisu i manifestu w porównaniu z 9004. [Przewodnik i ograniczenia](docs/ADVANCED_GAMEPLAY.md) · [Zapis](docs/MIGRATION_095.md) · [Wydajność](docs/PERFORMANCE_095.md)
