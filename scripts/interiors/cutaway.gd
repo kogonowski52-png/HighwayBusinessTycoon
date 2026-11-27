@@ -21,6 +21,7 @@ var game: Node3D
 var apartment := ""
 var service := ""
 var path := ""
+var awaiting_model := false
 var loaded := false
 var failed := false
 var viewport: SubViewport
@@ -57,7 +58,8 @@ func open(owner: Node3D, id: String, label: Label) -> void:
 	stretch_shrink = 2
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	path = "res://assets/models/interiors/" + apartment + ".glb"
-	if ResourceLoader.load_threaded_request(path, "PackedScene") != OK:
+	awaiting_model = ResourceLoader.load_threaded_request(path, "PackedScene") == OK
+	if not awaiting_model:
 		failed = true
 		progress.text = game.t("interior_error")
 
@@ -65,14 +67,33 @@ func _process(delta: float) -> void:
 	if failed or game.suspended_at >= 0:
 		return
 	if not loaded:
-		var values := []
-		match ResourceLoader.load_threaded_get_status(path, values):
-			ResourceLoader.THREAD_LOAD_LOADED: assemble(ResourceLoader.load_threaded_get(path))
-			ResourceLoader.THREAD_LOAD_FAILED, ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
-				failed = true
-				progress.text = game.t("interior_error")
+		var status := ResourceLoader.load_threaded_get_status(path)
+		if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			return
+		awaiting_model = false
+		var model: PackedScene
+		if status != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+			model = ResourceLoader.load_threaded_get(path) as PackedScene
+		if model == null:
+			failed = true
+			progress.text = game.t("interior_error")
+		else:
+			assemble(model)
 		return
 	update_activity(delta)
+
+func _exit_tree() -> void:
+	if awaiting_model:
+		awaiting_model = false
+		release_model_request(get_tree(), path)
+
+static func release_model_request(tree: SceneTree, requested_path: String) -> void:
+	# Closing the panel still owes the loader one get call. Poll outside the freed view.
+	var status := ResourceLoader.load_threaded_get_status(requested_path)
+	if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+		tree.process_frame.connect(func() -> void: release_model_request(tree, requested_path), CONNECT_ONE_SHOT)
+	elif status != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+		ResourceLoader.load_threaded_get(requested_path)
 
 func assemble(model: PackedScene) -> void:
 	loaded = true
