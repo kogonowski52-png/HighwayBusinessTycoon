@@ -1,5 +1,11 @@
 # Stan projektu
 
+## 0.9.4 RC · World Expansion
+
+W grze jest dwanaście niezależnych lokalizacji. Sześć nowych ma sceny, personel, aktywne trasy klientów, rozbudowę, kontrakty, kolekcje i dochody offline. Zachowano kampanię z 9003, a zapisywanie rozszerzono o terminy zwrotów wypożyczonych pojazdów. [Raport migracji](docs/MIGRATION_094.md)
+
+Do odbioru na fizycznym Androidzie pozostają płynność i temperatura, instalacja w miejscu oraz natywne SDK. Modele części wnętrz są uproszczone i korzystają ze wspólnych detali. APK 9004 ma podpis 9003. [Spis biznesów](docs/WORLD_EXPANSION.md) · [Pomiary](docs/PERFORMANCE_094.md) · [Testy](TEST_REPORT.md)
+
 ## 0.9.3 · Premium Graphics 2.0
 
 Stacja Północ ma pięć konstrukcji zadaszenia, osobne zaplecza rozbudowy sklepu, warsztatu, myjni i restauracji oraz cztery widoczne częściowe wnętrza. Szczotki myjni reagują na wizytę, a warsztat ma wyposażenie i efekty naprawy. Po ocenie Północy poprawiono architekturę 41 usług i otoczenie sześciu regionów. Flota ma 30 modeli, a 41 ilustracji w Rozbudowie pochodzi z aktualnych scen 3D. [Zakres zmian i ograniczenia](docs/PREMIUM_GRAPHICS_2.md) · [Porównania i nagranie](screenshots/0.9.3/README.md)

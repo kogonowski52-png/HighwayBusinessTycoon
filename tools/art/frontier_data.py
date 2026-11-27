@@ -42,6 +42,8 @@ def write(region):
              "luxury":("Obsługa kolekcjonerów","Collectors' concierge","sales_dealership","dealership"),
              "japan":("Cicha energia","Quiet energy","charged","charge"),
              "wilderness":("Drewno z Timberline","Timberline timber","deliveries","logging")}[region]
+    count, window = {"tropical": (5, 1800), "route66": (3, 3600), "harbor": (12, 1800),
+                     "luxury": (4, 2700), "japan": (12, 1800), "wilderness": (12, 1800)}[region]
     site_schema = []
     art = {}
     prints = {}
@@ -89,7 +91,7 @@ def write(region):
         *["\t"+literal(x)+"," for x in site_schema],
         "]",
         f'const ECONOMICS := {literal([opening, pace, shortest, 109, 109, quest, manager])}',
-        'const CONTRACT := '+literal(dict(field=label[2], site=label[3], count=12, time=1800,
+        'const CONTRACT := '+literal(dict(field=label[2], site=label[3], count=count, time=window,
                                            cash=round(opening*.72),pl=label[0],en=label[1])),
         "const SIGNS := {",
         *[f'\t"{key}": {literal(x)},' for key,x in art.items()],

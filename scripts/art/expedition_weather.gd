@@ -42,8 +42,13 @@ func apply(site: HbtEconomy, event: Dictionary, quality: int, choice: String) ->
 			condition = "wind"
 		if winter and condition in ["rain", "clear"]:
 			condition = "snow"
-		if district in ["ocean", "tropical", "harbor", "luxury"] and condition == "snow":
-			condition = "haze"
+		if condition == "snow":
+			if district in ["ocean", "harbor"]:
+				condition = "haze"
+			elif district in ["tropical", "luxury", "japan"]:
+				condition = "clear"
+			elif district == "route66":
+				condition = "wind"
 	var changed := condition != weather or effect.mesh == null
 	weather = condition
 	lighting.set_condition(condition)

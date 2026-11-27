@@ -2,7 +2,6 @@ extends "res://scripts/buildings/regional_landscape.gd"
 ## Each frontier has its own geographic landmarks, horizon, structures and vegetation.
 
 const WALL_TRIM := Color("#f6ddb2")
-const SHORE := Color("#d2bb80")
 
 func ground(pigments: Array) -> void:
 	if routes.district == "tropical":

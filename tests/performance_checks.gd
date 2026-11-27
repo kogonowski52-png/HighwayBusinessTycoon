@@ -72,7 +72,7 @@ func commerce_checks() -> void:
 		expect(estate.income_per_minute().compare(before.plus(HbtAmount.from(41))) == 0, "rolling minute sums values above int64")
 		estate.clock += 59
 		expect(estate.income_per_minute().decimal() == "41", "one-second boundary expires the exact first payment")
-	expect(services == 41, "all 41 businesses covered")
+	expect(services == 84, "all 84 businesses covered")
 
 func lifecycle_checks() -> void:
 	var now: int = game.economy.clock

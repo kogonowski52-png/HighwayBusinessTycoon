@@ -1,5 +1,39 @@
 # Raport testów
 
+## 0.9.4 RC · World Expansion
+
+### Rozgrywka w renderowanym oknie Godota
+
+Godot 4.7.2 na Linuksie x86_64 z rendererem Compatibility. Scenariusz otwierał każdy region przyciskiem w atlasie, opłacał go z właściwego portfela, tankował u pierwszego klienta i wykonywał wizytę z pracownikiem w każdym biznesie. Sprawdzono zapłatę, wyjazd, odbiór środków, stan magazynu lub wypożyczalni, zapis poziomów oraz powrót do sponsora. Wcześniejszych sześć map przeszło osobny przebieg 164/164 z przyciskami atlasu, etapami magazynu Metro i jednokrotnym odbiorem dochodu offline po powrocie. Powtórka bez zapisu kadrów zaliczyła 112/112 sprawdzeń. Zakończyła się bez wcześniejszego ostrzeżenia o uchwytach audio po dodaniu wygaszania dźwięku na końcu skryptu testowego.
+
+| Nowy region | Usługi sprawdzone w scenie | Asercje |
+| --- | ---: | ---: |
+| Tropical Island | 8 | 103/103 |
+| Route 66 | 6 | 82/82 |
+| Industrial Harbor | 8 | 107/107 |
+| Luxury City | 7 | 94/94 |
+| Japan Highway | 7 | 95/95 |
+| Northern Wilderness | 7 | 99/99 |
+
+Film z Godot Movie Maker ma 176 klatek w 486 × 864, 18 FPS i trwa 9,8 s. Podczas nagrania aplikacja rozliczyła wynajęty pojazd oraz obsłużyła transport z ładunkiem. Z galerii można otworzyć zbliżenie każdego z 43 nowych biznesów, wszystkie dwanaście kompleksów i sześć porównań z 9003. [Galeria i film](screenshots/0.9.4/README.md)
+
+### Automatyczne testy gry
+
+| Próba | Wynik |
+| --- | --- |
+| Wydarzenia, trasy i księga | 151/151 w World Expansion, 82/82 w księdze ekspansji i 93/93 tras regionalnych. Sprawdzono dwanaście wydarzeń, kontrakty, odbiór nagród, termin zwrotu wypożyczonego auta oraz 25 minut symulacji ruchu dla każdego nowego regionu. Test odnotował pojedyncze odzyskanie trasy w Industrial Harbor. |
+| Progresja bezpłatna | 55/55, trzy ziarna. Każdy przebieg otworzył wszystkie 84 usługi do 30. dnia. [Raport 1–60 dni](docs/BALANCE_094.md) |
+| Ekonomia i działanie istniejących funkcji | Ekonomia 70/70, stacja 27/27, dyspozytornia 30/30, kariera 210/210, prezentacja 278/278 i zasoby graficzne 182/182. |
+| Ruch obciążeniowy i profile | 468/468 sprawdzeń dotyczących obciążenia, limitów efektów, cyklu życia, budżetów i kalkulacji wszystkich 84 usług. |
+| Katalog i tłumaczenia | 3476/3476 sprawdzeń zasobów oraz wpisów PL i EN. |
+| Dotyk | 65/65 w renderowanym oknie i 62/62 headless ze zdarzeniami ScreenTouch i ScreenDrag. Sprawdzono przełączenie rozdziału atlasu, dotknięcie wiersza po przewinięciu, ruch listy, kamerę i emulację zdarzeń myszy. |
+| Sklep, BOOST i reklamy | 58/58 prób sklepu i pierwszego dotknięcia, 101/101 prób monetyzacji i BOOST w dwunastu regionach oraz 15/15 prób weryfikatora. Zdarzenia dostawy reklamy i Billing pochodziły z kontrolowanego adaptera. |
+| Migracja | 9003 uruchomione z e0196cf utworzyło profil w 7/7 warunkach. Wczytanie w 9004, kolejny zapis i przywrócenie kopii przeszły 6/6. [Zakres migracji](docs/MIGRATION_094.md) |
+| Stabilność | 30/30 w 107 s z rzeczywistym zegarem, pełną trasą przez dwanaście map, 17 podróżami, czterema restartami scen i 21 obsłużonymi klientami. Po 107 s zegar pięciominutowego BOOST wskazał pozostałe 193 s. [Próbki](docs/qa-0.9.4/stability.json) |
+| Android | Podpis, identyfikator pakietu, manifest, SDK testowe i wyrównanie 16 KiB sprawdzono na wyeksportowanym 9004. [Weryfikacja APK](docs/ANDROID_SIGNING.md#testowy-apk-094) |
+
+Dla fizycznego Androida pozostają do sprawdzenia płynność, dłuższa praca, natywna emisja reklam, testy Play Billing oraz instalacja w miejscu. W Cloud dostępny był renderer programowy bez KVM. [Porównanie wydajności i pamięci](docs/PERFORMANCE_094.md)
+
 ## 0.9.3 · Premium Graphics 2.0
 
 Godot 4.7.2, Blender 4.3.2, Linux x86_64, Compatibility i Mesa llvmpipe. Próby uruchamiały istniejące sceny, obiekty i panele gry. Kadry studyjne pokazują aktualne modele silnika. [Galeria, porównania i film](screenshots/0.9.3/README.md) · [Pomiary przed i po](docs/PERFORMANCE_093.md)

@@ -91,9 +91,17 @@ func run() -> void:
 	game.operations.hide_page()
 	await show_page("atlas")
 	game.operations.expedition.show_chapter(Atlas.EXPANSION_CHAPTER.has(source_id))
+	await settle()
+	if rendered:
+		await create_timer(.24).timeout
 	await click_row(game.district_name(source_id))
-	await click_row(game.t("district_travel"))
-	expect(await wait_for_district(source_id), "return through atlas keeps an independent estate")
+	expect(game.operations.page == "district" and game.operations.expedition.destination == source_id,
+		"the open estate is selected in the correct atlas chapter")
+	if game.operations.page == "district":
+		if rendered:
+			await create_timer(.24).timeout
+		await click_row(game.t("district_travel"))
+		expect(await wait_for_district(source_id), "return through atlas keeps an independent estate")
 	expect(sponsor.level("fuel") >= 20 and world.districts[target].customers == expected_sales, "return keeps both developments")
 	var recovered := HbtCampaign.new(HbtEconomy.new())
 	recovered.storage.path = save_path

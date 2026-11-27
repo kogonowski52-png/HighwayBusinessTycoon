@@ -125,7 +125,7 @@ func exercise_programs() -> void:
 		expect(ledger.claim_event(store) and not ledger.claim_event(store) and ledger.cosmetics.has(event.id), "unique points and themed prize " + event.id)
 		ledger.advance(store.clock - Calendar.WEEK)
 		expect(ledger.season().index == index and ledger.paid_event(), "clock rollback never repeats a prize")
-	expect(ledger.finished_events.size() == 5, "event archive keeps previous summaries")
+	expect(ledger.finished_events.size() == mini(8, Calendar.SEASONS.size() - 1), "event archive keeps previous summaries")
 	store.clock += Calendar.WEEK
 	ledger.advance(store.clock)
 	for rule in Calendar.CONTRACTS:

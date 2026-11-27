@@ -10,6 +10,7 @@ const LIMIT := 1_000_000_000
 
 var high_water := 0
 var week := -1
+var retained_season := ""
 var event_totals: Dictionary = {}
 var finished_events: Array = []
 var contracts: Dictionary = {}
@@ -23,6 +24,9 @@ var prestige_points := 0
 func restore(data: Dictionary) -> void:
 	high_water = HbtEconomy.counter(data.get("high_water", 0))
 	week = clampi(int(data.get("week", -1)), -1, 20000000)
+	retained_season = str(data.get("season", ""))
+	if week >= Calendar.ORIGINAL_SEASONS and retained_season.is_empty():
+		retained_season = Calendar.SEASONS[week % Calendar.ORIGINAL_SEASONS].id
 	event_totals = HbtEconomy.safe_dict(data.get("event_totals"))
 	var history: Variant = data.get("finished_events", [])
 	finished_events = history.slice(-8) if history is Array else []
@@ -32,30 +36,34 @@ func restore(data: Dictionary) -> void:
 	cosmetics = HbtEconomy.safe_dict(data.get("cosmetics"))
 	chosen = HbtEconomy.safe_dict(data.get("chosen"))
 	prizes = HbtEconomy.safe_dict(data.get("prizes"))
-	prestige_points = clampi(int(data.get("prestige_points", 0)), 0, 40)
+	prestige_points = clampi(int(data.get("prestige_points", 0)), 0, Atlas.DESTINATIONS.size() * 20)
 
 func snapshot() -> Dictionary:
-	return {"high_water": high_water, "week": week, "event_totals": event_totals,
+	var result := {"high_water": high_water, "week": week, "event_totals": event_totals,
 		"finished_events": finished_events, "contracts": contracts, "seen_vehicles": seen_vehicles,
 		"sightings": sightings, "cosmetics": cosmetics, "chosen": chosen, "prizes": prizes, "prestige_points": prestige_points}
+	if week >= Calendar.ORIGINAL_SEASONS:
+		result.season = Calendar.rotation(week, retained_season).id
+	return result
 
 func advance(clock: int) -> void:
 	high_water = maxi(high_water, clock)
 	var schedule := Calendar.event_at(high_water)
 	if int(schedule.index) != week:
 		if week >= 0:
-			var previous: Dictionary = Calendar.SEASONS[week % Calendar.SEASONS.size()]
+			var previous := Calendar.rotation(week, retained_season)
 			finished_events.append({"id": previous.id, "week": week, "totals": event_totals})
 			if finished_events.size() > 8:
 				finished_events.pop_front()
 		week = schedule.index
+		retained_season = ""
 		event_totals = {}
 	for key in contracts.keys():
 		if int(contracts[key].due) < high_water - Calendar.WEEK and not (contracts[key].done and not contracts[key].paid):
 			contracts.erase(key)
 
 func season() -> Dictionary:
-	return Calendar.event_at(high_water)
+	return Calendar.event_at(high_water, retained_season)
 
 func visit(site: HbtEconomy, ticket: HbtVisit) -> Dictionary:
 	if not ticket.paid:
@@ -75,7 +83,8 @@ func visit(site: HbtEconomy, ticket: HbtVisit) -> Dictionary:
 		"stay": int(venue in ["hotel", "parking"] or service in ["motel", "parking", "vip_park"]),
 		"clean": int(venue == "wash" or service in ["wash", "showers", "restrooms"]),
 		"charged": int(service == "charge"), "sports": int(model in ["vela", "kestrel", "onyx", "akari", "velvet", "sunray"]),
-		"rentals": int(ticket.trade == "lease"),
+		"rentals": int(ticket.trade == "lease"), "tuning": int(service == "tuning"),
+		"restorations": int(service == "restoration"), "logging": int(service == "logging" and ticket.trade in ["inbound", "outbound"]),
 		"special": int(ticket.client.get("campaign", false)),
 		"turnover": LIMIT if earned.length() > 9 else mini(LIMIT, earned.to_int()),
 	}
@@ -193,15 +202,16 @@ func claim_contract(site: HbtEconomy, key: String) -> bool:
 
 func items(group: String, district := "north") -> Array:
 	match group:
-		"cars": return VEHICLES.VEHICLES.keys().filter(func(id: String) -> bool: return id not in ["atlas", "cargo"])
+		"cars": return VEHICLES.VEHICLES.keys().slice(0, 30).filter(func(id: String) -> bool: return id not in ["atlas", "cargo"])
 		"trucks": return ["atlas", "cargo"]
+		"frontier_fleet": return VEHICLES.VEHICLES.keys().slice(30)
 		"routes": return Atlas.STAMPS.get(district, [])
 		"managers": return Managers.catalog(district, false)
 		_: return Calendar.COSMETICS.get(group, [])
 
 func owned(site: HbtEconomy, group: String, item: String) -> bool:
 	match group:
-		"cars", "trucks": return seen_vehicles.get(item, false)
+		"cars", "trucks", "frontier_fleet": return seen_vehicles.get(item, false)
 		"managers": return site.cards.has(item)
 		"routes": return HbtEconomy.safe_dict(sightings.get(site.district)).get(item, false)
 		_: return cosmetics.get(item, false)

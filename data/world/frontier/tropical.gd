@@ -31,7 +31,7 @@ const SERVICES := [
 	["wash", "Myjnia Pearl Mist", "Pearl Mist Car Spa", 1470, 1598, 5.8, 56800, "resort", 5, 56, 1880, [1, 22], "car", "cleaner", "clean", "wash"],
 ]
 const ECONOMICS := [9200, 5.4, 1.45, 109, 109, "resort", "noa"]
-const CONTRACT := {"field": "sales_rent", "site": "rent", "count": 12, "time": 1800, "cash": 6624, "pl": "Goście wypożyczalni", "en": "Rental customers"}
+const CONTRACT := {"field": "sales_rent", "site": "rent", "count": 5, "time": 1800, "cash": 6624, "pl": "Goście wypożyczalni", "en": "Rental customers"}
 const SIGNS := {
 	"fuel": ["PALMWATER", 2.87, 2.409, 3.9400000000000004],
 	"rent": ["TIDE KEYS", 3.03, 2.515, 3.9699999999999998],

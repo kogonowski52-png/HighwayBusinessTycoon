@@ -7,6 +7,11 @@ const RegionalRoutes = preload("res://data/world/regional_routes.gd")
 const DistrictOrder := ["north", "desert", "valley", "alpine", "ocean", "metro"]
 
 var campaign: HbtCampaign
+var expanded_world := "--world" in OS.get_cmdline_user_args()
+
+func district_order() -> Array:
+	return Atlas.DESTINATIONS.keys() if expanded_world else DistrictOrder
+
 var save_path := ""
 var openings := {}
 var return_cursor := 0
@@ -50,7 +55,9 @@ func simulate(seed: int) -> void:
 	begin_session(true)
 	var last_gross := HbtAmount.new()
 	var horizons := HORIZONS
-	if "--release-horizons" in OS.get_cmdline_user_args():
+	if expanded_world:
+		horizons = [300, 1800, 7200, 86_400, 604_800, 1_209_600, 2_592_000, 5_184_000]
+	elif "--release-horizons" in OS.get_cmdline_user_args():
 		horizons = [300, 900, 1800, 7200, 86400, 259200, 604800, 1209600, 2592000]
 	for horizon in horizons:
 		if horizon <= 7200:
@@ -69,19 +76,23 @@ func simulate(seed: int) -> void:
 				"steady free expansion and multiple staffed businesses within thirty minutes")
 			7200: expect(campaign.districts.size() >= 4 and not campaign.prestige_ready(), "campaign opens additional branches without exhausting the cap")
 			86400: expect(not offline.empty() and campaign.current().metric("staff") >= 1, "first day gains include independent offline revenue")
-			604800: expect(campaign.districts.size() == 6 and row.sites >= 31, "open all districts with free progression within seven days")
+			604800: expect(campaign.districts.size() >= 6 and row.sites >= 31, "all six original districts progress in seven days")
 			2592000:
-				expect(row.sites == total_businesses() and row.managers >= 7 and row.missions >= 200,
+				var required: int = 65 if expanded_world else total_businesses()
+				expect(row.sites >= required and row.managers >= 7 and row.missions >= 200,
 					"month-end visits grow staffed businesses, managers and mission rewards")
 				expect(row.levels >= 1850 and row.levels < total_businesses() * 100, "long-term upgrading runway remains after thirty days")
 				expect(row.recoveries * 100 <= maxi(1, row.departures) * 3, "traffic recovery remains below 3% in a new campaign")
+			5184000:
+				expect(row.districts == district_order().size() and row.sites == total_businesses(),
+					"all frontier services are reachable in a free 60-day campaign")
 	expect(first_sale > 0 and first_sale <= 5.0 and first_upgrade > 0 and first_upgrade <= 60.0,
 		"first earnings and upgrade retain 0.6.0 timings")
 	clean_save(save_path)
 
 func total_businesses() -> int:
 	var count := 0
-	for id in DistrictOrder:
+	for id in district_order():
 		var estate: HbtEconomy = campaign.districts.get(id)
 		if estate == null:
 			estate = HbtEconomy.new(id)
@@ -122,8 +133,8 @@ func checked_travel(id: String, stage: bool) -> void:
 
 func invest() -> void:
 	var next_index := campaign.districts.size()
-	if next_index < DistrictOrder.size() and campaign.available(DistrictOrder[next_index]):
-		checked_travel(DistrictOrder[next_index], true)
+	if next_index < district_order().size() and campaign.available(district_order()[next_index]):
+		checked_travel(district_order()[next_index], true)
 		return
 	# The stock simulation uses the same purchase rules and selects regional directors
 	# only after their actual mission has delivered the cards.
@@ -149,8 +160,8 @@ func check_in_until(horizon: int) -> void:
 		economy.capture_absence(WALL + int(seconds))
 		cash_out()
 		begin_session()
-		if campaign.districts.size() == DistrictOrder.size():
-			var target: String = DistrictOrder[return_cursor % DistrictOrder.size()]
+		if campaign.districts.size() == district_order().size():
+			var target: String = district_order()[return_cursor % district_order().size()]
 			return_cursor += 1
 			if target != economy.district:
 				checked_travel(target, false)
@@ -166,7 +177,7 @@ func campaign_evidence(horizon: int) -> Dictionary:
 	var tasks := 0
 	var gross := HbtAmount.new()
 	var overview := {}
-	for id in DistrictOrder:
+	for id in district_order():
 		if not campaign.districts.has(id):
 			continue
 		var estate: HbtEconomy = campaign.districts[id]

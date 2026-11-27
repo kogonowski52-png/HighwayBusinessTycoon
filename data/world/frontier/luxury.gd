@@ -30,7 +30,7 @@ const SERVICES := [
 	["tuning", "Centrum tuningu Velocity", "Velocity Tuning", 5100, 6324, 6.4, 171000, "vip_park", 4, 67, 7440, [1, 18], "car", "mechanic", "repair", "repair"],
 ]
 const ECONOMICS := [33000, 6.3, 1.48, 109, 109, "tuning", "selene"]
-const CONTRACT := {"field": "sales_dealership", "site": "dealership", "count": 12, "time": 1800, "cash": 23760, "pl": "Obsługa kolekcjonerów", "en": "Collectors' concierge"}
+const CONTRACT := {"field": "sales_dealership", "site": "dealership", "count": 4, "time": 2700, "cash": 23760, "pl": "Obsługa kolekcjonerów", "en": "Collectors' concierge"}
 const SIGNS := {
 	"fuel": ["AURUM FORECOURT", 3.17, 2.8329999999999997, 4.24],
 	"dealership": ["ONYX ATELIER", 3.9899999999999998, 3.469, 4.93],

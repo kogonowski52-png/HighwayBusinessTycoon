@@ -1,5 +1,11 @@
 # Podpisywanie testowych wydań Androida
 
+## Testowy APK 0.9.4
+
+HighwayBusinessTycoon-0.9.4-test.apk ma kod 9004 i identyfikator `pl.krystiandevelopment.highwaytycoon`. Weryfikacja porównała podpis i manifest z APK 9003. Oba mają ten sam certyfikat testowy. APK ARM64 skompilowano z SDK 36. Sprawdzono wyrównanie ELF i ZIP do 16 KiB oraz obecność mostka natywnego, AdMob, UMP i Play Billing. Instalacja w miejscu pozostaje do sprawdzenia na urządzeniu.
+
+Rozmiar pliku wynosi 155 988 497 bajtów. SHA-256 APK to `d1c0f4fcd09bf56e1afb6a9045ce434a49829a590cee8269fd82bc0e768957a1`. [Pobierz APK z GitHub](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/download/v0.9.4-rc.1/HighwayBusinessTycoon-0.9.4-test.apk) · [Migracja zapisu](MIGRATION_094.md)
+
 ## Testowy APK 0.9.3
 
 HighwayBusinessTycoon-0.9.3-test.apk ma kod 9003, nazwę wersji 0.9.3, identyfikator `pl.krystiandevelopment.highwaytycoon` i ABI ARM64. Weryfikator porównał plik z podpisanym 0.9.2. Certyfikat jest zgodny, a obie biblioteki natywne i archiwum zachowują wyrównanie 16 KiB.

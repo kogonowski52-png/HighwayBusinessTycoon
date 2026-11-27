@@ -38,7 +38,8 @@ DISTRICTS = {
         fleet=["oxbow","velvet","roamer","kestrel","mesa","sundown","cargo","regency"],
         guests={"local":"oxbow","tourist":"roamer","vip":"velvet","traveler":"velvet","family":"roamer","business":"oxbow"},
         weights={"traveler":2.6,"tourist":1.8,"vip":1.2},
-        specialties={"traveler":{"restaurant":42,"motel":48,"restoration":26},"vip":{"restoration":65,"workshop":38}},
+        specialties={"traveler":{"restaurant":42,"motel":48,"restoration":51},
+                     "local":{"workshop":42,"restoration":31},"vip":{"restoration":70,"workshop":38}},
         scenes=[
             venue("fuel","Paliwa Copper Spur","Copper Spur Retro Fuel","COPPER SPUR","fuel",0,-9.5,9.8,4.7,3.42,1000,510,0,"",0),
             venue("restaurant","American Diner Sunliner","Sunliner American Diner","SUNLINER DINER","food",-16,-10,9.4,5.0,3.47,1420,940,11100,"fuel",9),

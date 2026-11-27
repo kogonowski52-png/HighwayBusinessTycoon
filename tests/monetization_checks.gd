@@ -153,7 +153,7 @@ func boost_in_each_district() -> void:
 		estate = world.current()
 		estate.credit("cash", HbtAmount.from(1_000_000_000))
 		estate.credit("reputation", HbtAmount.from(160))
-		estate.buy_levels("fuel", 10)
+		estate.buy_levels("fuel", 25)
 		for site: String in estate.facilities:
 			if site != "fuel" and estate.unlock(site):
 				estate.buy_levels(site, 10)

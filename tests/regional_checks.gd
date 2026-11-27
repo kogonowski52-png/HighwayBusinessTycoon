@@ -14,7 +14,7 @@ func run() -> void:
 	await process_frame
 	campaign_roundtrip()
 	var missions := HbtEconomy.new().missions.size() + HbtEconomy.new("desert").missions.size()
-	for district in Regions.LAYOUTS:
+	for district in Atlas.chapter_routes(false).slice(2):
 		missions += drive_region(district)
 	expect(missions == 590, "590 playable chapter missions across six districts")
 	freight_checks()
@@ -26,7 +26,7 @@ func campaign_roundtrip() -> void:
 	north.storage.path = save
 	var campaign := HbtCampaign.new(north)
 	campaign.restore(STAMP)
-	var chain: Array = Atlas.DESTINATIONS.keys()
+	var chain := Atlas.chapter_routes(false)
 	for id in chain.slice(1):
 		var offer: Dictionary = Atlas.DESTINATIONS[id]
 		var sponsor := campaign.current()

@@ -193,19 +193,22 @@ func achievements() -> void:
 	var store: HbtEconomy = game.economy
 	var finished := store.recognition.achievement_claimed.size()
 	panel.feature(hud.REPUTATION, game.t("achievements_header"), game.t("ach_total") % [finished, Data.collection.size()])
-	var id: String = Data.GROUPS[page_medal][0]
-	var selected: VBoxContainer = panel.box(game.t("ach_" + id), game.t("collection_page") % [page_medal + 1, Data.GROUPS.size()])
+	var count_tracks := Data.track_count(store.district)
+	page_medal = mini(page_medal, count_tracks - 1)
+	var id: String = Data.GROUPS[page_medal][0] if page_medal < Data.GROUPS.size() else "frontier_medals"
+	var selected: VBoxContainer = panel.box(game.t("ach_" + id), game.t("collection_page") % [page_medal + 1, count_tracks])
 	var navigation := HBoxContainer.new()
 	selected.add_child(navigation)
 	for turn in [-1, 1]:
 		var flip: Button = panel.button(navigation, game.t("previous") if turn < 0 else game.t("next"),
-			browse_medal.bind(turn), page_medal + turn < 0 or page_medal + turn >= Data.GROUPS.size())
+			browse_medal.bind(turn), page_medal + turn < 0 or page_medal + turn >= count_tracks)
 		flip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for item in Data.collection.values():
-		if item.group != id:
+		if item.group != id or item.get("district", store.district) != store.district:
 			continue
 		var amount := store.achievement_progress(item)
-		var title: String = game.t("ach_" + id) + " " + Data.ROMAN[item.tier]
+		var regional: bool = item.has("district")
+		var title: String = item[store.language] if regional else game.t("ach_" + id) + " " + Data.ROMAN[item.tier]
 		var row: VBoxContainer = panel.box(title)
 		var contents := HBoxContainer.new()
 		row.add_child(contents)
@@ -216,7 +219,13 @@ func achievements() -> void:
 		var description: Label = hud.caption(words, 25, hud.INK)
 		description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		var goal: String = game.money(HbtAmount.from(item.goal)) if id == "gross" else str(item.goal)
-		description.text = game.t("ach_rule_" + id) % goal
+		if regional:
+			if item.site.is_empty():
+				description.text = game.t("ach_rule_" + item.counter) % goal
+			else:
+				description.text = game.t("ach_site_" + item.counter) % [game.site_name(item.site), int(item.goal)]
+		else:
+			description.text = game.t("ach_rule_" + id) % goal
 		var count: Label = hud.caption(words, 22, hud.MINT, hud.HEAVY)
 		count.text = "%s · %s" % [game.t("progress_pair") % [HbtAmount.from(amount).compact(store.language),
 			HbtAmount.from(item.goal).compact(store.language)], game.t("ach_prize") % item.reward]
@@ -230,7 +239,7 @@ func achievements() -> void:
 			hud.button_art(claim, hud.DIAMOND, 53)
 
 func browse_medal(delta: int) -> void:
-	page_medal = clampi(page_medal + delta, 0, Data.GROUPS.size() - 1)
+	page_medal = clampi(page_medal + delta, 0, Data.track_count(game.economy.district) - 1)
 	panel.scroll.scroll_vertical = 0
 	panel.refresh()
 

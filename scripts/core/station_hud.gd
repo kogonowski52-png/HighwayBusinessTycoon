@@ -170,6 +170,7 @@ func _ready() -> void:
 	pages.atlas = atlas
 
 	boost_button = action(framing, 146, 118, false)
+	boost_button.clip_contents = true
 	boost_button.add_theme_font_size_override("font_size", 24)
 	boost_button.add_theme_stylebox_override("normal", sculpted(UPGRADE, 33, 10))
 	boost_button.add_theme_stylebox_override("hover", sculpted(UPGRADE, 33, 10))

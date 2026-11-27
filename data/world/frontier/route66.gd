@@ -15,7 +15,7 @@ const LAYOUT := {
 		"restoration": [Vector2(42, -16.4), "car", 5.55, 5.4, 2],
 	},
 	"fleet": ["oxbow", "velvet", "roamer", "kestrel", "mesa", "sundown", "cargo", "regency"], "guests": {"local": "oxbow", "tourist": "roamer", "vip": "velvet", "traveler": "velvet", "family": "roamer", "business": "oxbow"},
-	"weights": {"traveler": 2.6, "tourist": 1.8, "vip": 1.2}, "specialties": {"traveler": {"restaurant": 42, "motel": 48, "restoration": 26}, "vip": {"restoration": 65, "workshop": 38}},
+	"weights": {"traveler": 2.6, "tourist": 1.8, "vip": 1.2}, "specialties": {"traveler": {"restaurant": 42, "motel": 48, "restoration": 51}, "local": {"workshop": 42, "restoration": 31}, "vip": {"restoration": 70, "workshop": 38}},
 	"palette": ["#bb875f", "#e5b37a", "#655f57", "#928279"], "frontier": true,
 }
 const SERVICES := [
@@ -27,7 +27,7 @@ const SERVICES := [
 	["restoration", "Centrum renowacji Brightsteel", "Brightsteel Restoration", 2030, 2975, 6.4, 74400, "parts", 4, 55, 3500, [1, 18], "car", "mechanic", "repair", "repair"],
 ]
 const ECONOMICS := [14200, 5.9, 1.55, 109, 109, "restoration", "mona"]
-const CONTRACT := {"field": "sales_restoration", "site": "restoration", "count": 12, "time": 1800, "cash": 10224, "pl": "Renowacje Copper Spur", "en": "Copper Spur restorations"}
+const CONTRACT := {"field": "sales_restoration", "site": "restoration", "count": 3, "time": 3600, "cash": 10224, "pl": "Renowacje Copper Spur", "en": "Copper Spur restorations"}
 const SIGNS := {
 	"fuel": ["COPPER SPUR", 3.11, 2.621, 4.18],
 	"restaurant": ["SUNLINER DINER", 3.29, 2.7800000000000002, 4.23],

@@ -308,10 +308,10 @@ func vehicle_studies() -> void:
 	await capture("11-samochody-detal.png")
 
 	var roster := Catalog.roster()
-	check(roster.size() == 30, "30 authored vehicle geometries")
-	for section in 3:
+	check(roster.size() == 48, "48 authored vehicle geometries")
+	for section in ceili(roster.size() / 10.0):
 		studio(Vector2i(1280, 854), Vector3(0, 0.20, 0.65), Vector3(0, 21, 13), 29.0)
-		for index in 10:
+		for index in mini(10, roster.size() - section * 10):
 			var x := (index % 5 - 2.0) * 5.47
 			var z := -3.48 if index < 5 else 2.46
 			var id: String = roster[section * 10 + index]

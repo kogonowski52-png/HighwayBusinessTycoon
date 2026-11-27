@@ -1,5 +1,13 @@
 # Historia zmian
 
+## 0.9.4 RC · World Expansion
+
+- Tropical Island, Route 66, Industrial Harbor, Luxury City, Japan Highway i Northern Wilderness otwierają się w drugim rozdziale atlasu. Łącznie działa 12 lokalizacji i 84 biznesy.
+- Uruchomiono wypożyczalnie z odroczonymi zwrotami, załadunek i rozładunek, chłodnie, salony, działalność turystyczną oraz nowe usługi warsztatowe.
+- Przygotowano 18 dodatkowych nadwozi, ośmiu menedżerów, sześć wydarzeń, 129 nowych misji rozdziałowych i 54 odznaki regionalne.
+- Uzupełniono etapy rozwoju pierwotnych kompleksów oraz ograniczono koszt rysowania wody, nawierzchni i często używanych modeli pojazdów.
+- Zachowano schemat zapisu i certyfikat testowy. Android ARM64 ma kod 9004. [Zakres, pomiary i ograniczenia](docs/WORLD_EXPANSION.md)
+
 ## 0.9.3 · Premium Graphics 2.0
 
 - Pięć indywidualnych konstrukcji stacji i osobne moduły rozbudowy dla sklepu, warsztatu, myjni i restauracji.

@@ -1,5 +1,9 @@
 # Licencje zasobów
 
+## Zasoby 0.9.4
+
+Plany i architektura sześciu map, moduły przebudowy, modele 48 pojazdów, osiem nowych portretów, instalacje wydarzeń i mapa fal to własna geometria lub ilustracje Highway Business Tycoon. Wydanie korzysta też z dotychczasowych bibliotek Androida, fontów i muzyki projektu. Galeria i film zostały nagrane w Godocie. [Modele dzielnic](tools/art/frontier_art.py) · [Moduły](tools/art/legacy_works.py) · [Flota](tools/art/vehicles.py) · [Portrety](tools/art/frontier_managers.py) · [Instalacje wydarzeń](tools/art/frontier_events.py)
+
 ## Zasoby 0.9.3
 
 Geometria budynków, pojazdów, postaci i roślinności, materiały, tekstury nawierzchni, ikony oraz kadry w 0.9.3 są własnością projektu. Powstały z autorskich generatorów Blender i wcześniejszych zasobów Highway Business Tycoon. [Architektura](tools/art/premium_facades.py) · [Roślinność](tools/art/premium_botany.py) · [Flota](tools/art/vehicles.py) · [Postacie](tools/art/characters.py) · [Kadry kart z Godota](tools/art/render_business_cards.gd)

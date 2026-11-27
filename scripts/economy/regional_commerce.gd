@@ -135,8 +135,8 @@ func restore(values: Dictionary, levels: Dictionary) -> void:
 			inventory[key] = clampi(int(old.get(key, 0)), 0, 1_000_000_000)
 		if inventory.has("returns") and old.get("returns") is Array:
 			for observed: Variant in old.returns.slice(0, capacity(id, levels[id])):
-				if observed is int and observed >= 0:
-					inventory.returns.append(observed)
+				if (observed is int or observed is float) and observed >= 0 and observed < 10_000_000_000:
+					inventory.returns.append(int(observed))
 			inventory.returns.sort()
 
 func statistics(id: String, tier: int) -> Dictionary:

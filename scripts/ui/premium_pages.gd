@@ -1,5 +1,6 @@
 extends RefCounted
 
+const Atlas = preload("res://data/world/atlas.gd")
 const Config = preload("res://data/monetization/config.gd")
 const TREASURY := "res://assets/ui/premium/treasury.png"
 const GEMS := "res://assets/ui/premium/gems.png"
@@ -180,6 +181,11 @@ func shop() -> void:
 			show_products("directors")
 			reward_card("manager", panel.extra.portrait(Config.AD_MANAGER))
 		"shop_business":
+			var district: String = game.economy.district
+			if Atlas.EXPANSION_CHAPTER.has(district):
+				var sign := "res://assets/ui/business/%s_fuel.png" % district
+				var card := hero(art(sign), game.district_name(district), text("shop_regional_business"))
+				panel.button(card, text("shop_regional_open"), game.open_page.bind("sites"), false, true)
 			show_products("business")
 		"shop_boost":
 			booster()

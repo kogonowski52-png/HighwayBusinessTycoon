@@ -30,7 +30,7 @@ func run() -> void:
 		elif option.begins_with("--report="):
 			report_file = option.get_slice("=", 1)
 		elif option.begins_with("--districts="):
-			district_limit = clampi(int(option.get_slice("=", 1)), 1, 6)
+			district_limit = clampi(int(option.get_slice("=", 1)), 1, Atlas.DESTINATIONS.size())
 		elif option.begins_with("--first-quality="):
 			first_quality = clampi(int(option.get_slice("=", 1)), 0, 3)
 		elif option.begins_with("--roundtrips="):

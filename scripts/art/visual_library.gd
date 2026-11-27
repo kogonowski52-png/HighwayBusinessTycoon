@@ -8,6 +8,8 @@ static var scenes: Dictionary = {}
 static var meshes: Dictionary = {}
 static var decals: Dictionary = {}
 static var quad: PlaneMesh
+static var fleet_residency: Array[String] = []
+const FLEET_SCENES := 24
 
 static func surface_shader(key: String, shader: Shader) -> ShaderMaterial:
 	if not decals.has(key):
@@ -18,6 +20,11 @@ static func surface_shader(key: String, shader: Shader) -> ShaderMaterial:
 
 static func scene(family: String, key: String) -> PackedScene:
 	var path := "res://assets/models/%s/%s.glb" % [family, key]
+	if family == "vehicles" and not key.begins_with("wheel_"):
+		fleet_residency.erase(path)
+		fleet_residency.append(path)
+		if fleet_residency.size() > FLEET_SCENES:
+			scenes.erase(fleet_residency.pop_front())
 	if not scenes.has(path):
 		scenes[path] = load(path)
 	return scenes[path]

@@ -17,6 +17,7 @@ const SaveManager = preload("res://scripts/core/save_manager.gd")
 const DESERT: HbtDistrict = preload("res://data/world/desert.tres")
 const DesertBusiness = preload("res://data/world/desert_businesses.gd")
 const Regions = preload("res://data/world/regions.gd")
+const FrontierGoals = preload("res://data/economy/frontier_goals.gd")
 const Commerce = preload("res://scripts/economy/regional_commerce.gd")
 const BPS := 10_000
 const CURRENCIES := ["cash", "diamond", "reputation", "event"]
@@ -89,7 +90,7 @@ func _init(location := "north") -> void:
 		missions = DesertBusiness.missions(facilities)
 		milestones = DesertBusiness.LANDMARKS
 	elif Regions.has_region(district):
-		missions = DesertBusiness.missions(facilities, district)
+		missions = FrontierGoals.missions(district, facilities) if Regions.FRONTIERS.has(district) else DesertBusiness.missions(facilities, district)
 		milestones = Regions.roster_goals(district)
 	else:
 		missions = Journey.items(facilities)
@@ -579,6 +580,9 @@ func metric(key: String, site := "") -> int:
 		"site_level": return level(site)
 		"site_sales": return int(per_service[site].count)
 		"rentals": return int(commerce.record(site).outbound)
+		"returns", "inbound", "outbound", "sold", "shoppers":
+			var field := "inbound" if key == "returns" else key
+			return int(commerce.record(site).get(field, 0))
 		"site_staff": return crew[site].size()
 		"site_training":
 			var training := 0
@@ -743,6 +747,10 @@ func redeem_voucher() -> bool:
 
 func achievement_progress(item: Dictionary) -> int:
 	var goal: int = item.goal
+	if item.has("district"):
+		if item.district != district:
+			return 0
+		return mini(goal, metric(item.counter, item.site))
 	match item.group:
 		"gross":
 			return goal if gross.compare(HbtAmount.from(goal)) >= 0 else gross.decimal().to_int()

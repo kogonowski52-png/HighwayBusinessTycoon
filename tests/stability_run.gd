@@ -2,8 +2,6 @@ extends "res://tests/station_smoke.gd"
 ## Real wall-clock endurance through the ordinary game node and event loop.
 
 const Atlas = preload("res://data/world/atlas.gd")
-const Calendar = preload("res://data/world/expedition_calendar.gd")
-const EVENT_TIME := Calendar.START + Calendar.WEEK * 3 + 86_500
 const PAGES := ["finance", "calendar", "goals", "shop", "atlas", "boost", "settings"]
 var seconds := 7200
 var travel_every := 180
@@ -16,6 +14,7 @@ var reports: Array[Dictionary] = []
 var report_path := ""
 var district_index := 0
 var restarts := 0
+var started_at := 0
 
 func run() -> void:
 	for arg in OS.get_cmdline_user_args():
@@ -28,6 +27,7 @@ func run() -> void:
 		elif arg.begins_with("--report="):
 			report_path = arg.get_slice("=", 1)
 	save_path = "/tmp/hbt-stage7-endurance-%d.cfg" % OS.get_process_id()
+	started_at = int(Time.get_unix_time_from_system())
 	seed_campaign()
 	if failures:
 		result("Continuous gameplay")
@@ -39,7 +39,7 @@ func run() -> void:
 	var next_move := travel_every
 	var next_sample := sample_every
 	var next_reboot := travel_every * 5
-	game = mount(EVENT_TIME)
+	game = mount(-1)
 	current_scene = game
 	activate()
 	print("ENDURANCE begin, duration=", seconds, " seconds, display=", DisplayServer.get_name())
@@ -67,8 +67,9 @@ func run() -> void:
 			next_sample += sample_every
 			sample(period)
 	store_report()
-	expect(period >= seconds and game.economy.clock - EVENT_TIME >= mini(floori(seconds * .82), seconds - 5), "continuous wall time and normal 60 Hz game ticks")
-	expect(moves > 0 and game.campaign.districts.size() == 6 and checkpoints > 0, "map switching and frequent saves across all six estates")
+	expect(period >= seconds and absi(game.economy.clock - int(Time.get_unix_time_from_system())) <= 2,
+		"the economy tracks wall time across game ticks, travel and restarts")
+	expect(moves > 0 and game.campaign.districts.size() == Atlas.DESTINATIONS.size() and checkpoints > 0, "map switching and frequent saves across all twelve estates")
 	if seconds >= 900:
 		expect(departures > 100 and reopenings > 20 and restarts >= 1, "ordinary paid traffic, many panels and actual scene restarts")
 	game.free()
@@ -80,7 +81,7 @@ func run() -> void:
 func seed_campaign() -> void:
 	var world := HbtCampaign.new(HbtEconomy.new())
 	world.storage.path = save_path
-	world.restore(EVENT_TIME)
+	world.restore(started_at)
 	for id: String in Atlas.DESTINATIONS:
 		if id != "north":
 			expect(world.travel(id) == OK, "unlock real map " + id)
@@ -98,7 +99,7 @@ func seed_campaign() -> void:
 	world.current().preferences.fps = 30
 	world.current().preferences.quality = 0
 	world.current().low_power = true
-	expect(world.travel("north") == OK and world.boost.extend_confirmed(EVENT_TIME) and world.checkpoint() == OK,
+	expect(world.travel("north") == OK and world.boost.extend_confirmed(started_at) and world.checkpoint() == OK,
 		"seed maximally developed estates and a five-minute bonus")
 
 func activate() -> void:
@@ -123,13 +124,12 @@ func migrate() -> void:
 
 func reopen_all(period: int) -> void:
 	departures += game.traffic.dispatch.departed
-	var now: int = game.economy.clock
 	var wanted: String = game.economy.district
 	expect(game.economy.checkpoint() == OK, "checkpoint before restart at %ds" % period)
 	var currency: HbtAmount = game.economy.amount("cash")
 	game.free()
 	await process_frame
-	game = mount(now)
+	game = mount(-1)
 	current_scene = game
 	restarts += 1
 	expect(game.economy.district == wanted and game.economy.amount("cash").compare(currency) == 0,
@@ -139,7 +139,7 @@ func reopen_all(period: int) -> void:
 func sample(period: int) -> void:
 	var fleet: HbtDispatch = game.traffic.dispatch
 	expect(fleet.consistent() and game.campaign.storage.read_candidate(save_path).schema >= 8, "valid reservations and profile at %ds" % period)
-	var row := {"elapsed_wall_seconds": period, "elapsed_game_seconds": game.economy.clock - EVENT_TIME,
+	var row := {"elapsed_wall_seconds": period, "elapsed_game_seconds": game.economy.clock - started_at,
 		"region": game.economy.district, "map_changes": moves, "scene_restarts": restarts,
 		"served": game.campaign.districts.values().reduce(func(sum: int, site: HbtEconomy) -> int: return sum + site.customers, 0),
 		"departures": departures + fleet.departed, "nodes": get_node_count(), "heap_bytes": OS.get_static_memory_usage(),

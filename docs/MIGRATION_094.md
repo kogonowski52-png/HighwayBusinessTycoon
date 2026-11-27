@@ -1,0 +1,7 @@
+# Migracja z Androida 9003 do 9004
+
+Źródłowy profil utworzył kod wydania 0.9.3 z commita e0196cf. Scenariusz założył i opłacił sześć niezależnych kompleksów, rozbudował biznesy, zatrudnił personel i zapisał BOOST, ustawienia oraz uprawnienie. Oryginalny profil przeszedł 7/7 asercji. Odczyt na 0.9.4, kolejny zapis i przywrócenie z kopii po uszkodzeniu pliku głównego oraz pliku tymczasowego przeszły 6/6. Porównano całe obsługiwane stany dzielnic, waluty zapisane jako tekst, poziomy, obsadę, identyfikatory kart i stany księgi. [Scenariusz migracji](../tests/migration_070.gd)
+
+Schemat 8 zachowuje poprzednią ścieżkę, strukturę źródłowego portfela i niezależne dane dzielnic. Odczyt dawnego pliku odtwarza sześć posiadanych regionów. Nowe regiony pojawiają się w atlasie i tworzą własne konto po opłaceniu warunków otwarcia. Dla nowych wypożyczalni zapisywana jest lista terminów zwrotu. Próba księgowa zamknęła grę ze zwrotem w przyszłości, odczytała zapis i rozliczyła zwrot jednokrotnie po właściwej godzinie. Trwający wpis starego kalendarza w tygodniu o innym nowym wydarzeniu kończy się na dawnych warunkach. [Scenariusze księgi](../tests/frontier_rules.gd)
+
+APK 9003 i 9004 porównano niezależnie od zapisu. Pakiety są podpisane tym samym certyfikatem, mają ten sam identyfikator i rosnący kod. Próba instalacji na fizycznym telefonie pozostaje otwarta. [Podpis Androida](ANDROID_SIGNING.md#testowy-apk-094)

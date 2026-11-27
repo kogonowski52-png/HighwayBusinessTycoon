@@ -7,6 +7,8 @@ const MAX_WIDTH := 142.0
 const TAP_DISTANCE := 17.0
 
 var controller: Node3D
+var limits_min := LIMIT_MIN
+var limits_max := LIMIT_MAX
 var lens: Camera3D
 var focus := Vector3.ZERO
 var heading := Vector3(15.3, 34.7, 31.5)
@@ -29,6 +31,13 @@ var cut: Tween
 func bind_to(game: Node3D, camera: Camera3D) -> void:
 	controller = game
 	lens = camera
+	if game.economy.Regions.FRONTIERS.has(game.economy.district):
+		for id: String in game.routes.layout.plots:
+			var at: Vector3 = game.routes.origin(id)
+			limits_min.x = minf(limits_min.x, at.x - 9.0)
+			limits_min.y = minf(limits_min.y, at.z - 9.0)
+			limits_max.x = maxf(limits_max.x, at.x + 9.0)
+			limits_max.y = maxf(limits_max.y, at.z + 9.0)
 
 func frame(center: Vector3, offset: Vector3, size: float, immediate: bool) -> void:
 	cancel_film(false)
@@ -100,8 +109,8 @@ func release_gestures() -> void:
 	momentum = Vector3.ZERO
 
 func clamp_target() -> void:
-	target.x = clampf(target.x, LIMIT_MIN.x, LIMIT_MAX.x)
-	target.z = clampf(target.z, LIMIT_MIN.y, LIMIT_MAX.y)
+	target.x = clampf(target.x, limits_min.x, limits_max.x)
+	target.z = clampf(target.z, limits_min.y, limits_max.y)
 
 func screen_vector(pixels: Vector2) -> Vector3:
 	var factor := zoom / get_viewport().get_visible_rect().size.x

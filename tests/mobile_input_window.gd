@@ -37,6 +37,7 @@ func run() -> void:
 	else:
 		await catalog_and_guide()
 		await survey_pages()
+		await test_atlas_chapters()
 		await test_slider()
 		await test_camera_and_dialog()
 		if DisplayServer.get_name() != "headless":
@@ -181,6 +182,22 @@ func survey_pages() -> void:
 			page + " leaves controls and camera alone during the drag")
 		print("TOUCH %s extent=%d moved=%d" % [page, extent, moved])
 		await close_sheet()
+
+func test_atlas_chapters() -> void:
+	game.open_page("atlas")
+	await settle()
+	var panel: CanvasLayer = game.operations
+	await tap(find_button(panel.rows, game.t("atlas_frontiers")))
+	expect(panel.expedition.expansion_side and find_button(panel.rows, game.district_name("tropical")) != null,
+		"touch switches the atlas to the expansion chapter")
+	var row := find_button(panel.rows, game.district_name("tropical"))
+	if is_instance_valid(row):
+		panel.scroll.ensure_control_visible(row)
+		await settle()
+		await tap(row)
+		expect(panel.page == "district" and panel.expedition.destination == "tropical",
+			"an expansion row opens its own region after scrolling into view")
+	await close_sheet()
 
 func test_slider() -> void:
 	game.open_page("settings")

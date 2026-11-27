@@ -157,7 +157,7 @@ static func detail(parent: Control, group: String, item: String) -> void:
 		subject = Art.place(presentation, "premium", "gold_gate")
 		width = 4.8
 		focus_y = .79
-	elif group in ["cars", "trucks", "routes"]:
+	elif group in ["cars", "trucks", "routes", "frontier_fleet"]:
 		subject = CAR.instantiate()
 		presentation.add_child(subject)
 		subject.build(item, 1)

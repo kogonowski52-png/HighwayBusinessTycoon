@@ -17,7 +17,7 @@ func run() -> void:
 	atlas.restore()
 	north.finish_tutorial()
 	north.preferences.weather = "clear"
-	for id in Atlas.DESTINATIONS:
+	for id in Atlas.chapter_routes(false):
 		if id != "north" and atlas.travel(id) != OK:
 			finish(false)
 			return

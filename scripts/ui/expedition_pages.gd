@@ -280,7 +280,7 @@ func show_collections() -> void:
 		collection_item = entries.front()
 	var owned: int = ledger.collected(site, collection)
 	panel.feature(hud.NAV.managers, text("collections_header"), text("collection_sources"))
-	for row in [["cars", "trucks", "managers"], ["decor", "signs", "facades"], ["routes"]]:
+	for row in [["cars", "trucks", "managers"], ["decor", "signs", "facades"], ["routes", "frontier_fleet"]]:
 		var choices := HBoxContainer.new()
 		panel.rows.add_child(choices)
 		for key in row:

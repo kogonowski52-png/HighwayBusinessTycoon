@@ -38,7 +38,7 @@ func run() -> void:
 			expect(not service.name_en.strip_edges().is_empty() and not service.name_pl.strip_edges().is_empty(),
 				"localized service · %s/%s" % [region, id])
 		print("%s · %d services · %d missions" % [region, estate.facilities.size(), estate.missions.size()])
-	expect(services == 41 and missions == 590, "six districts, forty-one services and 590 missions")
+	expect(Atlas.DESTINATIONS.size() == 12 and services == 84 and missions == 719, "twelve playable districts, 84 services and 719 chapter missions")
 	result("Release resource and locale audit")
 
 func walk(directory: String) -> PackedStringArray:

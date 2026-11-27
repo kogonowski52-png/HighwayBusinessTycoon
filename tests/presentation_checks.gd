@@ -75,8 +75,10 @@ func achievements_and_settings() -> void:
 		store.clock += 86_400
 		store.claim_calendar()
 	var icons := {}
-	expect(Recognition.collection.size() == 50, "50 achievement definitions")
+	expect(Recognition.collection.size() == 104, "104 achievement definitions")
 	for item in Recognition.collection.values():
+		if item.has("district"):
+			continue
 		var filename: String = item.icon
 		expect(not icons.has(filename) and ResourceLoader.exists(filename), "original icon " + item.id)
 		icons[filename] = true

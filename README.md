@@ -1,5 +1,7 @@
 # Highway Business Tycoon
 
+**0.9.4 RC · World Expansion** rozszerza kampanię do dwunastu grywalnych lokalizacji, 84 biznesów i 48 modeli pojazdów. W drugim rozdziale atlasu można odblokować sześć nowych kompleksów, prowadzić wypożyczalnie i terminale oraz wracać do poprzednich lokalizacji. Podpisane APK ARM64 ma kod 9004. [APK w GitHub Releases](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.4-rc.1) · [Mapa funkcji](docs/WORLD_EXPANSION.md) · [Galeria i film](screenshots/0.9.4/README.md)
+
 **0.9.3 · Premium Graphics 2.0** rozwija architekturę sześciu lokalizacji, wprowadza częściowe wnętrza na Stacji Północ i zwiększa flotę do 30 modeli. Podpisane APK ARM64 ma kod 9003. [APK w GitHub Releases](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.3-rc.1) · [Porównania i film](screenshots/0.9.3/README.md) · [Raport grafiki](docs/PREMIUM_GRAPHICS_2.md)
 
 **0.9.2** ładuje reklamy w tle i otwiera je po pierwszym dotknięciu. Sklep ma dziewięć ilustrowanych sekcji i pokazuje rzeczywisty stan Google Play. Podpisany APK na Android ARM64 ma kod 9002. [APK w GitHub Releases](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.2-rc.1) · [Galeria](screenshots/0.9.2/README.md) · [Raport](docs/ANDROID_COMMERCE_092.md)
@@ -20,7 +22,7 @@ W 0.6.0 przycisk **Atlas** otwiera sieć lokalizacji. Copper Mile w Desert Highw
 
 Rozpoczynasz ze 120 zł i klientem przy dystrybutorze. Samouczek prowadzi przez pierwszą sprzedaż, zakup poziomu, odbiór nagród, zatrudnienie i wpływy z kasy. Każdy krok dzieje się w normalnej rozgrywce.
 
-W **Rozbudowie** wybierasz usługę i sprawdzasz warunki otwarcia. W karcie **Etapy** kupisz 1, 10, 25 lub maksymalną liczbę ze 100 poziomów usługi. **Pracownicy** prowadzą do zatrudniania, szkoleń i awansów. W **Menedżerach** sprawdzisz 15 portretów, przypisanie, doświadczenie i następny bonus. **Misje** obejmują karierę, 11 rozdziałów, wydarzenia oraz 50 odznak. W **Sklepie** wymieniasz środki zdobyte w grze i aktywujesz zebrane kupony. Ikona kalendarza otwiera 30-dniowy cykl nagród. Ikona statystyk pokazuje wpływy, stan kas, aktywne premie i limit offline.
+W **Rozbudowie** wybierasz usługę i sprawdzasz warunki otwarcia. W karcie **Etapy** kupisz 1, 10, 25 lub maksymalną liczbę ze 100 poziomów usługi. **Pracownicy** prowadzą do zatrudniania, szkoleń i awansów. W **Menedżerach** sprawdzisz 33 portrety, przypisanie, doświadczenie i następny bonus. **Misje** obejmują karierę, cele regionalne, wydarzenia oraz 104 odznaki. W **Sklepie** wymieniasz środki zdobyte w grze i aktywujesz zebrane kupony. Ikona kalendarza otwiera 30-dniowy cykl nagród. Ikona statystyk pokazuje wpływy, stan kas, aktywne premie i limit offline.
 
 Przeciągnij mapę jednym palcem i zmień przybliżenie dwoma. W oknie komputera obsługują to przeciągnięcie myszą i kółko. Znaczniki nad budynkami przybliżają usługę albo otwierają jej ulepszenia. Ustawienia obejmują trzy kanały dźwięku, wibracje, PL i EN, cztery profile grafiki i dobór automatyczny, limit 30 lub 60 FPS oraz oszczędzanie baterii.
 
@@ -50,6 +52,8 @@ godot --headless --path . --script tests/expedition_window.gd
 godot --headless --path . --script tests/desert_balance.gd
 godot --headless --path . --script tests/regional_checks.gd
 godot --headless --path . --script tests/campaign_balance.gd
+godot --headless --path . --script tests/campaign_balance.gd -- --world --report=/tmp/hbt-world-balance.json
+godot --headless --path . --script tests/frontier_rules.gd
 godot --headless --path . --script tests/monetization_checks.gd
 godot --headless --path . --script tests/commerce_window.gd
 godot --headless --path . --script tests/monetization_balance.gd
@@ -67,6 +71,8 @@ godot --path . --write-movie /tmp/hbt-demo.avi --fixed-fps 30 --script tests/pre
 godot --path . --script tests/expedition_window.gd -- --capture-dir=/tmp/hbt-gallery
 godot --path . --write-movie /tmp/copper-mile.avi --fixed-fps 30 --script tests/expedition_recording.gd
 godot --path . --script tests/regional_window.gd -- --capture-dir=/tmp/hbt-061-gallery
+godot --path . --script tests/frontier_window.gd -- --district=harbor --capture-dir=/tmp/hbt-harbor-gallery
+godot --path . --write-movie /tmp/hbt-world.avi --fixed-fps 20 --script tests/frontier_recording.gd
 godot --path . --script tests/regional_window.gd -- --sample-performance
 godot --path . --write-movie /tmp/meridian.avi --fixed-fps 30 --script tests/regional_recording.gd
 godot --path . --script tests/performance_window.gd -- --capture-dir=/tmp/hbt-080-gallery --report=/tmp/hbt-080-performance.json
@@ -84,6 +90,8 @@ godot --path . --write-movie /tmp/hbt-070-boost.avi --fixed-fps 30 --script test
 Modele GLB są częścią repozytorium. Blender jest potrzebny do ponownego wygenerowania geometrii z autorskich skryptów.
 
 Raport Premium Graphics 2.0 opisuje zmienione modele, geometrię etapów i sposób odtworzenia porównań na tej samej kamerze. [Modele i technika](docs/PREMIUM_GRAPHICS_2.md) · [Pomiary](docs/PERFORMANCE_093.md)
+
+Geometrię i sceny World Expansion odtwarzają `tools/art/frontier_art.py` w Blenderze i `tools/art/frontier_data.py` w Pythonie. Przekaż identyfikator regionu po `--` w Blenderze lub jako pierwszy argument w Pythonie. Własne ilustracje miejsc powstają z modeli za pomocą `tools/art/render_business_cards.gd`. [Generator i plany](tools/art) · [Wydajność ekspansji](docs/PERFORMANCE_094.md)
 
 Galeria 0.3.2 zawiera test trzech pełnych modeli stacji oraz ujęcia przebudowy. Do ponownego porównania wariantów w oknie użyj `godot --path . --script tests/art_gallery.gd -- --suite=stations --capture-dir=/pełna/ścieżka`. [Galeria przebudowy](screenshots/0.3.2/README.md)
 

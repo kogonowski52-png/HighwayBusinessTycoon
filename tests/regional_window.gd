@@ -58,7 +58,7 @@ func run() -> void:
 	develop(28)
 	await phone_and_panorama("06-polnoc-panorama.jpg", true)
 	await performance("north")
-	for id in Atlas.DESTINATIONS.keys().slice(1):
+	for id in Atlas.chapter_routes(false).slice(1):
 		var prior: HbtEconomy = game.economy
 		var fee := HbtAmount.from(Atlas.DESTINATIONS[id].cost)
 		if not await atlas_travel(id):
@@ -83,8 +83,9 @@ func run() -> void:
 		expect(game.campaign.districts.size() == 6, "all six districts travelled and saved")
 	if not captures.is_empty():
 		expect(capture_count >= 40, "at least forty original viewport captures")
+	root.get_node("RouteAudio").shut_down()
 	game.free()
-	await process_frame
+	await create_timer(.18).timeout
 	clean_save(save_path)
 	result("Six districts in Godot")
 

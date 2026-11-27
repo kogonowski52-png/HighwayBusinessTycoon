@@ -1,5 +1,7 @@
 extends RefCounted
 
+const World = preload("res://data/economy/frontier_goals.gd")
+
 # Each entry is visible before it is earned. Missed dates leave the calendar at
 # the same slot, and the next cycle starts on the following UTC day.
 const CALENDAR := [
@@ -37,7 +39,15 @@ static func build_collection() -> Dictionary:
 			var id := "%s_%d" % [group[0], tier + 1]
 			result[id] = {"id": id, "group": group[0], "tier": tier, "goal": group[1][tier],
 				"reward": 2 + tier * 2, "icon": "res://assets/ui/presentation/medals/%s.png" % id}
+	for district: String in World.AWARDS:
+		for item: Array in World.AWARDS[district]:
+			result[item[0]] = {"id": item[0], "group": "frontier_medals", "district": district,
+				"pl": item[1], "en": item[2], "site": item[3], "counter": item[4], "tier": 0, "goal": item[5],
+				"reward": item[6], "icon": "res://assets/ui/presentation/medals/%s_3.png" % item[7]}
 	return result
+
+static func track_count(district: String) -> int:
+	return GROUPS.size() + int(World.AWARDS.has(district))
 
 static func xp_band(total: int) -> Dictionary:
 	for index in range(1, MANAGER_XP.size()):
