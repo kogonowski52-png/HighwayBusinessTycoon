@@ -158,12 +158,14 @@ func sample(id: String, quality: int) -> void:
 	game.set_quality(quality)
 	await wait_frames(7)
 	var timings: Array[float] = []
+	var simulation: Array[float] = []
 	var draws: Array[int] = []
 	var primitives: Array[int] = []
 	var objects: Array[int] = []
 	for _frame in frames:
 		var start := Time.get_ticks_usec()
 		game.tick_game(1.0 / 60.0)
+		simulation.append(elapsed_ms(start))
 		await RenderingServer.frame_post_draw
 		timings.append(elapsed_ms(start))
 		objects.append(root.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_OBJECTS_IN_FRAME))
@@ -171,11 +173,12 @@ func sample(id: String, quality: int) -> void:
 		primitives.append(root.get_render_info(Viewport.RENDER_INFO_TYPE_VISIBLE, Viewport.RENDER_INFO_PRIMITIVES_IN_FRAME))
 	var mean: float = timings.reduce(func(acc: float, next: float) -> float: return acc + next, 0.0) / frames
 	timings.sort()
+	simulation.sort()
 	draws.sort()
 	primitives.sort()
 	objects.sort()
 	var row := {"district": id, "quality": quality, "fps": 1000.0 / mean, "median_ms": timings[frames / 2],
-		"p95_ms": timings[ceili(frames * 0.95) - 1], "draws": draws[frames / 2], "primitives": primitives[frames / 2],
+		"simulation_ms": simulation[frames / 2], "p95_ms": timings[ceili(frames * 0.95) - 1], "draws": draws[frames / 2], "primitives": primitives[frames / 2],
 		"objects": objects[frames / 2], "nodes": get_node_count(), "rss_kib": process_rss(),
 		"heap_bytes": OS.get_static_memory_usage(), "vram_bytes": Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED),
 		"scale": root.scaling_3d_scale, "msaa": root.msaa_3d}
