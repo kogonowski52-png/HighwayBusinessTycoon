@@ -7,6 +7,7 @@ template="${HBT_ANDROID_TEMPLATE:?Set HBT_ANDROID_TEMPLATE to android_source.zip
 [[ "$output" = /* ]]
 [[ -f "$template" ]]
 
+sign_bundle=false
 require_verifier() {
   local expected_mode="$1"
   [[ "${HBT_PLAY_BACKEND:-}" =~ ^https://[A-Za-z0-9.-]+(:[0-9]+)?(/[A-Za-z0-9/_-]*)?$ ]]
@@ -29,30 +30,33 @@ case "$mode" in
     mode=test
     export_flag=--export-debug
     ;;
-  play-test|production)
+  play-unsigned|play-closed|play-test|production)
     [[ "$output" = *.aab ]]
-    : "${GODOT_ANDROID_KEYSTORE_RELEASE_PATH:?Use the registered Play upload keystore}"
-    : "${GODOT_ANDROID_KEYSTORE_RELEASE_USER:?Set the upload key alias}"
-    : "${GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD:?Supply the upload key password privately}"
+    if [[ "$mode" = play-unsigned ]]; then
+      [[ "$output" = *-unsigned.aab ]]
+    else
+      tools/android/sign-play-bundle.sh --check-key
+      sign_bundle=true
+    fi
     target="Android Play"
     export_flag=--export-release
-    if [[ "$mode" = play-test ]]; then
-      require_verifier sandbox
-      mode=test
-    fi
+    case "$mode" in
+      play-test) require_verifier sandbox; mode=test ;;
+      play-unsigned|play-closed) mode=closed ;;
+    esac
     ;;
-  *) printf 'Mode must be test, test-x86, play-test or production\n' >&2; exit 2 ;;
+  *) printf 'Mode must be test, test-x86, play-unsigned, play-closed, play-test or production\n' >&2; exit 2 ;;
 esac
 
 if [[ "$mode" = production ]]; then
-    for key in HBT_ADMOB_APP_ID HBT_REWARDED_BOOST_ID HBT_REWARDED_OFFLINE_ID HBT_REWARDED_BONUS_ID HBT_PLAY_BACKEND HBT_GOOGLE_CLIENT_ID HBT_PRIVACY_URL; do
+    for key in HBT_ADMOB_APP_ID HBT_REWARDED_BOOST_ID HBT_REWARDED_OFFLINE_ID HBT_REWARDED_GEMS_ID HBT_REWARDED_BONUS_ID HBT_PLAY_BACKEND HBT_GOOGLE_CLIENT_ID HBT_PRIVACY_URL; do
       if [[ -z "${!key:-}" || "${!key}" = ca-app-pub-3940256099942544* ]]; then
         printf 'Provide a valid production value for %s\n' "$key" >&2
         exit 2
       fi
     done
     [[ "$HBT_ADMOB_APP_ID" =~ ^ca-app-pub-[0-9]{16}~[0-9]{10}$ ]]
-    for key in HBT_REWARDED_BOOST_ID HBT_REWARDED_OFFLINE_ID HBT_REWARDED_BONUS_ID; do
+    for key in HBT_REWARDED_BOOST_ID HBT_REWARDED_OFFLINE_ID HBT_REWARDED_GEMS_ID HBT_REWARDED_BONUS_ID; do
       [[ "${!key}" =~ ^ca-app-pub-[0-9]{16}/[0-9]{10}$ ]]
     done
     if [[ "${HBT_INTERSTITIALS:-}" != off ]]; then
@@ -75,5 +79,12 @@ cp tools/android_rewarded/build/outputs/aar/HighwayRewarded-release.aar addons/h
 
 export HBT_ANDROID_MODE="$mode"
 godot --headless --path . --editor --import
-godot --headless --path . "$export_flag" "$target" "$output"
+if "$sign_bundle"; then
+  staging=$(mktemp -d "$(dirname "$output")/.hbt-bundle-XXXXXXXX")
+  trap 'rm -rf "$staging"' EXIT
+  godot --headless --path . "$export_flag" "$target" "$staging/build.aab"
+  tools/android/sign-play-bundle.sh "$staging/build.aab" "$output"
+else
+  godot --headless --path . "$export_flag" "$target" "$output"
+fi
 test -s "$output"

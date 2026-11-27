@@ -4,7 +4,8 @@ cd "$(dirname "$0")/../.."
 apk="${1:?APK path required}"
 prior="${2:-}"
 android_tools="${ANDROID_BUILD_TOOLS_DIR:?Provide Android SDK Build Tools directory}"
-version="${HBT_RELEASE_VERSION:-0.9.5}"
+version="${HBT_RELEASE_VERSION:-1.0.0-beta.1}"
+export HBT_EXPECTED_VERSION_CODE="${HBT_EXPECTED_VERSION_CODE:-10001}"
 architectures="${HBT_APK_ARCHITECTURES:-arm64}"
 if [[ "$version" = 0.7.0 ]]; then architectures=both; fi
 HBT_APK_ARCHITECTURES="$architectures" HBT_APK_NETWORK_MODE=native tools/android/verify-test-apk.sh "$apk" "$version" "$prior"
@@ -22,6 +23,7 @@ if [[ "$version" != 0.7.0 ]]; then
   "$android_tools/zipalign" -c -P 16 4 "$apk"
   python3 tools/android/check-page-size.py "$apk"
 fi
+if [[ "$version" == 1.0.0-beta.* ]]; then rg -q -F 'highwaytycoon.rewarded_gems' "$tree"; fi
 rg -q -F 'ca-app-pub-3940256099942544~3347511713' "$tree"
 python3 - "$apk" <<'PY'
 import sys, zipfile

@@ -1,0 +1,64 @@
+name: Sign the Android closed-test bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      unsigned_sha256:
+        description: SHA-256 from the beta.1 verification report
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  sign:
+    if: github.repository == 'kogonowski52-png/HighwayBusinessTycoon' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    environment: play-upload
+    timeout-minutes: 10
+    env:
+      BUNDLE_NAME: HighwayBusinessTycoon-1.0.0-beta.1
+      HBT_BUNDLETOOL_JAR: ${{ runner.temp }}/bundletool.jar
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Verify the released unsigned bundle
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA256: ${{ inputs.unsigned_sha256 }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          gh release download v1.0.0-beta.1 --repo "$GITHUB_REPOSITORY" \
+            --pattern "${BUNDLE_NAME}-unsigned.aab" --dir "$RUNNER_TEMP"
+          printf '%s  %s\n' "$EXPECTED_SHA256" "$RUNNER_TEMP/${BUNDLE_NAME}-unsigned.aab" | sha256sum -c
+          curl -fsSL --retry 2 https://github.com/google/bundletool/releases/download/1.18.2/bundletool-all-1.18.2.jar \
+            -o "$HBT_BUNDLETOOL_JAR"
+          printf '%s  %s\n' 378b5434cd1378bef6b2bc527b8c7f0ff2584b273830335bce54d6d0813c8584 "$HBT_BUNDLETOOL_JAR" | sha256sum -c
+          tools/android/verify-play-bundle.sh "$RUNNER_TEMP/${BUNDLE_NAME}-unsigned.aab" unsigned
+      - name: Sign with the registered upload certificate
+        env:
+          PLAY_KEYSTORE_BASE64: ${{ secrets.ANDROID_PLAY_UPLOAD_KEYSTORE_BASE64 }}
+          GODOT_ANDROID_KEYSTORE_RELEASE_USER: ${{ secrets.ANDROID_PLAY_UPLOAD_KEY_ALIAS }}
+          GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD: ${{ secrets.ANDROID_PLAY_UPLOAD_STORE_PASSWORD }}
+          HBT_PLAY_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_PLAY_UPLOAD_KEY_PASSWORD }}
+          HBT_PLAY_UPLOAD_SHA256: ${{ vars.ANDROID_PLAY_UPLOAD_SHA256 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${PLAY_KEYSTORE_BASE64:?Configure the Play upload keystore in the play-upload environment}"
+          export GODOT_ANDROID_KEYSTORE_RELEASE_PATH="$RUNNER_TEMP/play-upload-keystore"
+          trap 'rm -f "$GODOT_ANDROID_KEYSTORE_RELEASE_PATH"' EXIT
+          printf '%s' "$PLAY_KEYSTORE_BASE64" | base64 --decode > "$GODOT_ANDROID_KEYSTORE_RELEASE_PATH"
+          tools/android/sign-play-bundle.sh "$RUNNER_TEMP/${BUNDLE_NAME}-unsigned.aab" "$RUNNER_TEMP/$BUNDLE_NAME.aab"
+          tools/android/verify-play-bundle.sh "$RUNNER_TEMP/$BUNDLE_NAME.aab" signed | tee "$RUNNER_TEMP/verification.txt"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: HighwayBusinessTycoon-1.0.0-beta.1-play-upload
+          path: |
+            ${{ runner.temp }}/HighwayBusinessTycoon-1.0.0-beta.1.aab
+            ${{ runner.temp }}/verification.txt
+          if-no-files-found: error
+          retention-days: 14

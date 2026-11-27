@@ -9,11 +9,14 @@ certificate_file="$(dirname "${BASH_SOURCE[0]}")/test-certificate.sha256"
 read -r expected_certificate < "$certificate_file"
 
 version_part='(0|[1-9][0-9]{0,2})'
-if [[ ! "$version" =~ ^$version_part\.$version_part\.$version_part$ ]]; then
-  echo "Version must be MAJOR.MINOR.PATCH with components below 1000." >&2
+if [[ "$version" =~ ^$version_part\.$version_part\.$version_part$ ]]; then
+  expected_code=$((10#${BASH_REMATCH[1]} * 1000000 + 10#${BASH_REMATCH[2]} * 1000 + 10#${BASH_REMATCH[3]}))
+elif [[ "$version" =~ ^$version_part\.$version_part\.$version_part-beta\.[1-9][0-9]*$ && "${HBT_EXPECTED_VERSION_CODE:-}" =~ ^[1-9][0-9]{0,8}$ ]]; then
+  expected_code=$HBT_EXPECTED_VERSION_CODE
+else
+  echo "Use MAJOR.MINOR.PATCH, or supply HBT_EXPECTED_VERSION_CODE for a beta version." >&2
   exit 1
 fi
-expected_code=$((10#${BASH_REMATCH[1]} * 1000000 + 10#${BASH_REMATCH[2]} * 1000 + 10#${BASH_REMATCH[3]}))
 if (( expected_code < 6000 )); then
   echo "The stable signature applies from 0.6.0." >&2
   exit 1
