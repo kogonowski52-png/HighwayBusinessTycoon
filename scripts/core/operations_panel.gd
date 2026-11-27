@@ -378,7 +378,13 @@ func show_upgrades() -> void:
 	theme_source.button_art(purchase, theme_source.UPGRADE_ART, 56)
 	var ad_choice := {"site": site}
 	if controller.ads.available() and controller.ads.playable("upgrade", ad_choice):
-		button(card, controller.t("offer_upgrade"), premium.select_offer.bind("upgrade", ad_choice))
+		var reward: Button = button(card, controller.t("offer_upgrade"), premium.select_offer.bind("upgrade", ad_choice))
+		theme_source.button_art(reward, theme_source.REWARD_VIDEO, 47)
+	if controller.ads.available() and controller.ads.playable("cash") and store.tutorial_step == store.TUTORIAL_DONE:
+		var could_pay: bool = store.construction_quote(site).cash_ok if tier == 0 else store.quote_upgrade(site, 1).affordable
+		if tier < store.CONFIG.max_level and not could_pay:
+			var aid: Button = button(card, controller.t("offer_cash"), premium.select_offer.bind("cash", {}))
+			theme_source.button_art(aid, theme_source.REWARD_VIDEO, 47)
 	var thresholds: Array = [1, 2, 3, 4, 5] if site == "fuel" else Campus.THRESHOLDS
 	if controller.is_regional():
 		thresholds = RegionalCampus.THRESHOLDS

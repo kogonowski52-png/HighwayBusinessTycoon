@@ -24,7 +24,7 @@ class MobileExport extends EditorExportPlugin:
 		return platform is EditorExportPlatformAndroid
 
 	func native_export() -> bool:
-		return OS.get_environment("HBT_ANDROID_MODE") in ["test", "production"] and FileAccess.file_exists(LIBRARY)
+		return OS.get_environment("HBT_ANDROID_MODE") in ["test", "closed", "production"] and FileAccess.file_exists(LIBRARY)
 
 	func _get_android_libraries(_platform: EditorExportPlatform, _debug: bool) -> PackedStringArray:
 		return PackedStringArray([LIBRARY]) if native_export() else PackedStringArray()
@@ -44,23 +44,27 @@ class MobileExport extends EditorExportPlugin:
 	func _get_android_manifest_application_element_contents(_platform: EditorExportPlatform, _debug: bool) -> String:
 		if not native_export():
 			return ""
-		var test := OS.get_environment("HBT_ANDROID_MODE") == "test"
+		var mode := OS.get_environment("HBT_ANDROID_MODE")
+		var test := mode != "production"
 		var app := TEST_APP if test else read_identifier("HBT_ADMOB_APP_ID", "~")
 		var values := {
 			"com.google.android.gms.ads.APPLICATION_ID": app,
 			"highwaytycoon.rewarded_boost": TEST_REWARD if test else read_identifier("HBT_REWARDED_BOOST_ID", "/"),
 			"highwaytycoon.rewarded_offline": TEST_REWARD if test else read_identifier("HBT_REWARDED_OFFLINE_ID", "/"),
+			"highwaytycoon.rewarded_gems": TEST_REWARD if test else read_identifier("HBT_REWARDED_GEMS_ID", "/"),
 			"highwaytycoon.rewarded_bonus": TEST_REWARD if test else read_identifier("HBT_REWARDED_BONUS_ID", "/"),
 			"highwaytycoon.interstitial": TEST_BREAK if test else read_identifier("HBT_INTERSTITIAL_ID", "/"),
-			"highwaytycoon.billing": "true",
-			"highwaytycoon.mode": "test" if test else "production",
-			"highwaytycoon.diagnostics": "true" if test and _debug else "",
+			"highwaytycoon.billing": "false" if mode == "closed" else "true",
+			"highwaytycoon.mode": mode,
+			"highwaytycoon.diagnostics": "true" if mode == "test" and _debug else "",
 		}
 		if OS.get_environment("HBT_INTERSTITIALS") == "off":
 			values.erase("highwaytycoon.interstitial")
 		var url := OS.get_environment("HBT_PLAY_BACKEND").strip_edges()
 		var identity := OS.get_environment("HBT_GOOGLE_CLIENT_ID").strip_edges()
-		if RegEx.create_from_string("^https://[a-zA-Z0-9.-]+(?::[0-9]+)?(/[a-zA-Z0-9/_-]*)?$").search(url) != null 				and RegEx.create_from_string("^[0-9]+-[A-Za-z0-9_-]+\\.apps\\.googleusercontent\\.com$").search(identity) != null:
+		if (mode != "closed"
+				and RegEx.create_from_string("^https://[a-zA-Z0-9.-]+(?::[0-9]+)?(/[a-zA-Z0-9/_-]*)?$").search(url) != null
+				and RegEx.create_from_string("^[0-9]+-[A-Za-z0-9_-]+\\.apps\\.googleusercontent\\.com$").search(identity) != null):
 			values["highwaytycoon.backend"] = url
 			values["highwaytycoon.oauth_client"] = identity
 		var privacy := OS.get_environment("HBT_PRIVACY_URL").strip_edges()

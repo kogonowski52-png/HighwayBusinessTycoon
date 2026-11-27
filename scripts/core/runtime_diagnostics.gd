@@ -82,6 +82,7 @@ func sdk_summary() -> String:
 		"UMP · %s%s" % [ump_copy, code_text(ump_code)],
 		"BOOST · " + ad_slot("boost"),
 		game.t("offline_header") + " · " + ad_slot("offline"),
+		game.t("diagnostic_slot_gems") + " · " + ad_slot("gems"),
 		game.t("diagnostic_slot_bonus") + " · " + ad_slot("bonus"),
 		game.t("diagnostic_slot_break") + " · " + ad_slot("interstitial"),
 		"%s · %s (%d)" % [game.t("diagnostic_last_reward"), game.t("diagnostic_reward_" + game.ads.last_reward), game.ads.reward_receipts],

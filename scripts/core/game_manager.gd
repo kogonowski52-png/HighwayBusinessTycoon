@@ -541,11 +541,18 @@ func open_page(name: String) -> void:
 		return
 	if name in operations.development.PAGES:
 		sync_estate(true)
+	if name in operations.premium.SHOP_TABS:
+		operations.premium.choose_tab(name)
+		name = "shop"
 	if name == "shop":
-		log_commercial("shop_opened")
+		log_commercial("shop_opened", operations.premium.shop_tab)
 		purchases.open()
 	elif name == "pass":
 		purchases.open()
+	elif name == "boost":
+		log_commercial("boost_clicked", "hud")
+	elif name == "free_rewards":
+		log_commercial("free_rewards_opened")
 	camera_rig.release_gestures()
 	camera_rig.cancel_film(true)
 	if economy.tutorial_step == 2 and name == "goals":
@@ -771,6 +778,7 @@ func sync_commercial_clock() -> void:
 		economy.clock = now
 
 func offer_ad(id: String, detail: Dictionary = {}) -> void:
+	log_commercial("reward_offer_clicked", id)
 	if not ads.request(id, detail):
 		show_message(t("bonus_unavailable"))
 	operations.refresh()
@@ -793,14 +801,17 @@ func ad_rewarded(id: String) -> void:
 					effects.confetti(routes.position_of(building, 0), Color("#f6cb58"), 6)
 			hud.animate_reward(hud.boost_button.get_global_rect().get_center(), true)
 		hud.announce(t("boost_earned"), hud.BOLT, motion_enabled())
+		operations.premium.boost_flash()
 	elif id == "offline":
 		if operations.page == "offline":
 			operations.hide_page()
 		reward_feedback()
 	else:
-		reward_feedback("reward", id in ["cash", "mission", "freight_tip", "practice_bonus"])
-		if id == "upgrade":
-			effects.construction(routes.position_of(selected, 0))
+		reward_feedback("reward", id in ["cash", "arrival", "mission", "freight_tip", "practice_bonus"])
+		if id in ["gift", "daily", "event"] and motion_enabled():
+			hud.animate_reward(hud.pages.free_rewards.get_global_rect().get_center(), true, "diamond")
+		if id == "upgrade" and economy.facilities.has(ads.rewarded_site):
+			effects.construction(routes.position_of(ads.rewarded_site, 0))
 		show_message(t("ad_rewarded"))
 	operations.refresh()
 	refresh()
@@ -956,6 +967,9 @@ func refresh_boost_hud() -> void:
 		if placement in ["initializing", "loading", "reloading"] else "ad_short_showing" \
 		if placement == "showing" else "ad_short_unavailable"
 	hud.set_boost(left, RevenueConfig.CAP_SECONDS, boost_time(left), t("boost_active"), t(status), motion_enabled())
+	var has_reward := economy.recognition.is_available(economy.day_index()) or (
+		ads.ready("gift") and ads.playable("gift"))
+	hud.set_reward_pin(has_reward, motion_enabled())
 
 @warning_ignore("integer_division")
 func clock_text(seconds: int) -> String:
@@ -965,7 +979,7 @@ func refresh() -> void:
 	if not is_instance_valid(hud.cash):
 		return
 	refresh_boost_hud()
-	if operations.page in ["boost", "reward_offer"] and operations.modal_open():
+	if operations.page in ["boost", "reward_offer", "free_rewards"] and operations.modal_open():
 		operations.refresh()
 	if operations.modal_open():
 		operations.premium.update_clock()
@@ -976,6 +990,10 @@ func refresh() -> void:
 	hud.location.text = Atlas.DESTINATIONS[campaign.active].area if economy.district != "north" else t("location")
 	hud.title.text = district_name(campaign.active)
 	hud.pages.atlas.text = t("atlas_button")
+	hud.pages.free_rewards.text = t("free_short")
+	hud.pages.shop_special.text = t("offers_short")
+	for destination in hud.wallet_links:
+		hud.wallet_links[destination].tooltip_text = t(destination)
 	hud.cash_caption.text = t("cash_short")
 	hud.update_cash(economy.amount("cash"), economy.language, t("money"), motion_enabled())
 	for key in hud.wallet_stats:

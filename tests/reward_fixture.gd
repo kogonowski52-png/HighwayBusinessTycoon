@@ -42,7 +42,7 @@ func adPlacementState(slot: String) -> String:
 	return "unavailable"
 
 func preloadAds() -> void:
-	for slot in ["boost", "offline", "bonus", "interstitial"]:
+	for slot in ["boost", "offline", "gems", "bonus", "interstitial"]:
 		prepareReward(slot)
 
 func prepareReward(slot: String) -> void:
@@ -83,9 +83,9 @@ func finish(earned: bool, duplicate := false) -> void:
 		reward_earned.emit(prior)
 		if duplicate:
 			reward_earned.emit(prior)
-	reward_closed.emit(prior)
 	ticket = ""
 	opened_slot = ""
+	reward_closed.emit(prior)
 	if not slot.is_empty():
 		reloading[slot] = true
 		prepareReward(slot)

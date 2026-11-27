@@ -12,20 +12,22 @@ const BREAK_LIMIT := 4
 const COMMERCIAL_QUIET := 120
 const WORLD_FIRST := 300
 const WORLD_INTERVAL := Vector2i(395, 595)
+const CASH_QUOTE_SECONDS := 180
 
 # Cooldown, daily units, reward amount. Unitless offers resolve their disclosed target.
 const OFFERS := {
 	"offline": [90, 8, 0],
-	"cash": [600, 4, 420],
+	"cash": [600, 4, 120],
 	"upgrade": [1200, 3, 1],
 	"daily": [0, 1, 4],
 	"mission": [600, 2, 125],
 	"event": [1800, 1, 3],
-	"gift": [1200, 3, 5],
+	"gift": [1800, 5, 5],
 	"training": [900, 3, 1],
 	"delivery": [1200, 3, 1],
 	"manager": [0, 1, 0],
 	"vip": [900, 4, 1],
+	"arrival": [0, 12, 0],
 	"freight_rush": [600, 3, 0], "driver_rush": [600, 3, 0],
 	"practice_bonus": [600, 3, 0], "freight_tip": [600, 3, 0], "yard_gift": [0, 1, 0],
 }

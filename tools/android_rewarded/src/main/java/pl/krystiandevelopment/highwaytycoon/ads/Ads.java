@@ -25,6 +25,8 @@ final class Ads {
     private static final long EXPIRATION = 50 * 60_000L;
     private static final long LOAD_TIMEOUT = 25_000L;
     private static final long[] RETRY = {3_000, 8_000, 20_000, 60_000, 120_000};
+    private static final long MANUAL_RETRY_DELAY = 5 * 60_000L;
+    private static final int MAX_CONSENT_ATTEMPTS = 4;
     private final HighwayRewarded bridge;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Runnable scheduled = this::pump;
@@ -41,6 +43,7 @@ final class Ads {
     // Request bookkeeping is owned by the UI thread.
     private volatile boolean consentChecked;
     private long consentRetryAt;
+    private int consentFailures;
 
     private static final class Loaded {
         final Object ad;
@@ -85,7 +88,7 @@ final class Ads {
 
     Ads(HighwayRewarded bridge) {
         this.bridge = bridge;
-        for (String name : new String[]{"boost", "offline", "bonus", BREAK}) {
+        for (String name : new String[]{"boost", "offline", "gems", "bonus", BREAK}) {
             placements.put(name, new Placement(name));
         }
     }
@@ -129,6 +132,23 @@ final class Ads {
         return state(name) + "|" + slot.duration + "|" + slot.error;
     }
 
+    String issue(String name) {
+        Placement slot = placements.get(name);
+        if (slot == null || bridge.config(slot.config).isEmpty()) return "unconfigured";
+        if (bridge.suspended()) return "paused";
+        if (running && consentChecked && !consentUpdating && !consentAllowed) {
+            return consentError.isEmpty() ? "privacy" : "consent_error";
+        }
+        if (!"unavailable".equals(state(name))) return "";
+        return switch (slot.error) {
+            case "load:1" -> "unconfigured";
+            case "load:2" -> "network";
+            case "load:3" -> "no_fill";
+            case "load:timeout" -> "timeout";
+            default -> slot.error.startsWith("show:") ? "show_error" : "unavailable";
+        };
+    }
+
     void start() {
         running = true;
         main.post(scheduled);
@@ -148,9 +168,11 @@ final class Ads {
         if (placement == null || BREAK.equals(slot)) return;
         running = true;
         main.post(() -> {
-            // A fresh user request can retry sooner after an offline period.
-            if (!placement.requesting && SystemClock.elapsedRealtime() - placement.startedAt >= RETRY[0]) {
-                placement.retryAt = 0;
+            Activity host = bridge.activity();
+            long now = SystemClock.elapsedRealtime();
+            if (host != null && consentAllowed && initialized && !placement.requesting
+                    && placement.failures > RETRY.length && now >= placement.retryAt) {
+                load(host, placement);
             }
             pump();
         });
@@ -195,6 +217,8 @@ final class Ads {
             Loaded item = slot.loaded;
             if (item != null && now < item.expires) {
                 wakeAt = Math.min(wakeAt, item.expires);
+            } else if (slot.failures > RETRY.length) {
+                continue;
             } else if (now >= slot.retryAt) {
                 load(host, slot);
                 wakeAt = Math.min(wakeAt, now + LOAD_TIMEOUT);
@@ -229,7 +253,9 @@ final class Ads {
         consentError = error;
         updatePrivacy(consent);
         consentChecked = true;
-        consentRetryAt = !consentAllowed && !error.isEmpty() ? SystemClock.elapsedRealtime() + 30_000 : 0;
+        consentFailures = !consentAllowed && !error.isEmpty() ? consentFailures + 1 : 0;
+        consentRetryAt = consentFailures > 0 && consentFailures < MAX_CONSENT_ATTEMPTS
+            ? SystemClock.elapsedRealtime() + 30_000L * consentFailures : 0;
         consentUpdating = false;
         availability();
         pump();
@@ -285,8 +311,9 @@ final class Ads {
         } else {
             slot.error = error;
             slot.phase = "unavailable";
-            slot.retryAt = SystemClock.elapsedRealtime() + RETRY[Math.min(slot.failures, RETRY.length - 1)];
-            slot.failures = Math.min(slot.failures + 1, RETRY.length);
+            slot.failures = Math.min(slot.failures + 1, RETRY.length + 1);
+            long delay = slot.failures > RETRY.length ? MANUAL_RETRY_DELAY : RETRY[slot.failures - 1];
+            slot.retryAt = SystemClock.elapsedRealtime() + delay;
         }
         availability();
         main.post(scheduled);
@@ -388,6 +415,7 @@ final class Ads {
                     slot.requesting = false;
                     slot.phase = "unavailable";
                     slot.retryAt = 0;
+                    slot.failures = 0;
                 }
             }
             availability();

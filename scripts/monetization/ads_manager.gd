@@ -25,6 +25,7 @@ var wait_context := {}
 var wait_until := 0
 var next_attempt := 0
 var last_reward := "idle"
+var rewarded_site := ""
 var reward_receipts := 0
 var interstitial := ""
 var break_counted := false
@@ -65,6 +66,8 @@ func region() -> HbtEconomy:
 	return game.economy
 
 func slot(id: String) -> String:
+	if id == "gift":
+		return "gems"
 	return id if id in ["boost", "offline"] else "bonus"
 
 func loading(id := "offline") -> bool:
@@ -78,6 +81,39 @@ func placement_status(id: String) -> String:
 	if provider.rewardReady(slot(id)):
 		return "ready"
 	return "loading" if loading(id) else "unavailable"
+
+func issue(id: String) -> String:
+	if not available():
+		return "unconfigured"
+	if provider.has_method("adIssue"):
+		return provider.adIssue(slot(id))
+	return "unavailable"
+
+func cash_reward() -> HbtAmount:
+	var estimate := region().offline_quote(Config.CASH_QUOTE_SECONDS)
+	var starter := HbtAmount.from(Config.OFFERS.cash[2])
+	return estimate if estimate.compare(starter) > 0 else starter
+
+func delivery_site(detail: Dictionary = {}) -> String:
+	return str(detail.get("site", "warehouse" if region().level("warehouse") > 0 else "fuel"))
+
+func featured_context(id: String) -> Dictionary:
+	var e := region()
+	if id == "delivery":
+		return {"site": delivery_site()}
+	if id not in ["upgrade", "training"]:
+		return {}
+	var sites := [game.selected]
+	sites.append_array(e.facilities.keys())
+	for site: String in sites:
+		if id == "upgrade" and e.level(site) > 0 and e.level(site) < e.CONFIG.max_level:
+			return {"site": site}
+		if id == "training":
+			var crew: Array = e.crew.get(site, [])
+			for index in crew.size():
+				if int(crew[index].training) < Staff.MAX_TRAINING:
+					return {"site": site, "index": index}
+	return {}
 
 func privacy_required() -> bool:
 	return available() and provider.privacyOptionsRequired()
@@ -118,9 +154,14 @@ func playable(id: String, detail: Dictionary = {}) -> bool:
 		"mission": return e.claimed.get(str(detail.get("mission", "")), false) and detail.get("offer_day") == detail.get("start_day", e.day_index())
 		"event": return detail.has("event_week") or (world.ledger.season().live and world.ledger.paid_event())
 		"delivery":
-			return e.level("warehouse") > 0 and int(e.commerce.record("warehouse").stock) + int(e.commerce.holds("warehouse").incoming) 				< e.commerce.capacity("warehouse", e.level("warehouse"))
+			if delivery_site(detail) == "fuel":
+				return int(e.supplies.get("fuel", 0)) < 64
+			return (e.level("warehouse") > 0
+					and int(e.commerce.record("warehouse").stock) + int(e.commerce.holds("warehouse").incoming)
+					< e.commerce.capacity("warehouse", e.level("warehouse")))
 		"manager": return not e.cards.has(Config.AD_MANAGER)
 		"vip": return not world.premium.vip.has(e.district)
+		"arrival": return e.district != "north"
 	return true
 
 func already_claimed(world: HbtCampaign, id: String, detail: Dictionary) -> bool:
@@ -128,13 +169,18 @@ func already_claimed(world: HbtCampaign, id: String, detail: Dictionary) -> bool
 		return int(world.premium.offer_claims.get("event_week", -1)) == int(detail.get("event_week", world.ledger.week))
 	if id == "mission":
 		return world.premium.offer_claims.has(mission_marker(detail))
+	if id == "arrival":
+		return world.premium.offer_claims.has("arrival/" + region().district)
 	return false
 
 func mission_marker(detail: Dictionary) -> String:
 	return "mission/%s/%s" % [region().district, detail.get("mission", "")]
 
 func request(id := "offline", detail: Dictionary = {}) -> bool:
-	if not available() or busy() or game.purchases.busy() or game.suspended_at >= 0:
+	if busy() or game.purchases.busy() or game.suspended_at >= 0:
+		return false
+	if not available():
+		track("ad_unavailable", id)
 		return false
 	game.sync_commercial_clock()
 	var condition := detail.duplicate()
@@ -151,6 +197,10 @@ func request(id := "offline", detail: Dictionary = {}) -> bool:
 		wait_context["event_week"] = game.campaign.ledger.week
 	if id == "offline":
 		wait_context["eligible"] = e.offline_eligible()
+	if id in ["cash", "arrival"]:
+		wait_context["cash"] = cash_reward()
+	if id == "delivery":
+		wait_context["site"] = delivery_site(condition)
 	wait_until = Time.get_ticks_msec() + Config.AD_WAIT_MSEC
 	next_attempt = 0
 	last_reward = "waiting"
@@ -180,6 +230,7 @@ func check_waiting() -> void:
 		cancel_wait()
 		return
 	if now >= wait_until or not available() or not playable(wait_offer, wait_context):
+		track("ad_unavailable", wait_offer)
 		clear_wait()
 		last_reward = "unavailable"
 		failed.emit()
@@ -223,7 +274,7 @@ func clear_wait() -> void:
 	set_process(false)
 
 func on_ad_shown(placement: String) -> void:
-	track("ad_shown", placement)
+	track("ad_shown", offer if not offer.is_empty() else placement)
 
 func track(name: String, key: String) -> void:
 	game.campaign.premium.record(name, region().clock, key)
@@ -237,6 +288,7 @@ func receive(token: String) -> void:
 	var e := region()
 	var world: HbtCampaign = game.campaign
 	var id := offer
+	rewarded_site = str(context.get("site", ""))
 	var was_running := world.boost.earning(e.clock)
 	paid = world.premium.apply(world, func() -> bool:
 		if not playable(id, context):
@@ -248,6 +300,8 @@ func receive(token: String) -> void:
 			world.premium.offer_claims[mission_marker(context)] = true
 		elif id == "event":
 			world.premium.offer_claims["event_week"] = context.event_week
+		elif id == "arrival":
+			world.premium.offer_claims["arrival/" + e.district] = true
 		world.premium.quiet(e.clock)
 		track("ad_reward", id)
 		if id == "boost":
@@ -265,7 +319,9 @@ func grant(world: HbtCampaign, e: HbtEconomy, id: String) -> bool:
 	match id:
 		"offline":
 			return not e.redeem_offline(true, context.eligible).empty()
-		"cash", "mission":
+		"cash", "arrival":
+			e.credit("cash", context.cash)
+		"mission":
 			e.credit("cash", HbtAmount.from(amount))
 		"daily", "event", "gift":
 			e.credit("diamond", HbtAmount.from(amount))
@@ -276,9 +332,12 @@ func grant(world: HbtCampaign, e: HbtEconomy, id: String) -> bool:
 			e.crew[context.site][context.index].training += amount
 			e.add_xp(4)
 		"delivery":
-			var load := e.commerce.record("warehouse")
-			load.stock += amount
-			load.inbound += amount
+			if context.site == "warehouse":
+				var load := e.commerce.record("warehouse")
+				load.stock += amount
+				load.inbound += amount
+			else:
+				e.deliver_supplies("fuel", amount)
 			world.ledger.increment(e, {"deliveries": amount})
 		"manager":
 			e.cards[Config.AD_MANAGER] = true
@@ -303,6 +362,7 @@ func closed(token: String) -> void:
 	commercial_finished.emit()
 	if did_fail:
 		last_reward = "unavailable"
+		track("ad_unavailable", id)
 		failed.emit()
 	elif no_reward:
 		last_reward = "cancelled"

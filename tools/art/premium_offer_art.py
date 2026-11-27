@@ -79,6 +79,24 @@ def tile(name, highlight, base):
     canvas.save(OUT / f"tile_{name}.png", optimize=True)
 
 
+def storefront_art():
+    export("boost_feature", (250, 158, 54), [("treasury", 337, 73, 226), ("bolt", 302, 93, 48)],
+           [(112, 104, 23), (372, 135, 28), (391, 261, 14), (88, 283, 14)])
+    export("rewards_feature", (63, 222, 182), [("treasury", 302, 108, 122), ("gems", 262, 44, 226)],
+           [(374, 148, 23), (88, 126, 19), (327, 304, 15)])
+    export("market_feature", (247, 165, 62), [("season", 273, 174, 63), ("treasury", 342, 38, 190),
+           ("gems", 223, 240, 254)], [(89, 136, 21), (385, 99, 23), (126, 294, 13)])
+    canvas = Image.new("RGBA", (180, 180))
+    draw = ImageDraw.Draw(canvas)
+    draw.rounded_rectangle((11, 39, 170, 155), radius=34, fill="#512c3c")
+    draw.rounded_rectangle((10, 26, 170, 143), radius=33, fill="#e2a348", outline="#ffe7ac", width=5)
+    draw.rounded_rectangle((23, 39, 156, 130), radius=21, fill="#305b70", outline="#ad6d36", width=5)
+    draw.rounded_rectangle((32, 48, 147, 66), radius=7, fill="#427c8a")
+    draw.polygon(((70, 66), (70, 110), (113, 88)), fill="#fff3c4")
+    star(draw, 147, 32, 24, (255, 244, 184, 255))
+    canvas.save(OUT / "reward_video.png", optimize=True)
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     export("starter", (255, 190, 110), [("gems", 151, 288, 153), ("treasury", 391, 45, 117)],
@@ -94,6 +112,7 @@ def main():
     export("gems_6500", (177, 125, 237), [("treasury", 352, 75, 105),
            ("gems", 270, 48, 195), ("gems", 217, 204, 216)], [(96, 127, 20), (393, 139, 24)])
     quiet()
+    storefront_art()
     for name, highlight, base in [
         ("petrol", "#467783", "#234457"), ("jade", "#428474", "#194e4a"),
         ("plum", "#795685", "#433153"), ("amber", "#8b6535", "#57402f"),

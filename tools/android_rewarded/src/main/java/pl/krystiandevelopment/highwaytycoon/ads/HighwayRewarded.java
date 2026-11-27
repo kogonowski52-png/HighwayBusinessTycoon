@@ -104,6 +104,7 @@ public final class HighwayRewarded extends GodotPlugin {
     @UsedByGodot public boolean adsConfigured() { return !config("rewarded_boost").isEmpty(); }
     @UsedByGodot public void preloadAds() { if (adsConfigured()) ads.start(); }
     @UsedByGodot public String adPlacementState(String slot) { return ads.state(slot); }
+    @UsedByGodot public String adIssue(String slot) { return ads.issue(slot); }
     @UsedByGodot public boolean rewardReady(String slot) { return ads.rewardReady(slot); }
     @UsedByGodot public boolean rewardLoading(String slot) { return ads.rewardLoading(slot); }
     @UsedByGodot public boolean privacyOptionsRequired() { return ads.privacyRequired(); }

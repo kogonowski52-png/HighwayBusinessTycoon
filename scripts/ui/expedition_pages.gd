@@ -158,6 +158,9 @@ func show_district() -> void:
 				panel.button(card, text("district_travel"), game.travel_to.bind(destination), false, true)
 			else:
 				panel.button(card, text("district_stay"), panel.hide_page, false, true)
+				if game.ads.available() and game.ads.playable("arrival"):
+					var reward: Button = panel.button(card, text("offer_arrival"), panel.premium.select_offer.bind("arrival", {}))
+					hud.button_art(reward, hud.REWARD_VIDEO, 48)
 		else:
 			var opened: Label = hud.caption(card, 26, hud.INK)
 			opened.text = text("district_gate") % [game.district_name(region["from"]), region.fuel, region.rep, balance(region.cost)]

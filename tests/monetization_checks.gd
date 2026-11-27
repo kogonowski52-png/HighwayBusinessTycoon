@@ -186,7 +186,8 @@ func check_rewards(provider: Fixture) -> void:
 		expect(watch(provider, "boost"), "another completed video")
 	expect(not watch(provider, "boost") and world.boost.remaining(UTC) == 1800, "the seventh ad is never shown")
 	var prior := e.amount("cash")
-	expect(watch(provider, "cash") and e.amount("cash").compare(prior.plus(HbtAmount.from(Config.OFFERS.cash[2]))) == 0, "fixed cash grant no ×2")
+	var quoted_cash: HbtAmount = game.ads.cash_reward()
+	expect(watch(provider, "cash") and e.amount("cash").compare(prior.plus(quoted_cash)) == 0, "quoted local cash grant is independent of ×2")
 	expect(not watch(provider, "cash"), "cash cooldown")
 	var previous := e.level("fuel")
 	expect(watch(provider, "upgrade", {"site": "fuel"}) and e.level("fuel") == previous + 1, "actual free building level")
@@ -195,7 +196,22 @@ func check_rewards(provider: Fixture) -> void:
 	expect(watch(provider, "training", {"site": "fuel", "index": 0}) and e.crew.fuel[0].training == 1, "actual free training")
 	e.claim_calendar()
 	expect(watch(provider, "daily") and not watch(provider, "daily"), "supplementary calendar reward once")
-	expect(watch(provider, "gift"), "fixed store gift")
+	var gems := e.amount("diamond")
+	expect(watch(provider, "gift") and game.ads.slot("gift") == "gems"
+		and e.amount("diamond").compare(gems.plus(HbtAmount.from(5))) == 0, "five gems confirmed via the dedicated placement")
+	expect(not watch(provider, "gift") and world.premium.offer_wait("gift", e.clock) == 1800, "gift cooldown is based on the confirmed receipt")
+	var today := (floori(e.clock / float(Config.DAY)) + 1) * Config.DAY
+	var gift_state := HbtPremiumState.new()
+	gift_state.restore(world.premium.snapshot().duplicate(true))
+	for use in Config.OFFERS.gift[1]:
+		expect(gift_state.allowed("gift", today), "gift daily allowance %d" % (use + 1))
+		gift_state.remember("gift", today)
+		today += Config.OFFERS.gift[0]
+	expect(not gift_state.allowed("gift", today) and gift_state.offer_wait("gift", today) == Config.DAY - 9000, "sixth reward waits until midnight UTC")
+	var reloaded := HbtPremiumState.new()
+	reloaded.restore(gift_state.snapshot().duplicate(true))
+	expect(reloaded.day_used("gift", today) == 5 and reloaded.allowed("gift", today + Config.DAY), "gift limits survive restoration and reset after the day ends")
+	expect(watch(provider, "delivery", {"site": "fuel"}) and e.supplies.get("fuel", 0) == 1, "a confirmed delivery stocks the starter station")
 	expect(watch(provider, "manager") and e.cards.has(Config.AD_MANAGER) and not watch(provider, "manager"), "identified, nonrandom manager")
 	expect(watch(provider, "vip") and world.premium.vip.has("north") and not watch(provider, "vip"), "one outstanding VIP visit")
 	var saved_purse := e.amount("cash")

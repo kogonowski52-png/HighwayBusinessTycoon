@@ -68,11 +68,20 @@ func break_allowed(clock: int, tutorial_done: bool) -> bool:
 	return ad_breaks.size() < Config.BREAK_LIMIT and (ad_breaks.is_empty() or clock >= ad_breaks.back() + Config.BREAK_INTERVAL)
 
 func allowed(id: String, now: int) -> bool:
+	return offer_wait(id, now) == 0
+
+func offer_wait(id: String, now: int) -> int:
 	var rule: Array = Config.OFFERS[id]
 	var past: Dictionary = offer_history.get(id, {})
 	var last := int(past.get("at", -1))
+	var remaining := maxi(0, last + int(rule[0]) - now) if last >= 0 else 0
+	var exhausted := day_used(id, now) >= int(rule[1])
+	return maxi(remaining, Config.DAY - posmod(now, Config.DAY)) if exhausted else remaining
+
+func day_used(id: String, now: int) -> int:
+	var past: Dictionary = offer_history.get(id, {})
 	var day := floori(now / float(Config.DAY))
-	return (last < 0 or now >= last + int(rule[0])) and (day != int(past.get("day", -1)) or int(past.get("count", 0)) < int(rule[1]))
+	return int(past.get("count", 0)) if day == int(past.get("day", -1)) else 0
 
 func remember(id: String, now: int) -> void:
 	if id == "boost":
@@ -126,6 +135,7 @@ func apply(world: HbtCampaign, operation: Callable) -> bool:
 	var gross := estate.gross
 	var offline := [estate.offline_pending, estate.offline_boosted, estate.offline_seconds, estate.offline_away_seconds]
 	var trades := estate.commerce.state.duplicate(true)
+	var supplies := estate.supplies.duplicate()
 	var practice := estate.practice_state.duplicate(true)
 	var works := estate.works.snapshot().duplicate(true)
 	var transport: Dictionary = world.freight.snapshot().duplicate(true)
@@ -150,6 +160,7 @@ func apply(world: HbtCampaign, operation: Callable) -> bool:
 		estate.offline_seconds = offline[2]
 		estate.offline_away_seconds = offline[3]
 		estate.commerce.state = trades
+		estate.supplies = supplies
 		estate.practice_state = practice
 		estate.works.restore(works)
 		world.freight.restore(transport)

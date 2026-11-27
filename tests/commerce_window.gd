@@ -66,7 +66,7 @@ func run() -> void:
 	result("Commerce, first-touch ads and native boundaries")
 
 func ads_on_first_touch() -> void:
-	expect(source.requests.size() == 4 and source.screens == 0, "all ad placements preloaded without showing")
+	expect(source.requests.size() == 5 and source.screens == 0, "all ad placements preloaded without showing")
 	game.open_page("boost")
 	await settle()
 	await tap_row(game.t("boost_watch"))
@@ -161,17 +161,29 @@ func ads_on_first_touch() -> void:
 
 func check_shop() -> void:
 	var premium: RefCounted = game.operations.premium
-	game.open_page("shop")
+	await photo("00-map-quick-access")
+	await tap(game.hud.wallet_links.shop_cash)
+	expect(premium.shop_tab == "shop_cash" and game.operations.page == "shop", "cash plus opens the cash section")
+	await tap(game.operations.back)
+	await tap(game.hud.wallet_links.shop_gems)
+	expect(premium.shop_tab == "shop_gems" and game.operations.page == "shop", "diamonds plus opens the gem section")
+	await tap(game.operations.back)
+	await tap(game.hud.pages.shop_special)
+	expect(premium.shop_tab == "shop_special", "HUD promotions opens special offers")
+	await tap(game.operations.back)
+	await tap(game.hud.pages.free_rewards)
+	expect(game.operations.page == "free_rewards" and has_label(game.t("offer_gift")) and has_label(game.t("offer_training")),
+		"HUD opens a separate rewards center with disclosed prizes")
+	await photo("00-free-reward-center")
+	await tap(game.operations.back)
+	await tap(game.hud.pages.shop)
 	await settle()
-	var expected := ["product_starter_pack", "calendar_header", "product_gems_100", "offer_cash", "product_manager_pack",
+	var expected := ["shop_feature_title", "free_rewards_header", "product_gems_100", "product_starter_pack", "offer_cash", "product_manager_pack",
 		"product_builder_pack", "boost_offer_title", "pass_header", "product_remove_ads"]
 	var i := 0
 	for id: String in premium.SHOP_TABS:
-		var tab: Button = premium.tabs[id]
-		await tap(tab)
+		await choose_shop(id)
 		expect(premium.shop_tab == id and has_label(game.t(expected[i])), "shop section opens via touch: " + id)
-		expect(tab.get_global_rect().size.y >= 68.0 and game.operations.panel.get_global_rect().encloses(tab.get_global_rect()),
-			"full sized tab in sheet: " + id)
 		if id == "shop_boost":
 			expect(premium.boost_bar.value == 300 and has_label(game.t("boost_active") + "  ·  05:00"),
 				"BOOST store tab shows the same countdown and progress")
@@ -188,26 +200,34 @@ func check_shop() -> void:
 	expect(game.operations.scroll.scroll_vertical > 100 and game.camera_rig.target == camera, "store drag leaves camera untouched")
 	await tap(premium.tabs.shop_free)
 	expect(game.operations.scroll.scroll_vertical == 0, "fixed tabs reset the scroll position")
-	if source.rewardReady("bonus"):
-		source.complete("bonus", false)
+	if source.rewardReady("gems"):
+		source.complete("gems", false)
 	await tap_row(game.t("offer_watch"))
 	expect(game.ads.waiting("gift"), "free shop gift queues the first selection")
 	await tap(premium.tabs.shop_gems)
-	source.complete("bonus", true)
+	source.complete("gems", true)
 	await settle()
 	expect(source.screens == 4 and not game.ads.busy(), "changing the store tab cancels the previous gift")
-	await tap(premium.tabs.shop_season)
+	await choose_shop("shop_season")
 	await tap_row(game.t("pass_view"))
 	expect(game.operations.page == "pass" and premium.selected_pass().sku == Revenue.SEASONS[0].sku,
 		"season tab opens the active pass")
 	expect(has_label(game.t("pass_reward_tier") % Revenue.SEASON_TIERS), "season pass still renders 30 reward tiers")
 	await tap(game.operations.back)
 
+func choose_shop(id: String) -> void:
+	var premium: RefCounted = game.operations.premium
+	if premium.tabs.has(id):
+		await tap(premium.tabs[id])
+	else:
+		await tap(premium.tabs.shop_featured)
+		await tap_row(game.t(id))
+
 func test_catalogue_states() -> void:
 	game.purchases.connect_provider(play)
 	game.open_page("shop")
 	await settle()
-	await tap(game.operations.premium.tabs.shop_special)
+	await choose_shop("shop_special")
 	var store: Node = game.purchases
 	expect(play.queries == 1 and store.catalog_status == "store_connect", "opening requests a real bridge catalogue once")
 	play.billing_state.emit("catalog", 12)

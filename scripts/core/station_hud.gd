@@ -26,10 +26,11 @@ const SETTINGS = preload("res://assets/ui/icon_settings.png")
 const CARDS = preload("res://assets/ui/icon_cards.png")
 const BOLT = preload("res://assets/ui/premium/bolt.png")
 const GIFT = preload("res://assets/ui/icon_gift.png")
+const REWARD_VIDEO = preload("res://assets/ui/premium/offers/reward_video.png")
 const CALENDAR = preload("res://assets/ui/icon_calendar.png")
 const HELP = preload("res://assets/ui/icon_help.png")
 const NAV := {"sites": UPGRADE_ART, "team": STAFF, "managers": CARDS, "goals": preload("res://assets/ui/icon_goals.png"),
-	"shop": GIFT, "boost": BOLT, "pass": CALENDAR, "reward_offer": GIFT, "finance": preload("res://assets/ui/icon_finance.png"), "settings": SETTINGS, "calendar": CALENDAR,
+	"shop": GIFT, "boost": BOLT, "free_rewards": REWARD_VIDEO, "pass": CALENDAR, "reward_offer": GIFT, "finance": preload("res://assets/ui/icon_finance.png"), "settings": SETTINGS, "calendar": CALENDAR,
 	"rank": REPUTATION, "achievements": REPUTATION, "help": HELP, "licenses": HELP, "privacy": HELP}
 const Touch = preload("res://scripts/ui/touch_button.gd")
 const IVORY = preload("res://assets/ui/presentation/shell.png")
@@ -84,10 +85,14 @@ var reward_layer := CanvasLayer.new()
 var upgrade_pulse: Tween
 var ready_glow := false
 var boost_button: Button
+var boost_caption: Label
 var boost_meter: ProgressBar
 var boost_status: Label
 var boost_pulse: Tween
 var boost_glow := false
+var boost_active := false
+var reward_pulse: Tween
+var wallet_links := {}
 var wallet_motion: Dictionary = {}
 var wallet_previous: Dictionary = {}
 var wallet_targets: Dictionary = {}
@@ -137,13 +142,13 @@ func _ready() -> void:
 	var balances := HBoxContainer.new()
 	header.add_child(balances)
 	balances.add_theme_constant_override("separation", 7)
-	var treasury := tile(balances, CASH, Color("#d6e9d5"))
+	var treasury := tile(balances, CASH, Color("#d6e9d5"), "shop_cash")
 	cash_caption = caption(treasury, 17, FADE, HEAVY)
 	cash = caption(treasury, 32, MINT, counter)
 	cash.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	for data in [["diamond", DIAMOND, Color("#e9dff9"), Color("#643c86")],
 		["reputation", REPUTATION, Color("#f5e7bf"), Color("#815021")]]:
-		var purse := tile(balances, data[1], data[2])
+		var purse := tile(balances, data[1], data[2], "shop_gems" if data[0] == "diamond" else "")
 		wallet_names[data[0]] = caption(purse, 16, FADE, HEAVY)
 		wallet_stats[data[0]] = caption(purse, 30, data[3], counter)
 		wallet_stats[data[0]].text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -169,22 +174,20 @@ func _ready() -> void:
 	atlas.pressed.connect(func() -> void: page_requested.emit("atlas"))
 	pages.atlas = atlas
 
-	boost_button = action(framing, 146, 118, false)
+	boost_button = action(framing, 146, 129, false)
 	boost_button.clip_contents = true
-	boost_button.add_theme_font_size_override("font_size", 24)
 	boost_button.add_theme_stylebox_override("normal", sculpted(UPGRADE, 33, 10))
 	boost_button.add_theme_stylebox_override("hover", sculpted(UPGRADE, 33, 10))
 	boost_button.add_theme_stylebox_override("pressed", sculpted(CREAM_BUTTON, 33, 10))
-	button_art(boost_button, BOLT, 44)
-	boost_button.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
-	boost_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var bolt := icon(boost_button, BOLT, 50)
+	bolt.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	bolt.offset_left = -25
+	bolt.offset_right = 25
+	bolt.offset_top = 8
+	bolt.offset_bottom = 58
 	boost_button.pressed.connect(func() -> void: page_requested.emit("boost"))
-	boost_status = caption(boost_button, 17, INK, HEAVY)
-	boost_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	boost_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	boost_status.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	boost_status.offset_top = -34
-	boost_status.offset_bottom = -13
+	boost_caption = boost_line(23, -75, -43)
+	boost_status = boost_line(17, -43, -17)
 	boost_meter = ProgressBar.new()
 	boost_button.add_child(boost_meter)
 	boost_meter.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -196,6 +199,9 @@ func _ready() -> void:
 	boost_meter.show_percentage = false
 	boost_meter.add_theme_stylebox_override("background", style(Color("#b17b47"), Color("#a06d36"), 4, 0))
 	boost_meter.add_theme_stylebox_override("fill", style(Color("#fff086"), Color("#dcc565"), 4, 0))
+	var rewards := shortcut(framing, "free_rewards", REWARD_VIDEO, ACTION)
+	add_badge(rewards, "free_rewards")
+	shortcut(framing, "shop_special", GIFT, LAVENDER)
 
 	dock = band(root, true, PETROL)
 	var tabs := HBoxContainer.new()
@@ -209,7 +215,7 @@ func _ready() -> void:
 		button_art(tab, NAV[page], 75)
 		tab.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
 		tab.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		tab.pressed.connect(func() -> void: page_requested.emit(page))
+		tab.pressed.connect(func() -> void: page_requested.emit("shop_featured" if page == "shop" else page))
 		pages[page] = tab
 	add_badge(pages.goals, "goals")
 
@@ -352,11 +358,17 @@ func add_badge(button: Button, key: String) -> void:
 func set_boost(left: int, cap: int, time_text: String, active_text: String, status: String, motion: bool) -> void:
 	if not is_instance_valid(boost_button):
 		return
-	boost_button.text = "×2  " + time_text if left > 0 else "BOOST ×2"
+	boost_caption.text = "×2  " + time_text if left > 0 else "BOOST ×2"
 	boost_status.text = status
 	boost_button.tooltip_text = "%s · %s" % [active_text + " · " + time_text if left > 0 else "BOOST ×2", status]
 	boost_meter.max_value = cap
 	boost_meter.value = left
+	var active := left > 0
+	if active != boost_active:
+		boost_active = active
+		var face := sculpted(UPGRADE if active else CREAM_BUTTON, 33, 10)
+		boost_button.add_theme_stylebox_override("normal", face)
+		boost_button.add_theme_stylebox_override("hover", face)
 	cash.add_theme_color_override("font_color", Color("#9c5e19") if left > 0 else MINT)
 	var glow := left > 0 and motion
 	if boost_glow == glow:
@@ -369,6 +381,47 @@ func set_boost(left: int, cap: int, time_text: String, active_text: String, stat
 		boost_pulse = create_tween().set_loops().set_trans(Tween.TRANS_SINE)
 		boost_pulse.tween_property(boost_button, "modulate", Color(1.21, 1.15, .87), .76)
 		boost_pulse.tween_property(boost_button, "modulate", Color.WHITE, .76)
+
+func boost_line(font_size: int, top_offset: float, bottom_offset: float) -> Label:
+	var line := caption(boost_button, font_size, INK, HEAVY)
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	line.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	line.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	line.offset_left = 8
+	line.offset_right = -8
+	line.offset_top = top_offset
+	line.offset_bottom = bottom_offset
+	line.clip_text = true
+	line.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	return line
+
+func shortcut(parent: Control, page: String, icon_art: Texture2D, paint: Texture2D) -> Button:
+	var control := action(parent, 146, 88, false)
+	control.add_theme_stylebox_override("normal", sculpted(paint, 34, 8))
+	if paint == ACTION:
+		control.add_theme_color_override("font_color", CREAM)
+	control.add_theme_font_size_override("font_size", 20)
+	control.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	control.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+	control.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button_art(control, icon_art, 41)
+	control.pressed.connect(func() -> void: page_requested.emit(page))
+	pages[page] = control
+	return control
+
+func set_reward_pin(ready: bool, animated: bool) -> void:
+	var pin: Control = badges.free_rewards
+	pin.visible = ready
+	if ready and animated:
+		if reward_pulse == null or not reward_pulse.is_running():
+			pin.pivot_offset = pin.size * .5
+			reward_pulse = create_tween().set_loops().set_trans(Tween.TRANS_SINE)
+			reward_pulse.tween_property(pin, "scale", Vector2.ONE * 1.18, .7)
+			reward_pulse.tween_property(pin, "scale", Vector2.ONE, .7)
+	elif reward_pulse != null:
+		reward_pulse.kill()
+		pin.scale = Vector2.ONE
 
 func set_upgrade_ready(enabled: bool, motion: bool) -> void:
 	var glow := enabled and motion
@@ -383,7 +436,7 @@ func set_upgrade_ready(enabled: bool, motion: bool) -> void:
 		upgrade_pulse.tween_property(upgrade, "modulate", Color(1.15, 1.10, 0.99), 0.67)
 		upgrade_pulse.tween_property(upgrade, "modulate", Color.WHITE, 0.67)
 
-func tile(parent: Control, texture: Texture2D, tint: Color) -> VBoxContainer:
+func tile(parent: Control, texture: Texture2D, tint: Color, destination := "") -> VBoxContainer:
 	var shell := PanelContainer.new()
 	parent.add_child(shell)
 	shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -395,6 +448,14 @@ func tile(parent: Control, texture: Texture2D, tint: Color) -> VBoxContainer:
 	var body := VBoxContainer.new()
 	row.add_child(body)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if not destination.is_empty():
+		var plus := action(row, 59, 62, false)
+		plus.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		plus.text = "+"
+		plus.add_theme_font_size_override("font_size", 34)
+		plus.add_theme_stylebox_override("normal", sculpted(CREAM_BUTTON, 29, 0))
+		plus.pressed.connect(func() -> void: page_requested.emit(destination))
+		wallet_links[destination] = plus
 	return body
 
 func caption(parent: Control, font_size: int, color: Color, font: Font = BOLD) -> Label:
