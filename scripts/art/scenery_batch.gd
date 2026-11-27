@@ -2,6 +2,7 @@ extends RefCounted
 ## Instances keep their source mesh, material, color and transform. Cells keep culling local to the camera.
 
 const CELL := 33.0
+const FINISHES = preload("res://assets/materials/vertex_finishes.gdshader")
 const CONTACT = preload("res://assets/materials/contact.gdshader")
 static var unit_box: BoxMesh
 
@@ -65,6 +66,8 @@ static func batchable(part: MeshInstance3D, opaque_shader: Shader = null) -> boo
 	return true
 
 static func opaque(material: Material) -> bool:
+	if material is ShaderMaterial and material.shader == FINISHES:
+		return true
 	return material is BaseMaterial3D and material.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED \
 		and material.billboard_mode == BaseMaterial3D.BILLBOARD_DISABLED and material.next_pass == null
 

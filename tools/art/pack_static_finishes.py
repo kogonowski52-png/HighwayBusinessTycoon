@@ -1,7 +1,7 @@
 """Group opaque surfaces in existing GLBs without changing their geometry.
 
-Each triangle retains its exported vertex tint, normals and winding. A tiny
-metalness/roughness palette gives each finish independent PBR values. Separate
+Each triangle retains its exported vertex tint, normals and winding. Metalness
+and roughness are stored per vertex in the unused UV channel. Separate
 emissive and transparent surfaces keep their original materials and properties.
 
 Run after regenerating the original six regions' models.
@@ -11,26 +11,12 @@ import collections
 import json
 from pathlib import Path
 import struct
-import zlib
 
 
 COMPONENT_BYTES = {5121: 1, 5123: 2, 5125: 4, 5126: 4}
 CHANNELS = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4}
 REGIONS = ("valley", "alpine", "ocean", "metro")
 ATTRIBUTES = ("POSITION", "NORMAL", "COLOR_0")
-
-
-def png_chunk(kind, data):
-    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
-
-
-def palette_png(finishes):
-    # Four identical texels per finish keep the sample within the palette entry.
-    width = 4 * len(finishes)
-    row = b"\0" + b"".join(bytes((0, rough, metal)) * 4 for metal, rough in finishes)
-    return (b"\x89PNG\r\n\x1a\n" +
-            png_chunk(b"IHDR", struct.pack(">IIBBBBB", width, 4, 8, 2, 0, 0, 0)) +
-            png_chunk(b"IDAT", zlib.compress(row * 4)) + png_chunk(b"IEND", b""))
 
 
 class StaticModel:
@@ -49,7 +35,7 @@ class StaticModel:
         if primitive.get("mode", 4) != 4 or "indices" not in primitive or "material" not in primitive:
             return None
         material = self.doc["materials"][primitive["material"]]
-        if set(material) - {"name", "doubleSided", "pbrMetallicRoughness"}:
+        if not material.get("doubleSided", False) or set(material) - {"name", "doubleSided", "pbrMetallicRoughness"}:
             return None
         pbr = material.get("pbrMetallicRoughness", {})
         if set(pbr) - {"metallicFactor", "roughnessFactor"}:
@@ -57,7 +43,7 @@ class StaticModel:
         signature = tuple((self.doc["accessors"][primitive["attributes"][k]]["componentType"],
                            self.doc["accessors"][primitive["attributes"][k]].get("normalized", False))
                           for k in ATTRIBUTES)
-        return material.get("doubleSided", False), signature
+        return signature
 
     def bytes_of(self, view_id):
         view = self.doc["bufferViews"][view_id]
@@ -88,18 +74,12 @@ class StaticModel:
         self.doc["accessors"].append(details)
         return len(self.doc["accessors"]) - 1
 
-    def merged_surface(self, primitives, double_sided):
+    def merged_surface(self, primitives):
         materials = self.doc["materials"]
-        keys = []
         data = {k: bytearray() for k in (*ATTRIBUTES, "TEXCOORD_0")}
         bounds = collections.defaultdict(list)
         indices = []
         vertex_count = 0
-        for primitive in primitives:
-            pbr = materials[primitive["material"]].get("pbrMetallicRoughness", {})
-            finish = tuple(round(255 * pbr.get(k, 1.0)) for k in ("metallicFactor", "roughnessFactor"))
-            if finish not in keys:
-                keys.append(finish)
         for primitive in primitives:
             attrs = primitive["attributes"]
             count = self.doc["accessors"][attrs["POSITION"]]["count"]
@@ -113,9 +93,8 @@ class StaticModel:
                 {5121: "<B", 5123: "<H", 5125: "<I"}[component], self.read(primitive["indices"])))
             vertex_count += count
             pbr = materials[primitive["material"]].get("pbrMetallicRoughness", {})
-            finish = tuple(round(255 * pbr.get(k, 1.0)) for k in ("metallicFactor", "roughnessFactor"))
-            texel = (keys.index(finish) + 0.5) / len(keys)
-            data["TEXCOORD_0"].extend(struct.pack("<ff", texel, 0.5) * count)
+            properties = (float(pbr.get("metallicFactor", 1.0)), float(pbr.get("roughnessFactor", 1.0)))
+            data["TEXCOORD_0"].extend(struct.pack("<ff", *properties) * count)
         merged = {}
         for name, payload in data.items():
             source = self.doc["accessors"][primitives[0]["attributes"][name]] if name in ATTRIBUTES else {}
@@ -129,12 +108,7 @@ class StaticModel:
         short = vertex_count <= 65535
         index = self.add_accessor(struct.pack(f"<{len(indices)}{'H' if short else 'I'}", *indices),
             {"type": "SCALAR", "componentType": 5123 if short else 5125, "count": len(indices)}, 34963)
-        images = self.doc.setdefault("images", [])
-        images.append({"bufferView": self.add_view(palette_png(keys)), "mimeType": "image/png"})
-        textures = self.doc.setdefault("textures", [])
-        textures.append({"source": len(images) - 1})
-        materials.append({"name": "Packed surface finishes", "doubleSided": double_sided,
-                          "pbrMetallicRoughness": {"metallicRoughnessTexture": {"index": len(textures) - 1}}})
+        materials.append({"name": "Packed surface finishes", "doubleSided": True})
         return {"attributes": merged, "indices": index, "material": len(materials) - 1}
 
     def pack(self):
@@ -148,11 +122,11 @@ class StaticModel:
                     separate.append(primitive)
                 else:
                     groups[key].append(primitive)
-            for key, primitives in groups.items():
+            for primitives in groups.values():
                 if len(primitives) < 2:
                     separate.extend(primitives)
                     continue
-                separate.append(self.merged_surface(primitives, key[0]))
+                separate.append(self.merged_surface(primitives))
                 reduced += len(primitives) - 1
             mesh["primitives"] = separate
         if reduced:

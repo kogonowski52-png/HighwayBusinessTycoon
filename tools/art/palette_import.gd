@@ -2,10 +2,12 @@
 extends EditorScenePostImport
 
 const PRACTICAL = preload("res://assets/materials/practical.gdshader")
+const FINISHES = preload("res://assets/materials/vertex_finishes.gdshader")
 const DISPLAY_GLASS = preload("res://assets/materials/display_glass.gdshader")
 
 var practical: ShaderMaterial
 var glazing: ShaderMaterial
+var finishes: ShaderMaterial
 
 func _post_import(scene: Node) -> Object:
 	practical = ShaderMaterial.new()
@@ -16,6 +18,9 @@ func _post_import(scene: Node) -> Object:
 	glazing = ShaderMaterial.new()
 	glazing.shader = DISPLAY_GLASS
 	glazing.resource_name = "Glazing reflections"
+	finishes = ShaderMaterial.new()
+	finishes.shader = FINISHES
+	finishes.resource_name = "Packed surface finishes"
 	color_surfaces(scene)
 	return scene
 
@@ -32,5 +37,7 @@ func color_surfaces(node: Node) -> void:
 				mesh.surface_set_material(surface, practical)
 			elif material.resource_name == "Glass":
 				mesh.surface_set_material(surface, glazing)
+			elif material.resource_name == "Packed surface finishes":
+				mesh.surface_set_material(surface, finishes)
 	for child in node.get_children():
 		color_surfaces(child)

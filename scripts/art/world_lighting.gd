@@ -191,6 +191,6 @@ func set_quality(tier: int) -> void:
 		reduced = quality == 0
 		sun.directional_shadow_max_distance = [34.0, 57.0, 74.0, 88.0][quality]
 		sun.shadow_blur = [1.0, 1.28, 1.6, 1.75][quality]
-		sun.directional_shadow_mode = [DirectionalLight3D.SHADOW_ORTHOGONAL, DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS,
+		sun.directional_shadow_mode = [DirectionalLight3D.SHADOW_ORTHOGONAL, DirectionalLight3D.SHADOW_ORTHOGONAL,
 			DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS, DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS][quality]
 		set_look(current)

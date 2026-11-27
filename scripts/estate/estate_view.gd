@@ -144,7 +144,8 @@ static func dyed(source: ArrayMesh, choices: Dictionary) -> ArrayMesh:
 		var arrays := source.surface_get_arrays(surface)
 		var points: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 		var normals: Variant = arrays[Mesh.ARRAY_NORMAL]
-		if material is BaseMaterial3D and arrays[Mesh.ARRAY_COLOR] is PackedColorArray and normals is PackedVector3Array:
+		var opaque := material is BaseMaterial3D or (material is ShaderMaterial and material.resource_name == "Packed surface finishes")
+		if opaque and arrays[Mesh.ARRAY_COLOR] is PackedColorArray and normals is PackedVector3Array:
 			var colors: PackedColorArray = arrays[Mesh.ARRAY_COLOR]
 			for i in points.size():
 				var y := (points[i].y - base) / height
