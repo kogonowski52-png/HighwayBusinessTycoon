@@ -1,0 +1,60 @@
+name: Publish signed Android 0.9.5 APK
+
+on:
+  push:
+    branches: [android-apk-0.9.5-rc]
+    paths:
+      - .github/workflows/publish-approved-rc-apk.yml
+
+concurrency: highway-business-tycoon-0.9.5-rc-apk
+
+jobs:
+  publish:
+    if: github.repository == 'kogonowski52-png/HighwayBusinessTycoon'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      HBT_APK: HighwayBusinessTycoon-0.9.5-test.apk
+      HBT_APK_SIZE: '162208611'
+      HBT_APK_DIGEST: 2fab93b5f933037c59b9588d1dfd9d8d8b7e8ac86ca318d61915f6cce081d031
+      HBT_TAG: v0.9.5-rc.1
+      HBT_SOURCE: a8ce73a41367767e520174c7e5240beb617336b0
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: a8ce73a41367767e520174c7e5240beb617336b0
+      - name: Download and verify the already signed APK
+        shell: bash
+        run: |
+          apk="$RUNNER_TEMP/$HBT_APK"
+          printf 'version https://git-lfs.github.com/spec/v1\noid sha256:%s\nsize %s\n' "$HBT_APK_DIGEST" "$HBT_APK_SIZE" |
+            GIT_LFS_SKIP_SMUDGE=0 git lfs smudge "$HBT_APK" > "$apk"
+          test "$(wc -c < "$apk")" = "$HBT_APK_SIZE"
+          printf '%s  %s\n' "$HBT_APK_DIGEST" "$apk" | sha256sum -c
+          unzip -tq "$apk"
+      - name: Publish the test release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="$RUNNER_TEMP/highway-business-tycoon-rc-notes.md"
+          cat > "$notes" <<'NOTES'
+          Podpisany APK testowy Highway Business Tycoon 0.9.5 na Android ARM64.
+
+          - Pakiet `pl.krystiandevelopment.highwaytycoon`
+          - Kod wersji `9005`
+          - Stały certyfikat testowy zgodny z 0.9.4
+          - Advanced Gameplay. Własna flota, 60 kontraktów, trzy mini-gry, dziewięć wnętrz, personalizacja i infrastruktura.
+          - Oficjalne reklamy testowe Google. Płatności wymagają ścieżki testowej Play i weryfikatora HTTPS.
+          - SHA-256 pliku APK `2fab93b5f933037c59b9588d1dfd9d8d8b7e8ac86ca318d61915f6cce081d031`
+
+          [Galeria i nagrania z Godota](https://github.com/kogonowski52-png/HighwayBusinessTycoon/blob/v0.9.5-rc.1/screenshots/0.9.5/README.md) · [Raport testów i ograniczenia](https://github.com/kogonowski52-png/HighwayBusinessTycoon/blob/v0.9.5-rc.1/TEST_REPORT.md)
+          NOTES
+          movie="$RUNNER_TEMP/HighwayBusinessTycoon-0.9.5-flota.mp4"
+          cp screenshots/0.9.5/filmy/flota.mp4 "$movie"
+          gh release create "$HBT_TAG" "$RUNNER_TEMP/$HBT_APK" "$movie" \
+            --repo "$GITHUB_REPOSITORY" --target "$HBT_SOURCE" \
+            --title 'Highway Business Tycoon 0.9.5 RC · Advanced Gameplay' \
+            --notes-file "$notes" --prerelease --latest=false
