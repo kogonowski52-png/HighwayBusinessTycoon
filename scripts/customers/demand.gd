@@ -21,7 +21,7 @@ func customer(economy: HbtEconomy, forced := "") -> Dictionary:
 			and (key != "trucker" or has_trucks(economy)) \
 			and (key != "electric" or economy.level("charge") > 0):
 			var factors: Dictionary = layout.get("weights", {})
-			weights[key] = maxi(1, roundi(float(row.weight) * float(factors.get(key, 1.0))))
+			weights[key] = maxi(1, roundi(float(row.weight) * float(factors.get(key, 1.0)) * economy.works.group_weight(economy.clock, key)))
 	var id := weighted(weights) if forced.is_empty() else forced
 	var campaign_model := ""
 	if forced.is_empty() and not economy.special_guest.is_empty() and random.randf() < 0.29:
@@ -62,7 +62,7 @@ func pick(economy: HbtEconomy, visitor: Dictionary, queues: Dictionary, free_onl
 		if economy.price(id).compare(visitor.budget) > 0 or not accepts(economy.facilities[id], visitor):
 			continue
 		# An occupied building remains a choice, but the customer prefers the shorter wait.
-		weights[id] = maxi(1, floori(float(preferred[id]) * economy.attraction(id) / (1.0 + queues.get(id, 0) * 0.63)))
+		weights[id] = maxi(1, floori(float(preferred[id]) * economy.attraction(id) * economy.works.service_weight(economy, id) / (1.0 + queues.get(id, 0) * 0.63)))
 	return weighted(weights)
 
 func interests(economy: HbtEconomy, customer_type: String) -> Dictionary:

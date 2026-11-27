@@ -184,6 +184,9 @@ func prestige(confirmed: bool) -> Error:
 	next.clock = previous.clock
 	next.high_water = previous.high_water
 	next.prestige_rank = previous.prestige_rank + 1
+	next.works.restore(previous.works.snapshot())
+	next.practice_state = previous.practice_state.duplicate(true)
+	next.supplies = previous.supplies.duplicate()
 	next.tutorial_step = HbtEconomy.TUTORIAL_DONE
 	next.equipped.assign(previous.equipped)
 	next.player_xp = previous.player_xp

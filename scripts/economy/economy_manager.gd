@@ -73,7 +73,10 @@ var milestones: Array = BOOK.MILESTONES
 var campaign_data: Dictionary = {}
 var save_hook: Callable
 var prestige_rank := 0
+const EstateWorks = preload("res://scripts/estate/estate_works.gd")
+var works := EstateWorks.new()
 var supplies: Dictionary = {}
+var practice_state: Dictionary = {}
 var conditions: Dictionary = {}
 var special_guest: Dictionary = {}
 
@@ -194,6 +197,14 @@ func restore_profile(data: Dictionary, wall: int, accrue := true) -> void:
 		var record := safe_dict(sales.get(id))
 		per_service[id] = {"count": counter(record.get("count", 0)), "gross": HbtAmount.from(record.get("gross", "0"))}
 	commerce.restore(safe_dict(data.get("commerce")), levels)
+	works.restore(safe_dict(data.get("works")))
+	practice_state = {}
+	for kind in ["fuel", "wash", "cargo"]:
+		var note := safe_dict(safe_dict(data.get("practice")).get(kind))
+		if not note.is_empty():
+			practice_state[kind] = {"ready": counter(note.get("ready")), "best": clampi(int(note.get("best", 0)), 0, 100),
+				"count": counter(note.get("count")), "last": HbtAmount.from(note.get("last", "0")).decimal(),
+				"claimed_bonus": note.get("claimed_bonus") == true}
 	supplies = {}
 	for cargo: String in safe_dict(data.get("supplies")):
 		var quantity := mini(64, counter(data.supplies[cargo]))
@@ -285,6 +296,10 @@ func snapshot() -> Dictionary:
 	}
 	if not offline_boosted.empty():
 		result["offline_boosted"] = offline_boosted.decimal()
+	if works.has_work():
+		result["works"] = works.snapshot()
+	if not practice_state.is_empty():
+		result["practice"] = practice_state
 	if not supplies.is_empty():
 		result["supplies"] = supplies
 	if not commerce.state.is_empty():
@@ -362,7 +377,7 @@ func quote_upgrade(id: String, quantity: int) -> Dictionary:
 	if tier == 0 or tier >= CONFIG.max_level or quantity < 0:
 		return {"count": 0, "cost": HbtAmount.new(), "affordable": false}
 	if quantity == 1:
-		var cost := cost_at(id, tier)
+		var cost := building_input_cost(cost_at(id, tier))
 		return {"count": 1, "cost": cost, "affordable": can_afford(cost)}
 	var totals := cost_prefix(id)
 	var start := tier - 1
@@ -371,11 +386,11 @@ func quote_upgrade(id: String, quantity: int) -> Dictionary:
 		var high := CONFIG.max_level - tier
 		while count < high:
 			var middle := (count + high + 1) >> 1
-			if can_afford(totals[start + middle].minus(totals[start])):
+			if can_afford(building_input_cost(totals[start + middle].minus(totals[start]))):
 				count = middle
 			else:
 				high = middle - 1
-	var total := totals[start + count].minus(totals[start])
+	var total := building_input_cost(totals[start + count].minus(totals[start]))
 	return {"count": count, "cost": total, "affordable": count > 0 and can_afford(total)}
 
 func buy_levels(id: String, quantity: int) -> int:
@@ -383,6 +398,7 @@ func buy_levels(id: String, quantity: int) -> int:
 	if not quote.affordable or not debit(quote.cost):
 		return 0
 	levels[id] += quote.count
+	consume_cargo("materials")
 	add_xp(quote.count * 3)
 	touch()
 	return quote.count
@@ -394,7 +410,7 @@ func gate_open(id: String) -> bool:
 
 func construction_quote(id: String) -> Dictionary:
 	var service: HbtService = facilities[id]
-	var cost := HbtAmount.from(service.unlock_cost)
+	var cost := building_input_cost(HbtAmount.from(service.unlock_cost))
 	var grade := level(service.prerequisite)
 	var reputation := metric("reputation")
 	var level_ok := grade >= service.prerequisite_level
@@ -410,9 +426,10 @@ func estimated_bay_income(id: String) -> HbtAmount:
 
 func unlock(id: String) -> bool:
 	var facility: HbtService = facilities[id]
-	if not gate_open(id) or not debit(HbtAmount.from(facility.unlock_cost)):
+	if not gate_open(id) or not debit(building_input_cost(HbtAmount.from(facility.unlock_cost))):
 		return false
 	levels[id] = 1
+	consume_cargo("materials")
 	if id == "market" and tutorial_step == 5:
 		tutorial_step = TUTORIAL_DONE
 	add_xp(12)
@@ -448,6 +465,17 @@ func promote(id: String, index: int) -> bool:
 	touch()
 	return true
 
+func specialize(id: String, index: int, focus: String) -> bool:
+	var people: Array = crew.get(id, [])
+	if index not in range(people.size()) or focus not in Staff.SPECIALTIES:
+		return false
+	var employee: Dictionary = people[index]
+	if int(employee.rank) < 2 or focus == employee.get("specialty", "") or storage.read_only:
+		return false
+	employee["specialty"] = focus
+	touch()
+	return true
+
 func duration(id: String, worker: int, at_level := -1) -> float:
 	var facility: HbtService = facilities[id]
 	var tier := level(id) if at_level < 0 else at_level
@@ -460,6 +488,8 @@ func duration(id: String, worker: int, at_level := -1) -> float:
 		time *= float(BPS) / (BPS + skill("automation", id))
 	if has_supplies(id):
 		time *= .86
+	if not works.levels.is_empty():
+		time *= works.service_time()
 	return maxf(0.65, time * float(BPS) / (BPS + skill("speed", id)))
 
 func payout(id: String, tip: int, worker: int, include_boost := true, include_global := true) -> HbtAmount:
@@ -499,6 +529,9 @@ func serve(id: String, value: HbtAmount, reputation: int, worker: int) -> void:
 		registers[id] = registers[id].plus(value)
 	touch()
 
+func building_input_cost(cost: HbtAmount) -> HbtAmount:
+	return cost.times(95).divided(100) if int(supplies.get("materials", 0)) > 0 else cost
+
 func deliver_supplies(cargo: String, units: int) -> void:
 	supplies[cargo] = mini(64, int(supplies.get(cargo, 0)) + units)
 	dirty = true
@@ -507,6 +540,8 @@ func supply_for(id: String) -> String:
 	var facility: HbtService = facilities.get(id)
 	if facility == null:
 		return ""
+	if id in ["logging", "haulage"]:
+		return "timber"
 	match facility.venue_kind:
 		"refuel": return "fuel"
 		"shop": return "goods"
@@ -527,7 +562,7 @@ func supply_for(id: String) -> String:
 		return "containers"
 	if id in ["motel", "vip_park", "resort"]:
 		return "vip"
-	return "materials"
+	return ""
 
 func has_supplies(id: String) -> bool:
 	return not supplies.is_empty() and int(supplies.get(supply_for(id), 0)) > 0
@@ -535,7 +570,9 @@ func has_supplies(id: String) -> bool:
 func consume_supplies(id: String) -> void:
 	if supplies.is_empty():
 		return
-	var cargo := supply_for(id)
+	consume_cargo(supply_for(id))
+
+func consume_cargo(cargo: String) -> void:
 	var left := int(supplies.get(cargo, 0))
 	if left > 1:
 		supplies[cargo] = left - 1

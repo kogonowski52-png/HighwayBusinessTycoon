@@ -3,6 +3,7 @@ extends Node3D
 signal arrived
 
 const Art = preload("res://scripts/art/visual_library.gd")
+const Kit = preload("res://scripts/buildings/model_kit.gd")
 const Clips = preload("res://scripts/art/character_clips.gd")
 const Managers = preload("res://data/economy/managers.gd")
 const ROLE_PROPS := {"driver": "Nozzle", "attendant": "Nozzle", "wash_worker": "Mop", "cleaner": "Mop",
@@ -19,6 +20,8 @@ var gait_index := 1
 var pace := 1.14
 var looping_walk := true
 var detailed_animation := true
+var stripe: BoneAttachment3D
+var marking := ""
 
 func _ready() -> void:
 	var visual := Art.place(self, "characters", role)
@@ -100,3 +103,22 @@ func pose_at(clip: String, time: float) -> void:
 	if detailed_animation:
 		animation.seek(time, true)
 		animation.advance(0)
+
+func show_rank(rank: int, specialty: String) -> void:
+	var identity := str([rank, specialty])
+	if identity == marking:
+		return
+	marking = identity
+	if is_instance_valid(stripe):
+		stripe.queue_free()
+		stripe = null
+	if rank < 2:
+		return
+	stripe = BoneAttachment3D.new()
+	stripe.bone_name = "spine"
+	skeleton.add_child(stripe)
+	var board := Color("#efc16c") if rank < 3 else Color("#a3d6df")
+	var piping := Color("#f19467") if specialty == "speed" else Color("#b4cf97") if specialty == "quality" else board
+	for side in [-1,1]:
+		Kit.box(stripe, Vector3(side * .213,.298,.122), Vector3(.095,.030,.095), board)
+		Kit.box(stripe, Vector3(side * .213,.316,.133), Vector3(.094,.008,.023), piping)

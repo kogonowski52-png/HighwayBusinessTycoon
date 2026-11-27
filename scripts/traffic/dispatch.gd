@@ -9,6 +9,7 @@ signal started(visit: HbtVisit)
 signal completed(visit: HbtVisit)
 
 const Routes = preload("res://data/economy/routes.gd")
+const Vehicles = preload("res://scripts/traffic/vehicle_catalog.gd")
 const Demand = preload("res://scripts/customers/demand.gd")
 const Phase = HbtVisit.Phase
 const Staff = preload("res://scripts/employees/staff_rules.gd")
@@ -65,8 +66,13 @@ func seed_station() -> void:
 	bays.fuel[0] = visit.number
 	added.emit(visit)
 
-func try_admit(forced := "", requested := "") -> HbtVisit:
+func try_admit(forced := "", requested := "", showcase := "") -> HbtVisit:
 	var client := demand.customer(economy, forced)
+	if not showcase.is_empty():
+		var unit := Vehicles.definition(showcase)
+		client.model = showcase
+		client.length = unit.length
+		client.width = unit.width
 	var lane: String = client.kind
 	if lanes[lane].size() >= routes.lane_size(lane) or guards.has("entry_" + lane):
 		capacity_rejected += 1
@@ -143,7 +149,7 @@ func tick(delta: float) -> void:
 		arrival_in -= delta
 		if arrival_in <= 0.0:
 			try_admit()
-			arrival_in = economy.arrival_period() * demand.random.randf_range(0.83, 1.20)
+			arrival_in = maxf(.85, economy.arrival_period() / economy.works.attraction(economy.clock)) * demand.random.randf_range(0.83, 1.20)
 
 func queued_by_service() -> Dictionary:
 	var count := {}
@@ -195,7 +201,7 @@ func update_queue(lane: String, delta: float) -> void:
 		if previous != null:
 			var gap := (float(ticket.client.length) + float(previous.client.length)) * 0.5 + 0.65
 			target.x = maxf(target.x, previous.location.x + gap)
-		step(ticket, target, QUEUE_SPEED * delta, delta, false)
+		step(ticket, target, QUEUE_SPEED * delta * (economy.works.queue_speed() if not economy.works.levels.is_empty() else 1.0), delta, false)
 		previous = ticket
 
 func dispatch_head(lane: String) -> void:
@@ -209,6 +215,7 @@ func dispatch_head(lane: String) -> void:
 		if acquire(ticket, sectors):
 			lanes[lane].pop_front()
 			ticket.bounced = true
+			economy.works.feedback_for(ticket, economy, false)
 			abandoned += 1
 			route(ticket, routes.bypass(lane), Phase.DEPART)
 			state_changed.emit()
@@ -263,6 +270,7 @@ func finish(ticket: HbtVisit) -> void:
 	economy.commerce.settle(ticket, economy.level(ticket.service), economy.clock)
 	if economy.global_boost != null and economy.global_boost.earning(economy.clock):
 		ticket.invoice = ticket.base_invoice.times(HbtBoost.Policy.INCOME_MULTIPLIER)
+	economy.works.feedback_for(ticket, economy, true)
 	economy.serve(ticket.service, ticket.invoice, ticket.client.reputation, ticket.worker)
 	completed.emit(ticket)
 	state_changed.emit()
@@ -270,6 +278,7 @@ func finish(ticket: HbtVisit) -> void:
 func leave_unserved(ticket: HbtVisit) -> void:
 	ticket.phase = Phase.EXIT_WAIT
 	ticket.bounced = true
+	economy.works.feedback_for(ticket, economy, false)
 	abandoned += 1
 	state_changed.emit()
 
@@ -312,6 +321,8 @@ func travel(ticket: HbtVisit, delta: float) -> void:
 	elif ticket.phase == Phase.APPROACH and ticket.cursor == ticket.path.size() - 1:
 		speed = 5.0
 	var remaining := delta * speed
+	if not economy.works.levels.is_empty():
+		remaining *= economy.works.travel_scale(ticket.phase)
 	while remaining > 0.00001:
 		var target := ticket.path[ticket.cursor]
 		var direction := target - ticket.location

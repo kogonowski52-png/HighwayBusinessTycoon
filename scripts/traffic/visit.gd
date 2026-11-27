@@ -27,6 +27,7 @@ var steer := 0
 var invoice: HbtAmount
 var base_invoice: HbtAmount
 var ad_guest := false
+var spotlight: Dictionary = {}
 var trade := ""
 var stock_delta := 0
 var sold_model := ""

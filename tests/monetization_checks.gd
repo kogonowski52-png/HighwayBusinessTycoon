@@ -17,6 +17,7 @@ func run() -> void:
 	var provider := Fixture.new()
 	game.ads.connect_provider(provider)
 	check_rewards(provider)
+	check_advanced_rewards(provider)
 	check_programs(provider)
 	check_billing()
 	check_purchase_queue()
@@ -222,6 +223,44 @@ func check_rewards(provider: Fixture) -> void:
 	expect(watch(provider, "offline") and e.amount("cash").compare(old.plus(HbtAmount.from(140))) == 0 and e.offline_pending.empty(),
 		"confirmed offline ad pays only the specifically eligible extra")
 	e.clock = UTC
+
+func check_advanced_rewards(provider: Fixture) -> void:
+	var estate: HbtEconomy = game.economy
+	var world: HbtCampaign = game.campaign
+	estate.credit("cash", HbtAmount.from(1_000_000))
+	estate.buy_levels("fuel", 10)
+	var fleet = world.freight
+	expect(fleet.buy(world, "van") and fleet.hire(world) and fleet.assign(world, "1", "2"), "reward tests operate an actual fleet")
+	expect(fleet.train(world, "2"), "a driver has an active training session")
+	var old_due: int = fleet.drivers["2"].training
+	expect(watch(provider, "driver_rush", {"target":"2"}) and int(fleet.drivers["2"].training) == old_due - 30
+		and not watch(provider, "driver_rush", {"target":"2"}), "duplicate SDK callbacks cut exactly 30 seconds once")
+	estate.clock = old_due
+	fleet.advance(world, estate.clock)
+	expect(fleet.dispatch(world, "north/0", "1"), "synthetic reward starts from a legitimate dispatched contract")
+	var job: String = fleet.jobs.keys().front()
+	old_due = int(fleet.jobs[job].due)
+	game.ads.prepare("freight_rush")
+	expect(game.ads.request("freight_rush", {"target":job}), "ad is launched voluntarily")
+	provider.finish(false)
+	expect(int(fleet.jobs[job].due) == old_due, "dismissal does not accelerate a delivery")
+	expect(watch(provider, "freight_rush", {"target":job}) and int(fleet.jobs[job].due) == old_due - 20
+		and not watch(provider, "freight_rush", {"target":job}), "confirmed dispatch speedup applies once")
+	estate.clock = old_due
+	fleet.advance(world, estate.clock)
+	var previous := estate.amount("cash")
+	var record: Dictionary = fleet.receipts.north
+	expect(watch(provider, "freight_tip", {"target":record.order, "stamp":record.at})
+		and estate.amount("cash").compare(previous.plus(HbtAmount.from(record.cash).divided(5))) == 0,
+		"settlement receives exactly twenty percent, independent of BOOST")
+	estate.practice_state.fuel = {"ready":estate.clock+420,"best":90,"count":1,"last":"200","claimed_bonus":false}
+	previous = estate.amount("cash")
+	expect(watch(provider, "practice_bonus", {"target":"fuel","stamp":estate.clock+420})
+		and estate.amount("cash").compare(previous.plus(HbtAmount.from(100))) == 0 and estate.practice_state.fuel.claimed_bonus,
+		"the mini-game bonus refers only to a completed scored session")
+	expect(watch(provider, "yard_gift") and estate.works.ownership.has("planter/2") and not watch(provider, "yard_gift"),
+		"one identified decorator reward per district, with duplicate suppression")
+	estate.clock = UTC
 
 func check_programs(provider: Fixture) -> void:
 	var e: HbtEconomy = game.economy

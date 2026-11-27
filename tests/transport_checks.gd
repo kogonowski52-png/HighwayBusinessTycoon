@@ -57,6 +57,12 @@ func run() -> void:
 			fund(repeat.current())
 	expect(repeat.travel("north") == OK, "flight returns to the same carrier")
 	check_manifests()
+	var material_bill := repeat.current().quote_upgrade("fuel", 10)
+	repeat.current().deliver_supplies("materials", 2)
+	var discounted := repeat.current().quote_upgrade("fuel", 10)
+	expect(discounted.cost.compare(material_bill.cost.times(95).divided(100)) == 0
+		and repeat.current().buy_levels("fuel", 10) == 10 and repeat.current().supplies.materials == 1,
+		"construction cargo reduces the real invoice and spends one shipment unit")
 	var dest_cash: HbtAmount = repeat.districts.valley.amount("cash")
 	wallet = repeat.current().amount("cash")
 	var outbound: Dictionary = repeat.freight.quote(repeat, "north/1", "1")

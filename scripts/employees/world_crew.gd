@@ -31,6 +31,9 @@ func roster(economy: HbtEconomy) -> void:
 		for index in range(staff[id].size(), economy.crew[id].size()):
 			var profile: HbtService = economy.facilities[id]
 			staff[id].append(person(profile.role, standby(id, index)))
+		for index in economy.crew[id].size():
+			var details: Dictionary = economy.crew[id][index]
+			staff[id][index].show_rank(details.rank, details.get("specialty", ""))
 	for id in economy.equipped:
 		if not directors.has(id):
 			directors[id] = person(id, manager_post(id))

@@ -54,7 +54,7 @@ func localization(ui_keys: Dictionary) -> void:
 	for language: String in ["en", "pl"]:
 		for key: String in Strings.COPY[language]:
 			keys[key] = true
-	for table: Dictionary in [Strings.MONETIZATION.COPY, Strings.EXPEDITION.COPY, Strings.PRESENTATION, Strings.IDLE]:
+	for table: Dictionary in [Strings.ADVANCED.COPY, Strings.MONETIZATION.COPY, Strings.EXPEDITION.COPY, Strings.PRESENTATION, Strings.IDLE]:
 		for key: String in table:
 			keys[key] = true
 	var format := RegEx.create_from_string("%[-0-9.]*[dfs]")
@@ -69,7 +69,7 @@ func localization(ui_keys: Dictionary) -> void:
 	print("Locale inventory · %d bilingual keys · %d literal UI lookups" % [keys.size(), ui_keys.size()])
 
 func localized(key: String, language: String) -> String:
-	for table: Dictionary in [Strings.MONETIZATION.COPY, Strings.EXPEDITION.COPY, Strings.PRESENTATION, Strings.IDLE]:
+	for table: Dictionary in [Strings.ADVANCED.COPY, Strings.MONETIZATION.COPY, Strings.EXPEDITION.COPY, Strings.PRESENTATION, Strings.IDLE]:
 		if table.has(key):
 			return table[key][int(language == "en")]
 	return Strings.COPY[language].get(key, "")

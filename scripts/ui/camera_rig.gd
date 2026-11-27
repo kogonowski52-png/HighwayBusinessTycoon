@@ -136,6 +136,8 @@ func zoom_at(multiplier: float, position: Vector2) -> void:
 
 # Release over a menu must clear the pointer as well.
 func _input(event: InputEvent) -> void:
+	if is_instance_valid(controller) and controller.practice_open():
+		return
 	if event is InputEventScreenTouch and not event.pressed and pointers.has(event.index):
 		var tap: bool = not event.canceled and pointers.size() == 1 and not touch_moved \
 			and touch_origin.distance_to(event.position) < TAP_DISTANCE
@@ -162,6 +164,8 @@ func begin_gesture() -> void:
 	drift_age = 0.06
 
 func _unhandled_input(event: InputEvent) -> void:
+	if is_instance_valid(controller) and controller.practice_open():
+		return
 	if controller == null or controller.operations.visible or not controller.mounted:
 		return
 	if event is InputEventMouse and event.device == InputEvent.DEVICE_ID_EMULATION:

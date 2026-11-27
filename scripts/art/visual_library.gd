@@ -10,6 +10,8 @@ static var decals: Dictionary = {}
 static var quad: PlaneMesh
 static var fleet_residency: Array[String] = []
 const FLEET_SCENES := 24
+static var optional_venues: Array[String] = []
+const DECOR_SCENES := 16
 
 static func surface_shader(key: String, shader: Shader) -> ShaderMaterial:
 	if not decals.has(key):
@@ -25,6 +27,11 @@ static func scene(family: String, key: String) -> PackedScene:
 		fleet_residency.append(path)
 		if fleet_residency.size() > FLEET_SCENES:
 			scenes.erase(fleet_residency.pop_front())
+	if family in ["estates", "transport"]:
+		optional_venues.erase(path)
+		optional_venues.append(path)
+		if optional_venues.size() > DECOR_SCENES:
+			scenes.erase(optional_venues.pop_front())
 	if not scenes.has(path):
 		scenes[path] = load(path)
 	return scenes[path]

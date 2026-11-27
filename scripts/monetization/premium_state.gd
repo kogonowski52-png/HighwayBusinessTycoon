@@ -126,6 +126,9 @@ func apply(world: HbtCampaign, operation: Callable) -> bool:
 	var gross := estate.gross
 	var offline := [estate.offline_pending, estate.offline_boosted, estate.offline_seconds, estate.offline_away_seconds]
 	var trades := estate.commerce.state.duplicate(true)
+	var practice := estate.practice_state.duplicate(true)
+	var works := estate.works.snapshot().duplicate(true)
+	var transport: Dictionary = world.freight.snapshot().duplicate(true)
 	var old_ledger: Dictionary = world.ledger.snapshot().duplicate(true)
 	var windows := world.boost.windows.duplicate()
 	var blocked := estate.is_blocking_signals()
@@ -147,6 +150,9 @@ func apply(world: HbtCampaign, operation: Callable) -> bool:
 		estate.offline_seconds = offline[2]
 		estate.offline_away_seconds = offline[3]
 		estate.commerce.state = trades
+		estate.practice_state = practice
+		estate.works.restore(works)
+		world.freight.restore(transport)
 		world.ledger.restore(old_ledger)
 		world.boost.windows.assign(windows)
 		world.share_identity(estate)

@@ -26,6 +26,8 @@ const OFFERS := {
 	"delivery": [1200, 3, 1],
 	"manager": [0, 1, 0],
 	"vip": [900, 4, 1],
+	"freight_rush": [600, 3, 0], "driver_rush": [600, 3, 0],
+	"practice_bonus": [600, 3, 0], "freight_tip": [600, 3, 0], "yard_gift": [0, 1, 0],
 }
 const AD_MANAGER := "reese"
 const STARTER_CARD := "sana"

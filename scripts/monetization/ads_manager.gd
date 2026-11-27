@@ -9,6 +9,7 @@ signal commercial_finished
 
 const Config = preload("res://data/monetization/config.gd")
 const Native := "HighwayRewarded"
+const AdvancedRewards = preload("res://scripts/monetization/advanced_rewards.gd")
 const Staff = preload("res://scripts/employees/staff_rules.gd")
 
 var game: Node3D
@@ -103,6 +104,8 @@ func playable(id: String, detail: Dictionary = {}) -> bool:
 		return false
 	if already_claimed(world, id, detail):
 		return false
+	if id in AdvancedRewards.IDS:
+		return AdvancedRewards.eligible(world, id, detail)
 	var site := str(detail.get("site", ""))
 	var index := int(detail.get("index", -1))
 	match id:
@@ -256,6 +259,8 @@ func receive(token: String) -> void:
 func grant(world: HbtCampaign, e: HbtEconomy, id: String) -> bool:
 	if id == "boost":
 		return world.boost.extend_confirmed(e.clock)
+	if id in AdvancedRewards.IDS:
+		return AdvancedRewards.grant(world, id, context)
 	var amount: int = Config.OFFERS[id][2]
 	match id:
 		"offline":

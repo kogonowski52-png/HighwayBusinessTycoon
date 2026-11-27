@@ -13,6 +13,9 @@ const Campus = preload("res://scripts/buildings/roadside_campus.gd")
 const RegionalCampus = preload("res://scripts/buildings/regional_campus.gd")
 const DesertCampus = preload("res://scripts/buildings/desert_campus.gd")
 const Premium = preload("res://scripts/ui/premium_pages.gd")
+const Development = preload("res://scripts/ui/estate_pages.gd")
+const Cutaway = preload("res://scripts/interiors/cutaway.gd")
+const Practice = preload("res://scripts/challenges/service_practice.gd")
 const Logistics = preload("res://scripts/ui/logistics_pages.gd")
 const Expedition = preload("res://scripts/ui/expedition_pages.gd")
 const TouchScroll = preload("res://scripts/ui/touch_scroll.gd")
@@ -37,6 +40,8 @@ var expedition_render_state := ""
 var extra := Extra.new()
 var expedition := Expedition.new()
 var logistics := Logistics.new()
+var interior: SubViewportContainer
+var development := Development.new()
 var premium := Premium.new()
 var business := BusinessDirectory.new()
 var closing := false
@@ -53,6 +58,7 @@ func setup(game: Node3D, hud: CanvasLayer) -> void:
 	extra.bind_to(self)
 	expedition.bind(self)
 	logistics.bind(self)
+	development.bind(self)
 	premium.bind(self)
 	layer = 5
 	shade = ColorRect.new()
@@ -196,6 +202,9 @@ func hide_page() -> void:
 	opening.chain().tween_callback(finish_close)
 
 func finish_close() -> void:
+	if is_instance_valid(interior):
+		interior.queue_free()
+		interior = null
 	visible = false
 	closing = false
 	closed.emit()
@@ -240,6 +249,10 @@ func refresh() -> void:
 		state = premium.signature(page)
 	if state.is_empty():
 		state = logistics.signature(page)
+	if state.is_empty():
+		state = development.signature(page)
+	if page == "interior":
+		state = str([page, store.language, controller.selected])
 	if not state.is_empty() and expedition_render_state == state:
 		return
 	expedition_render_state = state
@@ -267,8 +280,9 @@ func refresh() -> void:
 		"finance": show_finance()
 		"offline": show_offline()
 		"upgrades": show_upgrades()
+		"interior": show_interior()
 		_:
-			if not premium.show(page) and not expedition.show(page) and not logistics.show(page):
+			if not premium.show(page) and not expedition.show(page) and not logistics.show(page) and not development.show(page):
 				extra.show(page)
 	if previous_scroll > 0:
 		scroll.set_deferred("scroll_vertical", previous_scroll)
@@ -348,6 +362,16 @@ func show_upgrades() -> void:
 			toggle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			upgrade_counts[choice] = toggle
 	var purchase: Button = button(card, controller.hud.upgrade.text, controller.invest, controller.hud.upgrade.disabled, true)
+	if not Cutaway.for_site(store, site).is_empty():
+		button(card, controller.t("interior_action"), show_page.bind("interior"))
+	var challenge := Practice.mode(store, site)
+	if not challenge.is_empty():
+		var remaining := Practice.wait(store, challenge)
+		button(card, controller.t("practice_" + challenge) if remaining == 0 else controller.t("practice_wait") % controller.clock_text(remaining),
+			controller.start_practice.bind(site), remaining > 0 or store.storage.read_only)
+		var record: Dictionary = store.practice_state.get(challenge, {})
+		if not record.is_empty():
+			logistics.offer(card, "practice_bonus", {"target": challenge, "stamp": int(record.ready)})
 	tutorial_targets["upgrade_buy"] = purchase
 	if site == "market" and tier == 0:
 		tutorial_targets["first_business"] = purchase
@@ -430,6 +454,14 @@ func show_team() -> void:
 			worker.training >= Rules.MAX_TRAINING or not store.can_afford(training))
 		var promote := button(actions, controller.t("promotion") % controller.money(promotion), controller.promote_worker.bind(index),
 			not Rules.promotion_ready(worker) or not store.can_afford(promotion))
+		if int(worker.rank) >= 2:
+			var careers := HBoxContainer.new()
+			card.add_child(careers)
+			for specialty: String in Rules.SPECIALTIES:
+				var choice := button(careers, controller.t("staff_" + specialty),
+					set_specialty.bind(id, index, specialty), worker.get("specialty", "") == specialty,
+					worker.get("specialty", "") == specialty)
+				choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		train.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		promote.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var ad_choice := {"site": id, "index": index}
@@ -448,6 +480,11 @@ func open_card_source(source: Dictionary) -> void:
 	goals_tab = source.tab
 	chapter_index = source.chapter
 	show_page("goals")
+
+func set_specialty(site: String, index: int, focus: String) -> void:
+	if controller.economy.specialize(site, index, focus):
+		controller.economy.checkpoint()
+		refresh()
 
 func show_goals() -> void:
 	if controller.ads.available() and controller.ads.playable("mission", controller.last_mission):
@@ -570,6 +607,18 @@ func show_event(store: HbtEconomy) -> void:
 		store.cards.has("mira") or not store.can_afford(HbtAmount.from(Book.EVENT_CARD_COST), "event"))
 	button(event_box, controller.t("event_trade") % [Book.EVENT_DIAMOND_COST, Book.EVENT_DIAMONDS],
 		controller.exchange_points.bind(false), not store.can_afford(HbtAmount.from(Book.EVENT_DIAMOND_COST), "event"))
+
+func show_interior() -> void:
+	var id: String = controller.selected
+	var file := "res://assets/ui/business/%s_%s.png" % [controller.economy.district, id]
+	var artwork: Texture2D = load(file) if ResourceLoader.exists(file) else theme_source.NAV.sites
+	var card := feature(artwork, controller.site_name(id), controller.t("interior_intro"))
+	var live: Label = theme_source.caption(card, 25, theme_source.CREAM, theme_source.BOLD)
+	live.text = controller.t("interior_loading")
+	interior = Cutaway.new()
+	rows.add_child(interior)
+	interior.open(controller, id, live)
+	button(rows, controller.t("interior_return"), show_page.bind("upgrades"), false, true)
 
 func show_finance() -> void:
 	button(rows, controller.t("empire_header"), show_page.bind("empire"), false, true)

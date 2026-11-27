@@ -2,7 +2,7 @@ config_version=5
 
 [application]
 config/name="Highway Business Tycoon"
-config/version="0.9.4"
+config/version="0.9.5"
 boot_splash/image="res://assets/ui/presentation/krystian-development.png"
 boot_splash/bg_color=Color(0.064, 0.165, 0.192, 1)
 config/icon="res://assets/icons/highway-rc.png"

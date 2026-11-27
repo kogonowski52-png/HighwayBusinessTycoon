@@ -25,7 +25,7 @@ func restore(source: Dictionary) -> void:
 			continue
 		drivers[id] = {
 			"home": data.home, "rank": clampi(int(data.get("rank", 1)), 1, Catalog.MAX_DRIVER_RANK),
-			"training": HbtEconomy.counter(data.get("training")), "xp": HbtEconomy.counter(data.get("xp")),
+			"training": HbtEconomy.counter(data.get("training")), "xp": HbtEconomy.counter(data.get("xp")), "rushed": data.get("rushed") == true,
 		}
 		serial = maxi(serial, int(id) + 1)
 	var assigned := {}
@@ -119,7 +119,9 @@ func train(world: RefCounted, driver: String) -> bool:
 	if data.home != world.active or data.training > 0 or rank >= Catalog.MAX_DRIVER_RANK:
 		return false
 	var estate: HbtEconomy = world.current()
-	return transact(world, training_price(rank), func() -> void: data.training = estate.clock + 30 + rank * 30)
+	return transact(world, training_price(rank), func() -> void:
+		data.training = estate.clock + 30 + rank * 30
+		data.rushed = false)
 
 func training_price(rank: int) -> int:
 	return 110 + 135 * rank

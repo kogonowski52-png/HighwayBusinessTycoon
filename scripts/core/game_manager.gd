@@ -14,6 +14,10 @@ const FrontierLandscape = preload("res://scripts/buildings/frontier_landscape.gd
 const RegionalCampus = preload("res://scripts/buildings/regional_campus.gd")
 const RegionalStation = preload("res://scripts/buildings/regional_station.gd")
 const Diagnostics := "res://scripts/core/runtime_diagnostics.gd"
+const Practice = preload("res://scripts/challenges/service_practice.gd")
+const PracticeScreen = preload("res://scripts/challenges/practice_screen.gd")
+const Spotlight = preload("res://scripts/estate/spotlight_director.gd")
+const EstateView = preload("res://scripts/estate/estate_view.gd")
 const Depot = preload("res://scripts/logistics/depot_view.gd")
 const WorldStream = preload("res://scripts/core/world_stream.gd")
 const RenderBudget = preload("res://scripts/core/render_budget.gd")
@@ -56,6 +60,9 @@ var arrived_from_trip := false
 var weather: Node3D
 var world_second := -1
 var depot: Node3D
+var estate_view: Node3D
+var roadside_moments := Spotlight.new()
+var practice_screen: CanvasLayer
 var scene_elapsed := 0.0
 var paused_3d := false
 var shown_event := ""
@@ -171,6 +178,9 @@ func _ready() -> void:
 	economy.changed.connect(on_economy_changed)
 	traffic.dispatch.state_changed.connect(refresh)
 	traffic.dispatch.completed.connect(on_sale)
+	add_child(roadside_moments)
+	roadside_moments.bind(self)
+	traffic.dispatch.completed.connect(roadside_moments.arrived)
 	hud.serve_requested.connect(serve_customer)
 	hud.upgrade_requested.connect(invest)
 	hud.lighting_requested.connect(cycle_lighting)
@@ -214,6 +224,7 @@ func _ready() -> void:
 			set_look(opening_look)
 	update_expedition()
 	sync_depot()
+	sync_estate()
 	get_tree().auto_accept_quit = false
 	if not economy.offline_pending.empty():
 		operations.show_page("offline")
@@ -333,8 +344,11 @@ func tick_game(delta: float) -> void:
 			if operations.modal_open() and operations.page in operations.logistics.PAGES:
 				operations.refresh()
 		sync_depot()
+		roadside_moments.tick()
 		if operations.modal_open():
 			operations.logistics.update_clocks(economy.clock)
+			if operations.page == "marketing":
+				operations.refresh()
 		update_expedition()
 		if operations.modal_open() and operations.page == "diagnostics":
 			operations.refresh()
@@ -455,7 +469,9 @@ func _notification(what: int) -> void:
 					operations.show_page("offline")
 				refresh()
 		NOTIFICATION_WM_GO_BACK_REQUEST:
-			if operations.modal_open():
+			if practice_open():
+				practice_screen.dismiss()
+			elif operations.modal_open():
 				operations.hide_page()
 			else:
 				leave_game()
@@ -505,11 +521,26 @@ func select_quantity(count: int) -> void:
 func serve_customer() -> void:
 	traffic.dispatch.start_manual(selected)
 
+func practice_open() -> bool:
+	return is_instance_valid(practice_screen) and practice_screen.visible
+
+func start_practice(id: String) -> void:
+	var kind := Practice.mode(economy, id)
+	if kind.is_empty() or Practice.wait(economy, kind) > 0 or practice_open() or traveling or ads.busy() or purchases.busy():
+		return
+	operations.hide_page()
+	camera_rig.release_gestures()
+	practice_screen = PracticeScreen.new()
+	add_child(practice_screen)
+	practice_screen.open(self, kind, id, func() -> void: open_page("upgrades"))
+
 func open_page(name: String) -> void:
 	if name == "diagnostics" and not is_instance_valid(diagnostics):
 		return
-	if traveling or ads.displaying():
+	if traveling or ads.displaying() or practice_open():
 		return
+	if name in operations.development.PAGES:
+		sync_estate(true)
 	if name == "shop":
 		log_commercial("shop_opened")
 		purchases.open()
@@ -767,7 +798,7 @@ func ad_rewarded(id: String) -> void:
 			operations.hide_page()
 		reward_feedback()
 	else:
-		reward_feedback("reward", id in ["cash", "mission"])
+		reward_feedback("reward", id in ["cash", "mission", "freight_tip", "practice_bonus"])
 		if id == "upgrade":
 			effects.construction(routes.position_of(selected, 0))
 		show_message(t("ad_rewarded"))
@@ -829,9 +860,11 @@ func on_economy_changed() -> void:
 			if economy.district == "north":
 				station.setup(art_level)
 			landscape.set_forecourt_tier(art_level)
+	if is_instance_valid(estate_view) or not economy.works.levels.is_empty() or not economy.works.designs.is_empty():
+		sync_estate()
 	var roster := {}
 	for id in economy.crew:
-		roster[id] = economy.crew[id].size()
+		roster[id] = economy.crew[id].map(func(person: Dictionary) -> Array: return [person.rank, person.get("specialty", "")])
 	if live_crew != roster or live_directors != economy.equipped:
 		live_crew = roster
 		live_directors = economy.equipped.duplicate()
@@ -1075,6 +1108,21 @@ func redeem_collection(group: String) -> void:
 	if not campaign.storage.read_only and campaign.ledger.set_reward(economy, group):
 		reward_feedback()
 		economy.checkpoint()
+
+func sync_estate(force := false) -> void:
+	if not is_instance_valid(estate_view):
+		if not force and economy.works.levels.is_empty() and economy.works.designs.is_empty():
+			return
+		estate_view = EstateView.new()
+		add_child(estate_view)
+		estate_view.bind(self)
+	estate_view.refresh()
+
+func view_estate(building_works: bool) -> void:
+	sync_estate(true)
+	operations.hide_page()
+	var at: Vector3 = Depot.yard_position(economy.district) + Vector3(0,.52,4.8) if building_works else estate_view.about
+	camera_rig.frame(at, Vector3(14,24,26), 23.0, not motion_enabled())
 
 func sync_depot() -> void:
 	if is_instance_valid(depot):

@@ -2,7 +2,7 @@ extends "res://scripts/logistics/fleet_manager.gd"
 ## Every paid run has one reserved truck/driver and one persisted settlement time.
 
 const Orders = preload("res://data/logistics/contracts.gd")
-const AUTO_MANAGERS := ["dev", "leila", "soren", "eris"]
+const AUTO_MANAGERS := ["dev", "iman", "soren"]
 const SHOW_SECONDS := 13
 
 var jobs: Dictionary = {}
@@ -49,7 +49,8 @@ func restore(source: Dictionary) -> void:
 		if not id.is_valid_int() or order.is_empty() or truck.is_empty() or truck.home != order.from or not drivers.has(truck.driver) 				or start >= due or due - start > 1200 or busy(str(data.truck)) or job_for_order(str(data.order)):
 			continue
 		jobs[id] = {"order": data.order, "truck": data.truck, "start": start, "due": due,
-			"reward": HbtAmount.from(data.get("reward", "0")).decimal(), "cost": clampi(int(data.get("cost", 0)), 0, 20_000)}
+			"reward": HbtAmount.from(data.get("reward", "0")).decimal(), "cost": clampi(int(data.get("cost", 0)), 0, 20_000),
+			"rushed": data.get("rushed") == true}
 		serial = maxi(serial, int(id) + 1)
 
 func busy(vehicle: String) -> bool:
@@ -70,7 +71,7 @@ func quote(world: RefCounted, id: String, vehicle: String) -> Dictionary:
 	var load_size: int = order.load
 	var fee := int(spec.running) * (difficulty + 1) + load_size * (6 + difficulty * 4)
 	var reward := (125 + load_size * (19 + difficulty * 20) + difficulty * 160) * (100 + mini(120, estate.level("fuel"))) / 100
-	var duration := maxi(24, ceili(float(order.seconds) / spec.speed))
+	var duration := maxi(24, ceili(float(order.seconds) / (spec.speed * estate.works.dispatch_speed())))
 	var now: int = world.current().clock
 	return {"reward": reward, "cost": fee, "duration": duration, "parts": load_size,
 		"vehicle": order.cargo in spec.cargo and spec.capacity >= load_size,

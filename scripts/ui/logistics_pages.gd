@@ -123,6 +123,7 @@ func show_drivers() -> void:
 			var label: Label = hud.caption(card, 23, hud.MINT, hud.BOLD)
 			clocks["d/" + id] = label
 			label.text = t("fleet_in_training") % game.clock_text(maxi(0, int(driver.training) - estate.clock))
+			offer(card, "driver_rush", {"target": id})
 		elif manager.driver_working(id):
 			hud.caption(card, 23, hud.FADE).text = t("fleet_traveling")
 		elif driver.rank < Catalog.MAX_DRIVER_RANK:
@@ -194,6 +195,7 @@ func show_freight() -> void:
 		clocks[job_id] = row
 		row.text = t("freight_active") + " · " + game.clock_text(maxi(0, int(job.due) - now))
 		add_bar(card, maxi(0, now - int(job.start)), maxi(1, int(job.due - job.start)), Color("#559586"))
+		offer(card, "freight_rush", {"target": job_id})
 	var supplies: Dictionary = game.economy.supplies
 	if not supplies.is_empty():
 		var stock: Array[String] = []
@@ -203,7 +205,8 @@ func show_freight() -> void:
 		panel.box(t("freight_stock"), "  ·  ".join(stock))
 	var receipt: Dictionary = manager.receipts.get(here, {})
 	if not receipt.is_empty():
-		panel.box(t("freight_delivered") % game.money(HbtAmount.from(receipt.cash)), Orders.contract(receipt.order).get("name", ""))
+		var settled: VBoxContainer = panel.box(t("freight_delivered") % game.money(HbtAmount.from(receipt.cash)), Orders.contract(receipt.order).get("name", ""))
+		offer(settled, "freight_tip", {"target": str(receipt.order), "stamp": int(receipt.at)})
 	var automatic: VBoxContainer = panel.box(t("freight_dispatcher"))
 	if manager.has_dispatcher(game.economy):
 		var on: bool = manager.automatic.get(here, false)
@@ -274,6 +277,11 @@ func update_clocks(now: int) -> void:
 			if not job.is_empty():
 				label.text = t("freight_active") + " · " + game.clock_text(maxi(0, int(job.due) - now))
 
+func offer(parent: Control, id: String, context: Dictionary) -> void:
+	if game.ads.available() and game.ads.playable(id, context):
+		var button: Button = panel.button(parent, t("offer_" + id), panel.premium.select_offer.bind(id, context))
+		hud.button_art(button, hud.BOLT, 36)
+
 func add_bar(parent: Control, value: int, maximum: int, tint: Color) -> void:
 	var bar := ProgressBar.new()
 	bar.show_percentage = false
@@ -311,9 +319,12 @@ func show_empire() -> void:
 				title = estate.facilities[service].name_en if game.economy.language == "en" else estate.facilities[service].name_pl
 	var summary: VBoxContainer = panel.feature(DEPOT, t("empire_header"), t("empire_intro"))
 	nav(summary, "empire")
+	panel.development.nav(summary, "empire")
 	var overview: VBoxContainer = panel.box(t("empire_turnover"), game.money(aggregate, true))
 	hud.caption(overview, 25, hud.INK, hud.BOLD).text = t("empire_totals") % [totals.size(), staff, customers]
 	hud.caption(overview, 25, hud.INK).text = t("empire_jobs") % [manager.jobs.size(), manager.completed, manager.vehicles.size()]
+	var completed_projects: int = manager.completed + campaign.districts.values().reduce(func(progress: int, estate: HbtEconomy) -> int: return progress + estate.works.awards.size() + int(campaign.completion(estate.district) / 25.0), 0)
+	hud.caption(overview, 24, hud.INK, hud.HEAVY).text = t("empire_rank") % (1 + completed_projects / 4)
 	var duration := campaign.boost.remaining(game.economy.clock)
 	if duration > 0:
 		hud.caption(overview, 25, Color("#9c641e"), hud.HEAVY).text = t("empire_boost") % game.boost_time(duration)
