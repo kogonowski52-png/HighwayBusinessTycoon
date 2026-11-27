@@ -15,16 +15,19 @@ static func eligible(world: HbtCampaign, id: String, context: Dictionary) -> boo
 			var job: Dictionary = freight.jobs.get(item, {})
 			if job.is_empty():
 				return false
-			return freight.vehicles[job.truck].home == estate.district and not job.get("rushed", false) 				and int(job.due) - estate.clock > DELIVERY_SECONDS + 7
+			return (freight.vehicles[job.truck].home == estate.district and not job.get("rushed", false)
+					and int(job.due) - estate.clock > DELIVERY_SECONDS + 7)
 		"driver_rush":
 			var driver: Dictionary = freight.drivers.get(item, {})
-			return driver.get("home", "") == estate.district and not driver.get("rushed", false) 				and int(driver.get("training", 0)) - estate.clock > CLASS_SECONDS
+			return (driver.get("home", "") == estate.district and not driver.get("rushed", false)
+					and int(driver.get("training", 0)) - estate.clock > CLASS_SECONDS)
 		"freight_tip":
 			var recent: Dictionary = freight.receipts.get(estate.district, {})
 			return not recent.is_empty() and not recent.get("tip", false) and str(recent.order) == item and int(recent.at) == int(context.get("stamp", -1))
 		"practice_bonus":
 			var result: Dictionary = estate.practice_state.get(item, {})
-			return not result.is_empty() and not result.get("claimed_bonus", false) 				and int(result.ready) == int(context.get("stamp", -1))
+			return (not result.is_empty() and not result.get("claimed_bonus", false)
+					and int(result.ready) == int(context.get("stamp", -1)))
 		"yard_gift":
 			return not estate.works.ownership.has(DECORATION)
 	return false

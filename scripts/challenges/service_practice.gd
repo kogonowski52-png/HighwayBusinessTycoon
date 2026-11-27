@@ -33,7 +33,8 @@ static func mode(estate: HbtEconomy, id: String) -> String:
 		return "fuel"
 	if id in ["wash", "truck_wash", "detail"] or service.venue_kind == "wash":
 		return "wash"
-	if id in ["logistics", "warehouse", "terminal", "coldstore", "transfer", "logging", "haulage", "distribution"] 		or service.venue_kind in ["freight", "cold"]:
+	if (service.venue_kind in ["freight", "cold"]
+			or id in ["logistics", "warehouse", "terminal", "coldstore", "transfer", "logging", "haulage", "distribution"]):
 		return "cargo"
 	return ""
 
@@ -58,7 +59,8 @@ func needle() -> float:
 	return pingpong(elapsed * frequency + .13, 1.0)
 
 func fuel_ready() -> bool:
-	return practice == "fuel" and started and not done and elapsed < last() 		and attempts.size() < BANDS.size() and elapsed >= round_start + 3.3
+	return (practice == "fuel" and started and not done and elapsed < last()
+			and attempts.size() < BANDS.size() and elapsed >= round_start + 3.3)
 
 func mark_pressure() -> bool:
 	if not fuel_ready():
@@ -135,7 +137,9 @@ func score() -> int:
 	return 0
 
 func complete() -> bool:
-	return elapsed >= last() or (practice == "fuel" and attempts.size() == BANDS.size()) 		or (practice == "wash" and elapsed >= 15.0 and score() == 100) 		or (practice == "cargo" and elapsed >= 15.0 and piece_count() == LOAD.size())
+	return (elapsed >= last() or (practice == "fuel" and attempts.size() == BANDS.size())
+			or (practice == "wash" and elapsed >= 15.0 and score() == 100)
+			or (practice == "cargo" and elapsed >= 15.0 and piece_count() == LOAD.size()))
 
 func award(estate: HbtEconomy) -> HbtAmount:
 	if done or not started or not complete():

@@ -8,9 +8,11 @@ const Practice = preload("res://scripts/challenges/service_practice.gd")
 const EstateCatalog = preload("res://data/estate/complex_design.gd")
 const AT := 1_804_980_000
 var count := 0
+var metro_only := false
 
 func run() -> void:
 	for argument in OS.get_cmdline_user_args():
+		metro_only = metro_only or argument == "--metro-only"
 		if argument.begins_with("--capture-dir="):
 			captures = argument.get_slice("=", 1)
 	if not captures.is_empty():
@@ -18,24 +20,25 @@ func run() -> void:
 	root.content_scale_size = Vector2i(1080, 1920)
 	root.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
 	root.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
-	root.size = Vector2i(576, 1024)
+	root.size = Vector2i(420, 748)
 	root.position = Vector2i.ZERO
 	root.borderless = true
 	save_path = "/tmp/hbt-advanced-window-%d.cfg" % OS.get_process_id()
-	game = mount(AT)
+	game = mount_metro() if metro_only else mount(AT)
 	current_scene = game
 	game.economy.preferences.auto_day = false
 	game.traffic.dispatch.spawning = false
 	game.skip_tutorial()
 	prepare(game.economy)
 	await settle_ui()
-	await fleet_scene()
-	await show_practice("fuel")
-	await show_practice("wash")
-	await test_estate()
-	for id: String in ["market", "workshop", "wash", "restaurant", "motel"]:
-		await room_scene(id)
-	if await reach_metro():
+	if not metro_only:
+		await fleet_scene()
+		await show_practice("fuel")
+		await show_practice("wash")
+		await test_estate()
+		for id: String in ["market", "workshop", "wash", "restaurant", "motel"]:
+			await room_scene(id)
+	if metro_only or await reach_metro():
 		await show_practice("logistics")
 		for id: String in ["dealership", "mall", "warehouse", "logistics"]:
 			await room_scene(id)
@@ -314,6 +317,22 @@ func picture(name: String) -> void:
 	var frame := root.get_texture().get_image()
 	expect(frame.save_jpg(captures.path_join(name + ".jpg"), .92) == OK, "write engine frame " + name)
 	count += 1
+
+func mount_metro() -> Node3D:
+	var world := HbtCampaign.new(HbtEconomy.new())
+	world.storage.path = save_path
+	world.restore(AT)
+	prepare(world.current())
+	for region: String in ["desert", "valley", "alpine", "ocean", "metro"]:
+		expect(world.travel(region) == OK, "persistent sponsor reaches " + region)
+		prepare(world.current())
+	var instance: Node3D = load(Atlas.DESTINATIONS.metro.scene).instantiate()
+	instance.campaign = world
+	instance.wall_override = AT
+	instance.seed_override = 68427
+	root.add_child(instance)
+	instance.set_physics_process(false)
+	return instance
 
 func reach_metro() -> bool:
 	for id: String in ["desert", "valley", "alpine", "ocean", "metro"]:

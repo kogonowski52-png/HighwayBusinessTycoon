@@ -46,7 +46,11 @@ func restore(source: Dictionary) -> void:
 		var truck: Dictionary = vehicles.get(str(data.get("truck", "")), {})
 		var start := HbtEconomy.counter(data.get("start"))
 		var due := HbtEconomy.counter(data.get("due"))
-		if not id.is_valid_int() or order.is_empty() or truck.is_empty() or truck.home != order.from or not drivers.has(truck.driver) 				or start >= due or due - start > 1200 or busy(str(data.truck)) or job_for_order(str(data.order)):
+		if not id.is_valid_int() or order.is_empty() or truck.is_empty():
+			continue
+		if truck.home != order.from or not drivers.has(truck.driver) or start >= due or due - start > 1200:
+			continue
+		if busy(str(data.truck)) or job_for_order(str(data.order)):
 			continue
 		jobs[id] = {"order": data.order, "truck": data.truck, "start": start, "due": due,
 			"reward": HbtAmount.from(data.get("reward", "0")).decimal(), "cost": clampi(int(data.get("cost", 0)), 0, 20_000),
@@ -140,7 +144,9 @@ func finish(world: RefCounted, job: Dictionary, now: int) -> void:
 	depot.touch()
 
 func has_dispatcher(estate: HbtEconomy) -> bool:
-	return estate.equipped.any(func(id: String) -> bool: return id in AUTO_MANAGERS or 		estate.BOOK.MANAGERS[id].get("site", "") in ["logistics", "transfer", "terminal", "distribution", "transport", "logging"])
+	return estate.equipped.any(func(id: String) -> bool:
+		var site: String = estate.BOOK.MANAGERS[id].get("site", "")
+		return id in AUTO_MANAGERS or site in ["logistics", "transfer", "terminal", "distribution", "transport", "logging"])
 
 func toggle_automatic(world: RefCounted) -> bool:
 	if not has_dispatcher(world.current()):

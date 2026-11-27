@@ -126,7 +126,8 @@ func animate(delta: float) -> void:
 		var car: Node3D = trucks[id]
 		var run: Dictionary = visible_jobs[id]
 		var now := float(clock) + subsecond
-		var fraction: float = (now - float(run.job.due - fleet.SHOW_SECONDS)) / fleet.SHOW_SECONDS if run.arrival 			else (now - float(run.job.start)) / fleet.SHOW_SECONDS
+		var window_start := float(run.job.due - fleet.SHOW_SECONDS) if run.arrival else float(run.job.start)
+		var fraction: float = (now - window_start) / fleet.SHOW_SECONDS
 		var blend := smoothstep(0.0, 1.0, clampf(fraction, 0.0, 1.0))
 		var start := Vector3(-4.2 + minf(3.0, index * 2.15), .28, 2.05 + index * 1.85)
 		var junction := Vector3(1.8, .20, 3.10 + index * 1.85)

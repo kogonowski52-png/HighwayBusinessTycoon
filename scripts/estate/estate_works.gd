@@ -170,9 +170,12 @@ func sites_for(store: RefCounted, group: String) -> Array[String]:
 func feedback_for(ticket: HbtVisit, estate: RefCounted, served: bool) -> void:
 	var waiting := maxf(0.0, float(ticket.client.patience) - ticket.patience)
 	var delay := clampf(waiting / maxf(1.0, ticket.client.patience), 0, 1)
-	var report := 39.0 if not served else 82.0 - 29.0 * delay 		+ minf(11.0, estate.level(ticket.service) * .28 + designs.size() * .55 + stage("walkways") + stage("lamps") * .33)
+	var amenities := minf(11.0, estate.level(ticket.service) * .28 + designs.size() * .55 + stage("walkways") + stage("lamps") * .33)
+	var report := 39.0 if not served else 82.0 - 29.0 * delay + amenities
 	if served and ticket.worker >= 0 and estate.crew[ticket.service].size() > ticket.worker:
-		report += minf(8.0, float(estate.crew[ticket.service][ticket.worker].get("level", 1)) * 1.60)
+		var worker: Dictionary = estate.crew[ticket.service][ticket.worker]
+		report += minf(8.0, float(worker.rank) * 1.3 + float(worker.training) * .3
+			+ (1.8 if worker.get("specialty", "") == "quality" else 0.0))
 	samples += 1
 	rating = clampi(roundi(lerpf(rating, report, .13)), 0, 100)
 	var reason := "capacity" if not served and ticket.bounced else "queue" if not served or delay > .54 else "quality"
