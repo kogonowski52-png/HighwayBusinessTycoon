@@ -13,6 +13,7 @@ const Campus = preload("res://scripts/buildings/roadside_campus.gd")
 const RegionalCampus = preload("res://scripts/buildings/regional_campus.gd")
 const DesertCampus = preload("res://scripts/buildings/desert_campus.gd")
 const Premium = preload("res://scripts/ui/premium_pages.gd")
+const Logistics = preload("res://scripts/ui/logistics_pages.gd")
 const Expedition = preload("res://scripts/ui/expedition_pages.gd")
 const TouchScroll = preload("res://scripts/ui/touch_scroll.gd")
 const BusinessDirectory = preload("res://scripts/ui/business_directory.gd")
@@ -35,6 +36,7 @@ var manager_render_state := ""
 var expedition_render_state := ""
 var extra := Extra.new()
 var expedition := Expedition.new()
+var logistics := Logistics.new()
 var premium := Premium.new()
 var business := BusinessDirectory.new()
 var closing := false
@@ -50,6 +52,7 @@ func setup(game: Node3D, hud: CanvasLayer) -> void:
 	theme_source = hud
 	extra.bind_to(self)
 	expedition.bind(self)
+	logistics.bind(self)
 	premium.bind(self)
 	layer = 5
 	shade = ColorRect.new()
@@ -235,6 +238,8 @@ func refresh() -> void:
 	var state := expedition.signature(page)
 	if state.is_empty():
 		state = premium.signature(page)
+	if state.is_empty():
+		state = logistics.signature(page)
 	if not state.is_empty() and expedition_render_state == state:
 		return
 	expedition_render_state = state
@@ -263,7 +268,7 @@ func refresh() -> void:
 		"offline": show_offline()
 		"upgrades": show_upgrades()
 		_:
-			if not premium.show(page) and not expedition.show(page):
+			if not premium.show(page) and not expedition.show(page) and not logistics.show(page):
 				extra.show(page)
 	if previous_scroll > 0:
 		scroll.set_deferred("scroll_vertical", previous_scroll)
@@ -567,6 +572,7 @@ func show_event(store: HbtEconomy) -> void:
 		controller.exchange_points.bind(false), not store.can_afford(HbtAmount.from(Book.EVENT_DIAMOND_COST), "event"))
 
 func show_finance() -> void:
+	button(rows, controller.t("empire_header"), show_page.bind("empire"), false, true)
 	var store: HbtEconomy = controller.economy
 	var till := store.holding()
 	box(controller.t("fin_cash"), controller.money(store.amount("cash"), true))

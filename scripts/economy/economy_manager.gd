@@ -73,6 +73,7 @@ var milestones: Array = BOOK.MILESTONES
 var campaign_data: Dictionary = {}
 var save_hook: Callable
 var prestige_rank := 0
+var supplies: Dictionary = {}
 var conditions: Dictionary = {}
 var special_guest: Dictionary = {}
 
@@ -193,6 +194,11 @@ func restore_profile(data: Dictionary, wall: int, accrue := true) -> void:
 		var record := safe_dict(sales.get(id))
 		per_service[id] = {"count": counter(record.get("count", 0)), "gross": HbtAmount.from(record.get("gross", "0"))}
 	commerce.restore(safe_dict(data.get("commerce")), levels)
+	supplies = {}
+	for cargo: String in safe_dict(data.get("supplies")):
+		var quantity := mini(64, counter(data.supplies[cargo]))
+		if quantity > 0:
+			supplies[cargo] = quantity
 	var owned := safe_dict(data.get("cards"))
 	var ranks := safe_dict(data.get("manager_ranks"))
 	for id in BOOK.MANAGERS:
@@ -279,6 +285,8 @@ func snapshot() -> Dictionary:
 	}
 	if not offline_boosted.empty():
 		result["offline_boosted"] = offline_boosted.decimal()
+	if not supplies.is_empty():
+		result["supplies"] = supplies
 	if not commerce.state.is_empty():
 		result["commerce"] = commerce.state
 	if prestige_rank > 0:
@@ -450,6 +458,8 @@ func duration(id: String, worker: int, at_level := -1) -> float:
 		time *= float(BPS) / Staff.speed(crew[id][worker])
 	elif worker == MANAGER_WORKER:
 		time *= float(BPS) / (BPS + skill("automation", id))
+	if has_supplies(id):
+		time *= .86
 	return maxf(0.65, time * float(BPS) / (BPS + skill("speed", id)))
 
 func payout(id: String, tip: int, worker: int, include_boost := true, include_global := true) -> HbtAmount:
@@ -467,6 +477,7 @@ func payout(id: String, tip: int, worker: int, include_boost := true, include_gl
 func serve(id: String, value: HbtAmount, reputation: int, worker: int) -> void:
 	if worker >= 0:
 		crew[id][worker].xp = mini(1_000_000, crew[id][worker].xp + 1)
+	consume_supplies(id)
 	customers += 1
 	recognition.record_visit(id, equipped)
 	add_xp(2 + reputation)
@@ -487,6 +498,49 @@ func serve(id: String, value: HbtAmount, reputation: int, worker: int) -> void:
 	else:
 		registers[id] = registers[id].plus(value)
 	touch()
+
+func deliver_supplies(cargo: String, units: int) -> void:
+	supplies[cargo] = mini(64, int(supplies.get(cargo, 0)) + units)
+	dirty = true
+
+func supply_for(id: String) -> String:
+	var facility: HbtService = facilities.get(id)
+	if facility == null:
+		return ""
+	match facility.venue_kind:
+		"refuel": return "fuel"
+		"shop": return "goods"
+		"food": return "food"
+		"repair": return "parts"
+		"cold", "freight": return "containers"
+		"showroom": return "cars"
+		"hotel", "rent", "scooter", "parking", "vip": return "vip"
+	if id in ["fuel", "truck"]:
+		return "fuel"
+	if id in ["market", "mall", "parts"]:
+		return "goods"
+	if id in ["restaurant", "cafe", "drive_through"]:
+		return "food"
+	if id in ["workshop", "tires", "tuning", "restoration"]:
+		return "parts"
+	if id in ["logistics", "warehouse", "terminal"]:
+		return "containers"
+	if id in ["motel", "vip_park", "resort"]:
+		return "vip"
+	return "materials"
+
+func has_supplies(id: String) -> bool:
+	return not supplies.is_empty() and int(supplies.get(supply_for(id), 0)) > 0
+
+func consume_supplies(id: String) -> void:
+	if supplies.is_empty():
+		return
+	var cargo := supply_for(id)
+	var left := int(supplies.get(cargo, 0))
+	if left > 1:
+		supplies[cargo] = left - 1
+	elif left == 1:
+		supplies.erase(cargo)
 
 func holding() -> HbtAmount:
 	var total := HbtAmount.new()

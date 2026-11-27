@@ -14,6 +14,7 @@ const FrontierLandscape = preload("res://scripts/buildings/frontier_landscape.gd
 const RegionalCampus = preload("res://scripts/buildings/regional_campus.gd")
 const RegionalStation = preload("res://scripts/buildings/regional_station.gd")
 const Diagnostics := "res://scripts/core/runtime_diagnostics.gd"
+const Depot = preload("res://scripts/logistics/depot_view.gd")
 const WorldStream = preload("res://scripts/core/world_stream.gd")
 const RenderBudget = preload("res://scripts/core/render_budget.gd")
 const Weather = preload("res://scripts/art/expedition_weather.gd")
@@ -54,6 +55,7 @@ var travel_progress: ProgressBar
 var arrived_from_trip := false
 var weather: Node3D
 var world_second := -1
+var depot: Node3D
 var scene_elapsed := 0.0
 var paused_3d := false
 var shown_event := ""
@@ -211,6 +213,7 @@ func _ready() -> void:
 		if opening_look != Lighting.Look.DAY:
 			set_look(opening_look)
 	update_expedition()
+	sync_depot()
 	get_tree().auto_accept_quit = false
 	if not economy.offline_pending.empty():
 		operations.show_page("offline")
@@ -325,6 +328,13 @@ func tick_game(delta: float) -> void:
 			log_commercial("boost_expired", "boost")
 		boost_was_active = current
 		purchases.tick()
+		if campaign.freight.advance(campaign, economy.clock):
+			economy.checkpoint()
+			if operations.modal_open() and operations.page in operations.logistics.PAGES:
+				operations.refresh()
+		sync_depot()
+		if operations.modal_open():
+			operations.logistics.update_clocks(economy.clock)
 		update_expedition()
 		if operations.modal_open() and operations.page == "diagnostics":
 			operations.refresh()
@@ -1065,6 +1075,22 @@ func redeem_collection(group: String) -> void:
 	if not campaign.storage.read_only and campaign.ledger.set_reward(economy, group):
 		reward_feedback()
 		economy.checkpoint()
+
+func sync_depot() -> void:
+	if is_instance_valid(depot):
+		depot.update_clock(economy.clock)
+	elif campaign.freight.vehicles.values().any(func(record: Dictionary) -> bool: return record.home == economy.district) \
+			or not campaign.freight.visible_jobs(economy.district, economy.clock).is_empty():
+		depot = Depot.new()
+		add_child(depot)
+		depot.bind(campaign.freight, economy.district, economy.clock)
+
+func view_depot() -> void:
+	sync_depot()
+	if not is_instance_valid(depot):
+		return
+	operations.hide_page()
+	camera_rig.frame(depot.position + Vector3(0, .8, 0), Vector3(14, 24, 26), 24.0, not motion_enabled())
 
 func travel_to(id: String) -> void:
 	if closing or traveling or ads.busy() or purchases.busy() or not campaign.available(id) or id == campaign.active:

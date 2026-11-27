@@ -4,6 +4,7 @@ extends RefCounted
 
 const Atlas = preload("res://data/world/atlas.gd")
 const Calendar = preload("res://data/world/expedition_calendar.gd")
+const Fleet = preload("res://scripts/logistics/transport_manager.gd")
 const Ledger = preload("res://scripts/expansion/ledger.gd")
 
 var storage: RefCounted
@@ -12,6 +13,7 @@ var active := "north"
 var ledger := Ledger.new()
 var boost := HbtBoost.new()
 var premium := HbtPremiumState.new()
+var freight := Fleet.new()
 
 func _init(north: HbtEconomy) -> void:
 	storage = north.storage
@@ -29,6 +31,7 @@ func restore(wall := -1) -> void:
 	north.restore_profile(root, now, false)
 	north.capture_absence(now)
 	ledger.restore(HbtEconomy.safe_dict(world.get("ledger")))
+	freight.restore(HbtEconomy.safe_dict(world.get("transport")))
 	var saved := HbtEconomy.safe_dict(world.get("estates"))
 	for id in Atlas.DESTINATIONS:
 		if id == "north" or not saved.get(id) is Dictionary or not Atlas.DESTINATIONS[id].has("scene"):
@@ -46,6 +49,8 @@ func restore(wall := -1) -> void:
 	active = last if last is String and districts.has(last) else "north"
 	ledger.advance(north.clock)
 	north.campaign_data = {}
+	if freight.advance(self, north.clock, false):
+		checkpoint()
 	theme()
 
 func current() -> HbtEconomy:
@@ -79,7 +84,7 @@ func checkpoint() -> Error:
 	for id in districts:
 		if id != "north":
 			others[id] = districts[id].snapshot()
-	root["world"] = {"active": active, "estates": others, "ledger": ledger.snapshot(), "boost": boost.snapshot(), "premium": premium.snapshot()}
+	root["world"] = {"active": active, "estates": others, "ledger": ledger.snapshot(), "boost": boost.snapshot(), "premium": premium.snapshot(), "transport": freight.snapshot()}
 	var error: Error = storage.store(root)
 	estate.save_error = error
 	estate.dirty = error != OK
