@@ -1,5 +1,9 @@
 # Licencje zasobów
 
+## Zasoby 0.9.5
+
+Baza transportowa, cysterna, naczepy, przekroje dziewięciu wnętrz, elementy małej architektury i kafelki gier są autorskimi zasobami Highway Business Tycoon. Palety istniejących modeli powstały z ich pierwotnych parametrów i kolorów. Nagrania korzystają z renderów Godota i dotychczasowych dźwięków gry. [Baza i naczepy](tools/art/transport_yard.py) · [Wnętrza](tools/art/interiors.py) · [Elementy personalizacji](tools/art/estate_decor.py)
+
 ## Zasoby 0.9.4
 
 Plany i architektura sześciu map, moduły przebudowy, modele 48 pojazdów, osiem nowych portretów, instalacje wydarzeń i mapa fal to własna geometria lub ilustracje Highway Business Tycoon. Wydanie korzysta też z dotychczasowych bibliotek Androida, fontów i muzyki projektu. Galeria i film zostały nagrane w Godocie. [Modele dzielnic](tools/art/frontier_art.py) · [Moduły](tools/art/legacy_works.py) · [Flota](tools/art/vehicles.py) · [Portrety](tools/art/frontier_managers.py) · [Instalacje wydarzeń](tools/art/frontier_events.py)

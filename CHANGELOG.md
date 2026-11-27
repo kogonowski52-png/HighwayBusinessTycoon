@@ -1,5 +1,12 @@
 # Historia zmian
 
+## 0.9.5 RC · Advanced Gameplay
+
+- Własna flota z kierowcami, szkoleniem, przeglądami, naczepami i 60 kontraktami. Dostawy rozliczają się również po zmianie regionu lub zamknięciu gry.
+- Centrum imperium, trzy opcjonalne mini-gry oraz dziewięć wczytywanych na żądanie przekrojów wnętrz z obsadą stanowisk.
+- 60 opcji personalizacji, trzy etapy dziesięciu instalacji infrastruktury, siedem kampanii i sześć certyfikatów jakości. Awansowani pracownicy mogą wybrać specjalizację.
+- Sprowadzono nieprzezroczyste materiały z wcześniejszych regionów do mniejszej liczby powierzchni. Zapis i podpis testowy kontynuują 9004. [Przewodnik i ograniczenia](docs/ADVANCED_GAMEPLAY.md) · [Testy](TEST_REPORT.md)
+
 ## 0.9.4 RC · World Expansion
 
 - Tropical Island, Route 66, Industrial Harbor, Luxury City, Japan Highway i Northern Wilderness otwierają się w drugim rozdziale atlasu. Łącznie działa 12 lokalizacji i 84 biznesy.

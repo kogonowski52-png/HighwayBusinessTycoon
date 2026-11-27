@@ -1,5 +1,32 @@
 # Raport testów
 
+## 0.9.5 RC · Advanced Gameplay
+
+### Próby w renderowanym Godocie
+
+Zarejestrowano 65 unikalnych kadrów rozgrywki oraz pięć filmów. Scenariusze na Stacji Północ dotykały rzeczywistych kontrolek, kupiły pojazd, przypisały kierowcę, wysłały go w trasę i sprawdziły zakończony rozładunek. Dalsze próby rozegrały tankowanie i myjnię, zastosowały dekoracje oraz otworzyły pięć wnętrz. Przejazd wieloregionalny rozdzielono na osobne próby po przekroczeniu limitu czasu renderowania pierwszego wspólnego przebiegu. Próba Metro City zakończyła się wynikiem 39/39 i obejmowała układanie paczek dotykiem, aktywnych klientów i zwalnianie czterech wnętrz.
+
+Pięć nagrań zaliczyło odpowiednio 2/2 dla floty, 1/1 dla tankowania, 1/1 dla myjni, 6/6 dla załadunku z otwarciem Metro i 1/1 dla modernizacji drogi. Zapis pochodzi z Godot Movie Maker. Kadry i filmy wykorzystują osobne profile przygotowane do prób. [Galeria i filmy](screenshots/0.9.5/README.md)
+
+### Testy automatyczne
+
+| Obszar | Wynik |
+| --- | --- |
+| Flota i kontrakty | 104/104. Ceny, kierowcy, naczepy, stan pojazdu, szkolenie, rozładunek po ponownym uruchomieniu, wypłata między regionami i jedno zastosowanie materiałów budowlanych. |
+| Mini-gry | 22/22. Ograniczenie odstępu pomiarów, wszystkie strefy mycia, rotacja i zajętość siatki, wynik, blokada powtórnej wypłaty i zapis rezultatu. |
+| Wnętrza | 2/2. Trzykrotne otwarcie i zamknięcie panelu podczas asynchronicznego ładowania zwalnia wszystkie żądania modelu. |
+| Infrastruktura i opinie | 95/95. 60 opcji, trzy etapy dziesięciu prac, prawdziwe faktury, marketing, reagowanie kolejki, specjalizacja, certyfikat i regionalny zapis. |
+| Kampania | 55/55 na trzech ziarnach do 60. dnia. [Raport ekonomii](docs/BALANCE_095.md) |
+| Ruch i zapis | Trasy 30/30, katalog regionalny 93/93, ekspansja 82/82, zdarzenia i długie przejazdy sześciu nowszych regionów 151/151, ekonomia 70/70 i stacja 27/27. |
+| Prezentacja i zasoby | Kariera 210/210, prezentacja 278/278, oprawa 182/182, profile i obciążenie 468/468, zasoby oraz tłumaczenia 4048/4048. |
+| Gesty | Wynik 62/62 w Godocie headless ze zdarzeniami ScreenTouch i ScreenDrag. Sprawdzono przewijanie, kamerę, zakładki i budowę. |
+| Reklamy i zakup | 111/111 monetyzacji i BOOST, 58/58 sklepu i pierwszego dotknięcia, 15/15 backendu. Test nagród używa kontrolowanego adaptera zdarzeń SDK, w tym anulowania oraz powtórzonego potwierdzenia. |
+| Migracja | Bazowe 9004 zapisuje dwanaście regionów w 13/13 asercji. Wczytanie, zapis i odzyskanie backupu w 9005 przeszły 7/7. [Raport migracji](docs/MIGRATION_095.md) |
+
+### Android
+
+Android ARM64 9005 przeszedł porównanie identyfikatora i podpisu z 9004, test wyrównania 16 KiB i kontrolę mostka reklam oraz Billing. Odbiór na fizycznym telefonie pozostaje otwarty. [Podpis](docs/ANDROID_SIGNING.md#testowy-apk-095) · [Pomiary Linuksa](docs/PERFORMANCE_095.md)
+
 ## 0.9.4 RC · World Expansion
 
 ### Rozgrywka w renderowanym oknie Godota

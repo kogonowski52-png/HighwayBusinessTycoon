@@ -1,5 +1,9 @@
 # Stan projektu
 
+## 0.9.5 RC · Advanced Gameplay
+
+Flota, dostawy i rozliczenia działają w dwunastu regionach. Centrum imperium prowadzi do infrastruktury, marketingu, personalizacji i inspekcji. Ukończono mini-gry tankowania, mycia i załadunku oraz dziewięć wnętrz. Eksport 9005 przeszedł sprawdzenie podpisu i manifestu w porównaniu z 9004. [Przewodnik i ograniczenia](docs/ADVANCED_GAMEPLAY.md) · [Zapis](docs/MIGRATION_095.md) · [Wydajność](docs/PERFORMANCE_095.md)
+
 ## 0.9.4 RC · World Expansion
 
 W grze jest dwanaście niezależnych lokalizacji. Sześć nowych ma sceny, personel, aktywne trasy klientów, rozbudowę, kontrakty, kolekcje i dochody offline. Zachowano kampanię z 9003, a zapisywanie rozszerzono o terminy zwrotów wypożyczonych pojazdów. [Raport migracji](docs/MIGRATION_094.md)

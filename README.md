@@ -1,5 +1,7 @@
 # Highway Business Tycoon
 
+**0.9.5 RC · Advanced Gameplay** dodaje własną flotę i 60 tras dostaw, Centrum imperium, trzy mini-gry, dziewięć przekrojów wnętrz oraz personalizację i rozbudowę placów. Podpisane APK ARM64 ma kod 9005. [Wydanie na GitHubie](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.5-rc.1) · [Przewodnik po mechanikach](docs/ADVANCED_GAMEPLAY.md) · [Galeria i filmy](screenshots/0.9.5/README.md)
+
 **0.9.4 RC · World Expansion** rozszerza kampanię do dwunastu grywalnych lokalizacji, 84 biznesów i 48 modeli pojazdów. W drugim rozdziale atlasu można odblokować sześć nowych kompleksów, prowadzić wypożyczalnie i terminale oraz wracać do poprzednich lokalizacji. Podpisane APK ARM64 ma kod 9004. [APK w GitHub Releases](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.4-rc.1) · [Mapa funkcji](docs/WORLD_EXPANSION.md) · [Galeria i film](screenshots/0.9.4/README.md)
 
 **0.9.3 · Premium Graphics 2.0** rozwija architekturę sześciu lokalizacji, wprowadza częściowe wnętrza na Stacji Północ i zwiększa flotę do 30 modeli. Podpisane APK ARM64 ma kod 9003. [APK w GitHub Releases](https://github.com/kogonowski52-png/HighwayBusinessTycoon/releases/tag/v0.9.3-rc.1) · [Porównania i film](screenshots/0.9.3/README.md) · [Raport grafiki](docs/PREMIUM_GRAPHICS_2.md)
@@ -54,6 +56,10 @@ godot --headless --path . --script tests/regional_checks.gd
 godot --headless --path . --script tests/campaign_balance.gd
 godot --headless --path . --script tests/campaign_balance.gd -- --world --report=/tmp/hbt-world-balance.json
 godot --headless --path . --script tests/frontier_rules.gd
+godot --headless --path . --script tests/transport_checks.gd
+godot --headless --path . --script tests/estate_checks.gd
+godot --headless --path . --script tests/practice_checks.gd
+godot --headless --path . --script tests/interior_loading.gd
 godot --headless --path . --script tests/monetization_checks.gd
 godot --headless --path . --script tests/commerce_window.gd
 godot --headless --path . --script tests/monetization_balance.gd
@@ -71,6 +77,8 @@ godot --path . --write-movie /tmp/hbt-demo.avi --fixed-fps 30 --script tests/pre
 godot --path . --script tests/expedition_window.gd -- --capture-dir=/tmp/hbt-gallery
 godot --path . --write-movie /tmp/copper-mile.avi --fixed-fps 30 --script tests/expedition_recording.gd
 godot --path . --script tests/regional_window.gd -- --capture-dir=/tmp/hbt-061-gallery
+godot --path . --script tests/advanced_window.gd -- --capture-dir=/tmp/hbt-095-gallery
+godot --path . --write-movie /tmp/hbt-095-cargo.avi --fixed-fps 10 --script tests/advanced_recording.gd -- --feature=cargo
 godot --path . --script tests/frontier_window.gd -- --district=harbor --capture-dir=/tmp/hbt-harbor-gallery
 godot --path . --write-movie /tmp/hbt-world.avi --fixed-fps 20 --script tests/frontier_recording.gd
 godot --path . --script tests/regional_window.gd -- --sample-performance
